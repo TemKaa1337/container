@@ -28,9 +28,9 @@ final class Container implements ContainerInterface
      */
     private array $definitions = [];
 
-    private bool $isCompiled = false;
-
     private readonly array $env;
+
+    private bool $isCompiled = false;
 
     public function __construct(array $config, array $env = [])
     {

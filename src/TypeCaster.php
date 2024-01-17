@@ -5,21 +5,14 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer;
 
 use Psr\Container\ContainerExceptionInterface;
-use Temkaa\SimpleContainer\Attribute\NonAutowirable;
 use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
 
-#[NonAutowirable]
 final class TypeCaster
 {
-    private const SUPPORTED_TYPES = [
-        'bool',
-        'float',
-        'int',
-        'string',
-        'mixed',
-    ];
+    private const SUPPORTED_TYPES = ['bool', 'float', 'int', 'string', 'mixed'];
 
     /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @throws ContainerExceptionInterface
      */
     public function cast(mixed $value, string $castTo): mixed

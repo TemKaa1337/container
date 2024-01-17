@@ -41,6 +41,8 @@ final class ClassExtractor
     }
 
     /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
      * @return class-string[]
      */
     private function extractFromFile(string $path): array
