@@ -96,6 +96,33 @@ $config = [
 ];
 ```
 
+### Container attributes example:
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App;
+
+use Temkaa\SimpleContainer\Attribute\Alias;
+use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
+use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Tag
+
+#[Tag(name: 'tag_name')]
+#[Alias(name: 'class_alias')]
+class Example
+{
+    public function __construct(
+        #[Tagged(tag: 'any_tag_name')]
+        private readonly iterable $tagged,
+        #[Parameter(expression: 'env(INT_VARIABLE)')]
+        private readonly int $age,
+    ) {}
+}
+
+```
+
 ##### Important notes:
 - Please note that all classes for now are singletons, option with instantiating classes multiple times will be added later.
 
@@ -109,8 +136,6 @@ $config = [
 - remove array $env and replace with env getting everywhere
 - env var processors (Enum, ...)
 
-- Update readme
-- Make master branch protected
-- Code owners
 - automatic release tag drafter
+- automated git actions tests passing
 
