@@ -1,0 +1,25 @@
+{
+    "name": "temkaa/simple-container",
+    "description": "A simple implementation of DI Container",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Temkaa\\SimpleContainer\\": "src/",
+            "Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Komarov Artem",
+            "email": "temakomarov98@gmail.com"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "require": {
+        "php": ">=8.2",
+        "psr/container": "^2.0"
+    }
+}
