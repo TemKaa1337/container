@@ -31,6 +31,7 @@ final readonly class ArgumentValidator
 
         if ($argumentType instanceof ReflectionUnionType || $argumentType instanceof ReflectionIntersectionType) {
             $formattedArgumentType = $argumentType instanceof ReflectionUnionType ? 'union' : 'intersection';
+
             throw new UnresolvableArgumentException(
                 sprintf(
                     'Cannot resolve argument "%s" with %s type "%s" in class "%s".',
@@ -48,7 +49,7 @@ final readonly class ArgumentValidator
                     'Cannot instantiate entry "%s" with argument "%s::%s".',
                     $id,
                     $argument->getName(),
-                    $argument->getType()?->getName(),
+                    $argument->getType()->getName(),
                 ),
             );
         }

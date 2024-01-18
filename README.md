@@ -13,6 +13,12 @@ $container->compile();
 
 /** @var ClassName $object */
 $object = $container->get(ClassName::class);
+
+// or if you have the class which has alias (from Alias attribute) then you can get its instance by alias
+$object = $container->get('class_alias');
+
+// or if you have registered interface implementation in config you can get class which implements interface by calling
+$object = $container->get(InterfaceName::class);
 ```
 
 ##### Env variables example:
@@ -58,14 +64,14 @@ $config = [
     // always leave it as it is in example below
     'config_dir' => __DIR__,
     'services' => [
-        // this section icludes files that will be autowired by container
+        // this section includes files that will be autowired by container
         // you can pass either filename or directory
         // please note that class paths must be relative to `config_dir` path
         'include' => [
             '/../some/path/ClassName.php',
             '/../some/path/'
         ],
-        // this section icludes files that will be excluded from autowiring by container
+        // this section includes files that will be excluded from autowiring by container
         'exclude' => [
             '/../some/path/ClassName.php',
             '/../some/path/'
