@@ -491,8 +491,8 @@ final class ContainerConfigTest extends AbstractUnitTestCase
         );
 
         $config = [
-            'config_dir' => __DIR__,
-            'services' => [
+            'config_dir'         => __DIR__,
+            'services'           => [
                 'include' => [
                     self::GENERATED_CLASS_STUB_PATH.$emptyClassName1.'.php',
                     self::GENERATED_CLASS_STUB_PATH.$emptyClassName2.'.php',
@@ -504,7 +504,7 @@ final class ContainerConfigTest extends AbstractUnitTestCase
             'interface_bindings' => [
                 $interfaceNamespace => $interfaceImplementationNamespace,
             ],
-            'class_bindings' => [
+            'class_bindings'     => [
                 $this->classWithBuiltInArgumentTypesNamespace => [
                     'bind' => [
                         '$string' => 'string',

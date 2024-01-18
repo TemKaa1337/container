@@ -21,5 +21,11 @@ jobs:
             - name: Install dependencies
               run: composer install --no-progress
 
+            - name: Run PHPMD tests
+              run: ./vendor/bin/phpmd src/ text phpmd.xml
+
+            - name: Run Psalm tests
+              run: ./vendor/bin/psalm -c psalm.xml
+
             - name: Run test suite
               run: ./vendor/bin/phpunit tests/

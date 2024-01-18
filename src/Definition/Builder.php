@@ -135,8 +135,7 @@ final class Builder
 
         $dependencyReflection = new ReflectionClass($entryId);
         if ($dependencyReflection->isInterface()) {
-            $interfaceName = $dependencyReflection->getName();
-            $interfaceImplementation = $this->config->getInterfaceImplementation($interfaceName);
+            $interfaceImplementation = $this->config->getInterfaceImplementation($dependencyReflection->getName());
 
             $this->buildDefinition($interfaceImplementation);
 

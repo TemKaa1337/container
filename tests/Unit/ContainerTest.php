@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Closure;
 use Generator;
 use Psr\Container\ContainerExceptionInterface;
+use ReflectionAttribute;
 use ReflectionClass;
 use Temkaa\SimpleContainer\Container;
 use Temkaa\SimpleContainer\Definition\Definition;
@@ -51,7 +53,7 @@ final class ContainerTest extends AbstractUnitTestCase
         yield [
             'TestClass'.self::getNextGeneratedClassNumber(),
             'public readonly \Closure $generator',
-            \Closure::class,
+            Closure::class,
         ];
         yield [
             'TestClass'.self::getNextGeneratedClassNumber(),
@@ -66,7 +68,7 @@ final class ContainerTest extends AbstractUnitTestCase
         yield [
             'TestClass'.self::getNextGeneratedClassNumber(),
             'public readonly \ReflectionAttribute $r',
-            \ReflectionAttribute::class,
+            ReflectionAttribute::class,
         ];
     }
 

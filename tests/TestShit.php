@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Tests;
 
 use PHPUnit\Framework\TestCase;
-use Temkaa\SimpleContainer\Config;
-use Temkaa\SimpleContainer\Definition\Builder;
-use Temkaa\SimpleContainer\Definition\Resolver;
 use Tests\Fixture\Stub\Class\SomeInterface;
 use Tests\Fixture\Stub\Class\SomeInterfaceImplementation;
 use Tests\Helper\ClassStubGeneratorTrait;

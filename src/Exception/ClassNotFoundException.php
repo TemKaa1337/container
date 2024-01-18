@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Exception;
 
-use RuntimeException;
 use Psr\Container\ContainerExceptionInterface;
+use RuntimeException;
 
 final class ClassNotFoundException extends RuntimeException implements ContainerExceptionInterface
 {
