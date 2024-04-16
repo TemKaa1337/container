@@ -130,12 +130,16 @@ class Example
 ```
 
 ##### Important notes:
-- Please note that all classes for now are singletons, option with instantiating classes multiple times will be added later.
+- all classes for now are singletons, option with instantiating classes multiple times will be added later.
+- if you have type hinted some class in class arguments, which is neither in `include` and `exclude` sections, it will also be autowired.
 
 ##### Here are some TODOs:
+- refactor config to php objects code
+- fix psalm errors
+- fix psr-2 to psr-12 if statements
 - Refactoring src + refactoring tests
 - Add env var resolving circular detection
-- Allow tagged iterator to be caster to specific class collection
+- Allow tagged iterator to be casted to specific class collection
 - Add Decorator (both from attribute and config)
 - Add singleton option (both from attribute and config)
 - Add reflection caching

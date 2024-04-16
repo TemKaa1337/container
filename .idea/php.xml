@@ -105,7 +105,7 @@
     </Psalm_settings>
   </component>
   <component name="PsalmOptionsConfiguration">
-    <option name="config" value="E:\MYPROJECTS\simple-container\psalm.xml" />
+    <option name="config" value="E:\MYPROJECTS\simple-projects\simple-container\psalm.xml" />
     <option name="transferred" value="true" />
   </component>
 </project>
