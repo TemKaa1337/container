@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Definition;
+namespace Temkaa\SimpleContainer\Model\Definition;
 
 interface ReferenceInterface
 {

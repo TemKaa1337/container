@@ -10,7 +10,7 @@ use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 
-final class InterfaceBindingNodeValidator
+final class InterfaceBindingNodeValidator implements ValidatorInterface
 {
     /**
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
@@ -51,15 +51,15 @@ final class InterfaceBindingNodeValidator
                 throw new ClassNotFoundException($className);
             }
 
-            $r = new ReflectionClass($interfaceName);
-            if (!$r->isInterface()) {
+            $reflection = new ReflectionClass($interfaceName);
+            if (!$reflection->isInterface()) {
                 throw new CannotBindInterfaceException(
                     sprintf('Cannot bind interface "%s" as it not an interface.', $interfaceName),
                 );
             }
 
-            $r = new ReflectionClass($className);
-            if ($r->isInterface()) {
+            $reflection = new ReflectionClass($className);
+            if ($reflection->isInterface()) {
                 throw new CannotBindInterfaceException(
                     sprintf(
                         'Cannot bind interface "%s" to class "%s" as it it as interface.',
@@ -69,7 +69,7 @@ final class InterfaceBindingNodeValidator
                 );
             }
 
-            if (!$r->implementsInterface($interfaceName)) {
+            if (!$reflection->implementsInterface($interfaceName)) {
                 throw new CannotBindInterfaceException(
                     sprintf(
                         'Cannot bind interface "%s" to class "%s" as it doesn\'t implement int.',

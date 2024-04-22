@@ -8,15 +8,12 @@ use Psr\Container\ContainerExceptionInterface;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 
-final class ServicesNodeValidator
+final class ServicesNodeValidator implements ValidatorInterface
 {
     /**
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     *
      * @throws ContainerExceptionInterface
      */
-    public function validate(array $config, string $configDir): void
+    public function validate(array $config): void
     {
         if (!isset($config['services'])) {
             return;
@@ -28,45 +25,33 @@ final class ServicesNodeValidator
             );
         }
 
-        if (isset($config['services']['include'])) {
-            if (!is_array($config['services']['include'])) {
-                throw new InvalidConfigNodeTypeException(
-                    'Node "services.include" must be of "array<int, array>" type.',
-                );
-            }
+        $this->validateNode($config, name: 'include');
+        $this->validateNode($config, name: 'exclude');
+    }
 
-            if (!array_is_list($config['services']['include'])) {
-                throw new InvalidConfigNodeTypeException(
-                    'Node "services.include" must be of "array<int, array>" type.',
-                );
-            }
+    private function validateNode(array $config, string $name): void
+    {
+        $configDir = $config['file']->getPath();
 
-            foreach ($config['services']['include'] as $classPath) {
-                $dir = realpath($configDir.'/'.$classPath);
-                if ($dir === false) {
-                    throw new InvalidPathException(sprintf('The specified path "%s" does not exist.', $classPath));
-                }
-            }
+        if (!isset($config['services'][$name])) {
+            return;
         }
 
-        if (isset($config['services']['exclude'])) {
-            if (!is_array($config['services']['exclude'])) {
-                throw new InvalidConfigNodeTypeException(
-                    'Node "services.exclude" must be of "array<int, array>" type.',
-                );
-            }
+        if (!is_array($config['services'][$name])) {
+            throw new InvalidConfigNodeTypeException(
+                sprintf('Node "services.%s" must be of "array<int, array>" type.', $name),
+            );
+        }
 
-            if (!array_is_list($config['services']['exclude'])) {
-                throw new InvalidConfigNodeTypeException(
-                    'Node "services.include" must be of "array<int, array>" type.',
-                );
-            }
+        if (!array_is_list($config['services'][$name])) {
+            throw new InvalidConfigNodeTypeException(
+                sprintf('Node "services.%s" must be of "array<int, array>" type.', $name),
+            );
+        }
 
-            foreach ($config['services']['exclude'] as $classPath) {
-                $dir = realpath($configDir.'/'.$classPath);
-                if ($dir === false) {
-                    throw new InvalidPathException(sprintf('The specified path "%s" does not exist.', $classPath));
-                }
+        foreach ($config['services'][$name] as $classPath) {
+            if (realpath($configDir.'/'.$classPath) === false) {
+                throw new InvalidPathException(sprintf('The specified path "%s" does not exist.', $classPath));
             }
         }
     }

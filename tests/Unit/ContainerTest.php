@@ -4,191 +4,34 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Closure;
-use Generator;
 use Psr\Container\ContainerExceptionInterface;
-use ReflectionAttribute;
 use ReflectionClass;
-use Temkaa\SimpleContainer\Container;
-use Temkaa\SimpleContainer\Definition\Definition;
+use SplFileInfo;
+use Symfony\Component\Yaml\Yaml;
+use Temkaa\SimpleContainer\Container\Builder;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
-use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
-use function sprintf;
+use Temkaa\SimpleContainer\Model\Definition;
+use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
-// TODO: FUTURE
-// TODO: add tagged iterator by tag test to concrete collection class collection from config
-// TODO: add tagged iterator by tag test to concrete collection class collection from attribute
-// TODO: add config decorator test (only by interface?)
-// TODO: add attribute decorator test (only by interface?)
-// TODO: add singleton/not singleton test
-// TODO: add caching
-
-// TODO: NOW
-// TODO: add tests on binding string/env vars with attributes
-final class ContainerTest extends AbstractUnitTestCase
+final class ContainerTest extends AbstractContainerTest
 {
-    public static function getDataForCompilesWithUninstantiableEntryTest(): iterable
-    {
-        yield ['TestClass'.self::getNextGeneratedClassNumber(), 'abstract class', [], 'public'];
-
-        yield ['TestClass'.self::getNextGeneratedClassNumber(), 'final class', [], 'private'];
-
-        yield ['TestClass'.self::getNextGeneratedClassNumber(), 'final class', [], 'protected'];
-
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            'final class',
-            [self::ATTRIBUTE_NON_AUTOWIRABLE_SIGNATURE],
-            'public',
-        ];
-    }
-
-    public static function getDataForDoesNotCompileDueToInternalClassDependencyTest(): iterable
-    {
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            'public readonly \Closure $generator',
-            Closure::class,
-        ];
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            'public readonly \Generator $generator',
-            Generator::class,
-        ];
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            'public readonly \ReflectionClass $r',
-            ReflectionClass::class,
-        ];
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            'public readonly \ReflectionAttribute $r',
-            ReflectionAttribute::class,
-        ];
-    }
-
-    public static function getDataForDoesNotCompileDueToNotDeterminedArgumentTypeTest(): iterable
-    {
-        yield [
-            $className = 'TestClass'.self::getNextGeneratedClassNumber(),
-            'public readonly array|string $arg',
-            sprintf(
-                'Cannot resolve argument "arg" with union type "array|string" in class "%s".',
-                self::GENERATED_CLASS_NAMESPACE.$className,
-            ),
-        ];
-
-        yield [
-            $className = 'TestClass'.self::getNextGeneratedClassNumber(),
-            'public readonly array|object $arg',
-            sprintf(
-                'Cannot resolve argument "arg" with union type "object|array" in class "%s".',
-                self::GENERATED_CLASS_NAMESPACE.$className,
-            ),
-        ];
-
-        yield [
-            $className = 'TestClass'.self::getNextGeneratedClassNumber(),
-            'public readonly \Generator&\Iterator $arg',
-            sprintf(
-                'Cannot resolve argument "arg" with intersection type "Generator&Iterator" in class "%s".',
-                self::GENERATED_CLASS_NAMESPACE.$className,
-            ),
-        ];
-
-        yield [
-            $className = 'TestClass'.self::getNextGeneratedClassNumber(),
-            'public readonly (\Generator&\Iterator)|array $arg',
-            sprintf(
-                'Cannot resolve argument "arg" with union type "(Generator&Iterator)|array" in class "%s".',
-                self::GENERATED_CLASS_NAMESPACE.$className,
-            ),
-        ];
-    }
-
-    public static function getDataForDoesNotCompileDueToVariableBindingErrorsTest(): iterable
-    {
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            ['public readonly object $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'object'),
-        ];
-
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            ['public readonly array $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'array'),
-        ];
-
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            ['public readonly iterable $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'iterable'),
-        ];
-
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            ['public readonly int $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'int'),
-        ];
-
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            ['public readonly float $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'float'),
-        ];
-    }
-
-    public static function getDataForDoesNotCompileWithUninstantiableEntryTest(): iterable
-    {
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            $invalidClassName = 'TestClass'.self::getNextGeneratedClassNumber(),
-            'abstract class',
-            'public',
-            [sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName)],
-        ];
-
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            $invalidClassName = 'TestClass'.self::getNextGeneratedClassNumber(),
-            'final class',
-            'protected',
-            [sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName)],
-        ];
-
-        yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            $invalidClassName = 'TestClass'.self::getNextGeneratedClassNumber(),
-            'final class',
-            'private',
-            [sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName)],
-        ];
-    }
-
     public function testCompileClassWithBuiltInTypedArgument(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $files = [self::GENERATED_CLASS_STUB_PATH."$classPath.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
             className: $classPath,
             hasConstructor: true,
             constructorArguments: ['public readonly int $age,'],
         );
+
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$classPath.php"];
+        $configFile = $this->generateConfig(services: ['include' => $files]);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UnresolvableArgumentException::class);
@@ -201,18 +44,13 @@ final class ContainerTest extends AbstractUnitTestCase
             ),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     public function testCompileClassWithCircularDependencies(): void
     {
         $circularClassName1 = 'TestClass'.self::getNextGeneratedClassNumber();
         $circularClassName2 = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $files = [self::GENERATED_CLASS_STUB_PATH."$circularClassName1.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$circularClassName1.php",
             className: $circularClassName1,
@@ -221,7 +59,6 @@ final class ContainerTest extends AbstractUnitTestCase
                 sprintf('public readonly %s $arg', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$circularClassName2),
             ],
         );
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$circularClassName2.php",
             className: $circularClassName2,
@@ -230,6 +67,9 @@ final class ContainerTest extends AbstractUnitTestCase
                 sprintf('public readonly %s $arg', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$circularClassName1),
             ],
         );
+
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$circularClassName1.php"];
+        $configFile = $this->generateConfig(services: ['include' => $files]);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(CircularReferenceException::class);
@@ -241,23 +81,21 @@ final class ContainerTest extends AbstractUnitTestCase
             ),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     public function testCompileClassWithNonTypedArgument(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $files = [self::GENERATED_CLASS_STUB_PATH."$classPath.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
             className: $classPath,
             hasConstructor: true,
             constructorArguments: ['$arg'],
         );
+
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$classPath.php"];
+        $configFile = $this->generateConfig(services: ['include' => $files]);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UninstantiableEntryException::class);
@@ -269,18 +107,13 @@ final class ContainerTest extends AbstractUnitTestCase
             ),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     public function testCompileClassWithTypeHintedEnum(): void
     {
         $collectorClassName = 'TestClass'.self::getNextGeneratedClassNumber();
         $enumClassName = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $files = [self::GENERATED_CLASS_STUB_PATH."$collectorClassName.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php",
             className: $collectorClassName,
@@ -289,36 +122,35 @@ final class ContainerTest extends AbstractUnitTestCase
                 sprintf('public readonly %s $arg', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$enumClassName),
             ],
         );
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$enumClassName.php",
             className: $enumClassName,
             classNamePrefix: 'enum',
         );
 
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php"];
+        $configFile = $this->generateConfig(services: ['include' => $files]);
+
         $this->expectException(UninstantiableEntryException::class);
         $this->expectExceptionMessage(
             sprintf('Cannot instantiate entry with id "%s".', self::GENERATED_CLASS_NAMESPACE.$enumClassName),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     public function testCompileClassWithoutDependencies(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $files = [self::GENERATED_CLASS_STUB_PATH."$classPath.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
             className: $classPath,
         );
 
-        $container = new Container($config);
-        $container->compile();
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$classPath.php"];
+        $configFile = $this->generateConfig(services: ['include' => $files]);
+
+        $container = (new Builder())->add($configFile)->compile();
 
         $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
 
@@ -329,9 +161,6 @@ final class ContainerTest extends AbstractUnitTestCase
     public function testCompileWithCastedBoundVariablesFromAttributes(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $config = $this->getConfig(services: ['include' => [self::GENERATED_CLASS_STUB_PATH.$classPath.'.php']]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
             className: $classPath,
@@ -356,18 +185,18 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
-        $env = [
-            'ENV_CASTABLE_STRING_VAR' => '10.1',
-            'ENV_FLOAT_VAR'           => '10.1',
-            'ENV_BOOL_VAL'            => 'false',
-            'ENV_INT_VAL'             => '3',
-            'ENV_STRING_VAL'          => 'string',
-        ];
+        $configFile = $this->generateConfig(
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
+        );
 
-        $container = new Container($config, $env);
-        $container->compile();
+        putenv('ENV_CASTABLE_STRING_VAR=10.1');
+        putenv('ENV_FLOAT_VAR=10.1');
+        putenv('ENV_BOOL_VAL=false');
+        putenv('ENV_INT_VAL=3');
+        putenv('ENV_STRING_VAL=string');
 
-        self::assertIsObject($container);
+        $container = (new Builder())->add($configFile)->compile();
+
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
 
         self::assertIsObject($class);
@@ -385,26 +214,8 @@ final class ContainerTest extends AbstractUnitTestCase
 
     public function testCompileWithCastedBoundVariablesFromConfig(): void
     {
+        // TODO: rename methods names if they are incorrect
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $config = $this->getConfig(
-            services: ['include' => [self::GENERATED_CLASS_STUB_PATH.$classPath.'.php']],
-            classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$classPath => [
-                    'bind' => [
-                        '$varOne'   => 'env(ENV_CASTABLE_STRING_VAR)',
-                        'varTwo'    => 'env(ENV_CASTABLE_STRING_VAR)',
-                        '$varThree' => 'env(ENV_CASTABLE_STRING_VAR)',
-                        'varFour'   => 'env(ENV_CASTABLE_STRING_VAR)',
-                        '$varFive'  => 'env(ENV_FLOAT_VAR)',
-                        'varSix'    => 'env(ENV_BOOL_VAL)',
-                        '$varSeven' => 'env(ENV_INT_VAL)',
-                        'varEight'  => 'env(ENV_STRING_VAL)',
-                    ],
-                ],
-            ],
-        );
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
             className: $classPath,
@@ -421,18 +232,32 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
-        $env = [
-            'ENV_CASTABLE_STRING_VAR' => '10.1',
-            'ENV_FLOAT_VAR'           => '10.1',
-            'ENV_BOOL_VAL'            => 'false',
-            'ENV_INT_VAL'             => '3',
-            'ENV_STRING_VAL'          => 'string',
-        ];
+        $configFile = $this->generateConfig(
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
+            classBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$classPath => [
+                    'bind' => [
+                        '$varOne'   => 'env(ENV_CASTABLE_STRING_VAR)',
+                        'varTwo'    => 'env(ENV_CASTABLE_STRING_VAR)',
+                        '$varThree' => 'env(ENV_CASTABLE_STRING_VAR)',
+                        'varFour'   => 'env(ENV_CASTABLE_STRING_VAR)',
+                        '$varFive'  => 'env(ENV_FLOAT_VAR)',
+                        'varSix'    => 'env(ENV_BOOL_VAL)',
+                        '$varSeven' => 'env(ENV_INT_VAL)',
+                        'varEight'  => 'env(ENV_STRING_VAL)',
+                    ],
+                ],
+            ],
+        );
 
-        $container = new Container($config, $env);
-        $container->compile();
+        putenv('ENV_CASTABLE_STRING_VAR=10.1');
+        putenv('ENV_FLOAT_VAR=10.1');
+        putenv('ENV_BOOL_VAL=false');
+        putenv('ENV_INT_VAL=3');
+        putenv('ENV_STRING_VAL=string');
 
-        self::assertIsObject($container);
+        $container = (new Builder())->add($configFile)->compile();
+
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
 
         self::assertIsObject($class);
@@ -450,22 +275,20 @@ final class ContainerTest extends AbstractUnitTestCase
 
     public function testCompileWithNonExistentClass(): void
     {
-        $classPath = self::GENERATED_CLASS_STUB_PATH.'NonExistentClass.php';
-        $config = $this->getConfig(services: ['include' => [$classPath]]);
+        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.'NonExistentClass.php';
+        $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
+
+        $builder = new Builder();
 
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "'.$classPath.'" does not exist.');
 
-        $container = new Container($config);
-        $container->compile();
+        $builder->add($configFile);
     }
 
     public function testCompilesWithCastingStringsFromAttribute(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $config = $this->getConfig(services: ['include' => [self::GENERATED_CLASS_STUB_PATH.$classPath.'.php']]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
             className: $classPath,
@@ -490,10 +313,16 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
-        $container = new Container($config, env: []);
-        $container->compile();
+        $configFile = $this->generateConfig(
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
+        );
 
-        self::assertIsObject($container);
+        // TODO: make same constructions as one liners
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
+
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
 
         self::assertIsObject($class);
@@ -512,25 +341,6 @@ final class ContainerTest extends AbstractUnitTestCase
     public function testCompilesWithCastingStringsFromConfig(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        $config = $this->getConfig(
-            services: ['include' => [self::GENERATED_CLASS_STUB_PATH.$classPath.'.php']],
-            classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$classPath => [
-                    'bind' => [
-                        '$varOne'   => '10.1',
-                        'varTwo'    => '10.1',
-                        '$varThree' => '10.1',
-                        'varFour'   => '10.1',
-                        '$varFive'  => '10.1',
-                        'varSix'    => 'false',
-                        '$varSeven' => '3',
-                        'varEight'  => 'string',
-                    ],
-                ],
-            ],
-        );
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
             className: $classPath,
@@ -547,10 +357,29 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
-        $container = new Container($config, env: []);
-        $container->compile();
+        $configFile = $this->generateConfig(
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
+            classBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$classPath => [
+                    'bind' => [
+                        '$varOne'   => '10.1',
+                        'varTwo'    => '10.1',
+                        '$varThree' => '10.1',
+                        'varFour'   => '10.1',
+                        '$varFive'  => '10.1',
+                        'varSix'    => 'false',
+                        '$varSeven' => '3',
+                        'varEight'  => 'string',
+                    ],
+                ],
+            ],
+        );
 
-        self::assertIsObject($container);
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
+
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
 
         self::assertIsObject($class);
@@ -578,12 +407,15 @@ final class ContainerTest extends AbstractUnitTestCase
                 sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'empty2'),
             ],
         );
-        $config = $this->getConfig(services: ['include' => [self::GENERATED_CLASS_STUB_PATH.$classWithAliases.'.php']]);
 
-        $container = new Container($config);
-        $container->compile();
+        $configFile = $this->generateConfig(
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classWithAliases.'.php']],
+        );
 
-        self::assertIsObject($container);
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $class = $container->get($classWithAliasesNamespace);
 
@@ -625,17 +457,18 @@ final class ContainerTest extends AbstractUnitTestCase
         );
 
         $files = [
-            self::GENERATED_CLASS_STUB_PATH.$collectorName.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className1.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className2.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
         ];
-        $config = $this->getConfig(services: ['include' => $files]);
 
-        $container = new Container($config);
-        $container->compile();
+        $configFile = $this->generateConfig(services: ['include' => $files]);
 
-        $this->assertIsObject($container);
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $this->assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
         $this->assertInstanceOf(
@@ -671,15 +504,9 @@ final class ContainerTest extends AbstractUnitTestCase
         $interfaceName = 'Interface'.self::getNextGeneratedClassNumber();
 
         $classPaths = [
-            self::GENERATED_CLASS_STUB_PATH.$className.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName.'.php',
         ];
-        $config = $this->getConfig(
-            services: ['include' => $classPaths],
-            interfaceBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$className,
-            ],
-        );
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
@@ -693,10 +520,17 @@ final class ContainerTest extends AbstractUnitTestCase
             classNamePrefix: 'interface',
         );
 
-        $container = new Container($config);
-        $container->compile();
+        $configFile = $this->generateConfig(
+            services: ['include' => $classPaths],
+            interfaceBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$className,
+            ],
+        );
 
-        self::assertIsObject($container);
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
 
@@ -708,6 +542,7 @@ final class ContainerTest extends AbstractUnitTestCase
 
     public function testCompilesWithInterfaceTagInheritance(): void
     {
+        // TODO: move to buuilder test?
         $interfaceName1 = 'TestClass'.self::getNextGeneratedClassNumber();
         $interfaceAbsoluteNamespace1 = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1;
         self::generateClass(
@@ -742,18 +577,26 @@ final class ContainerTest extends AbstractUnitTestCase
         );
 
         $classes = [
-            self::GENERATED_CLASS_STUB_PATH.$classImplementsName.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$interfaceName3.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$interfaceName1.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$interfaceName2.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementsName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName3.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName1.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName2.'.php',
         ];
-        $config = $this->getConfig(services: ['include' => $classes]);
 
-        $container = new Container($config);
-        $container->compile();
+        $configFile = $this->generateConfig(services: ['include' => $classes]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $r = new ReflectionClass($container);
-        $definitions = $r->getProperty('definitions')->getValue($container);
+
+        /** @var DefinitionRepository $definitionRepository */
+        $definitionRepository = $r->getProperty('definitionRepository')->getValue($container);
+
+        $r = new ReflectionClass($definitionRepository);
+        $definitions = $r->getProperty('definitions')->getValue($definitionRepository);
 
         /** @var Definition $classDefinition */
         $classDefinition = $definitions[self::GENERATED_CLASS_NAMESPACE.$classImplementsName];
@@ -772,11 +615,12 @@ final class ContainerTest extends AbstractUnitTestCase
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromAttribute(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_STUB_PATH."$className.php"];
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
-        $config = $this->getConfig(services: ['include' => $files]);
-
-        $env = ['ENV_VAR_1' => 'test_one', 'ENV_VAR_2' => '10.1', 'ENV_VAR_3' => 'test-three', 'ENV_VAR_4' => 'true'];
+        putenv('ENV_VAR_1=test_one');
+        putenv('ENV_VAR_2=10.1');
+        putenv('ENV_VAR_3=test-three');
+        putenv('ENV_VAR_4=true');
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
@@ -791,8 +635,12 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
-        $container = new Container($config, $env);
-        $container->compile();
+        $configFile = $this->generateConfig(services: ['include' => $files]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -804,18 +652,12 @@ final class ContainerTest extends AbstractUnitTestCase
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromConfig(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_STUB_PATH."$className.php"];
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
-        $config = $this->getConfig(
-            services: ['include' => $files],
-            classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => [
-                    'bind' => ['$arg' => 'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)'],
-                ],
-            ],
-        );
-
-        $env = ['ENV_VAR_1' => 'test_one', 'ENV_VAR_2' => '10.1', 'ENV_VAR_3' => 'test-three', 'ENV_VAR_4' => 'true'];
+        putenv('ENV_VAR_1=test_one');
+        putenv('ENV_VAR_2=10.1');
+        putenv('ENV_VAR_3=test-three');
+        putenv('ENV_VAR_4=true');
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
@@ -826,8 +668,19 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
-        $container = new Container($config, $env);
-        $container->compile();
+        $configFile = $this->generateConfig(
+            services: ['include' => $files],
+            classBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$className => [
+                    'bind' => ['$arg' => 'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)'],
+                ],
+            ],
+        );
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $fullClassNameSpace = self::GENERATED_CLASS_NAMESPACE.$className;
         $class = $container->get($fullClassNameSpace);
@@ -871,15 +724,18 @@ final class ContainerTest extends AbstractUnitTestCase
         );
 
         $classes = [
-            self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$classImplementing1.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$classImplementing2.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementing1.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementing2.'.php',
         ];
-        $config = $this->getConfig(services: ['include' => $classes]);
 
-        $container = new Container($config);
-        $container->compile();
+        $configFile = $this->generateConfig(services: ['include' => $classes]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $this->assertIsObject($container);
 
@@ -914,13 +770,16 @@ final class ContainerTest extends AbstractUnitTestCase
         );
 
         $classes = [
-            self::GENERATED_CLASS_STUB_PATH.$collectorName.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$taggedClassName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$taggedClassName.'.php',
         ];
-        $config = $this->getConfig(services: ['include' => $classes]);
 
-        $container = new Container($config);
-        $container->compile();
+        $configFile = $this->generateConfig(services: ['include' => $classes]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $this->assertIsObject($container);
 
@@ -960,10 +819,11 @@ final class ContainerTest extends AbstractUnitTestCase
         );
 
         $classes = [
-            self::GENERATED_CLASS_STUB_PATH.$collectorName.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$taggedClassName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$taggedClassName.'.php',
         ];
-        $config = $this->getConfig(
+
+        $configFile = $this->generateConfig(
             services: ['include' => $classes],
             classBindings: [
                 self::GENERATED_CLASS_NAMESPACE.$collectorName   => [
@@ -978,8 +838,10 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
-        $container = new Container($config);
-        $container->compile();
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $this->assertIsObject($container);
 
@@ -1017,11 +879,10 @@ final class ContainerTest extends AbstractUnitTestCase
             hasConstructor: true,
         );
 
-        $classPath = self::GENERATED_CLASS_STUB_PATH.$className.'.php';
-        $config = $this->getConfig(services: ['include' => [$classPath]]);
+        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php';
+        $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
 
-        $container = new Container($config);
-        $container->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         self::assertIsObject($container);
         self::assertFalse($container->has($className));
@@ -1057,13 +918,14 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
-        $files = [
-            self::GENERATED_CLASS_STUB_PATH.$collectorName.'.php',
-        ];
-        $config = $this->getConfig(services: ['include' => $files]);
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php'];
 
-        $container = new Container($config);
-        $container->compile();
+        $configFile = $this->generateConfig(services: ['include' => $files]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $this->assertIsObject($container);
 
@@ -1073,6 +935,7 @@ final class ContainerTest extends AbstractUnitTestCase
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
         );
 
+        // TODO: move everywhere $this to self
         $this->assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className2));
         $this->assertInstanceOf(
             self::GENERATED_CLASS_NAMESPACE.$className2,
@@ -1098,8 +961,7 @@ final class ContainerTest extends AbstractUnitTestCase
     public function testCompliesWithNullableVariable(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_STUB_PATH."$className.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
@@ -1108,11 +970,14 @@ final class ContainerTest extends AbstractUnitTestCase
             constructorArguments: ['public readonly ?string $arg'],
         );
 
-        $container = new Container($config);
-        $container->compile();
+        $configFile = $this->generateConfig(services: ['include' => $files]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
+        $container = $builder->compile();
 
         $classFullNamespace = self::GENERATED_CLASS_NAMESPACE.$className;
-        self::assertIsObject($container);
 
         $class = $container->get($classFullNamespace);
         self::assertInstanceOf($classFullNamespace, $class);
@@ -1122,8 +987,7 @@ final class ContainerTest extends AbstractUnitTestCase
     public function testDoesNotCompileDueToCircularExceptionByTaggedBinding(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_STUB_PATH."$className.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
@@ -1136,6 +1000,11 @@ final class ContainerTest extends AbstractUnitTestCase
             ],
         );
 
+        $configFile = $this->generateConfig(services: ['include' => $files]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(CircularReferenceException::class);
         $this->expectExceptionMessage(
@@ -1146,8 +1015,7 @@ final class ContainerTest extends AbstractUnitTestCase
             ),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        $builder->compile();
     }
 
     /**
@@ -1158,9 +1026,6 @@ final class ContainerTest extends AbstractUnitTestCase
         string $constructorArgument,
         string $argumentClassName,
     ): void {
-        $files = [self::GENERATED_CLASS_STUB_PATH."$className.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
             className: $className,
@@ -1168,18 +1033,19 @@ final class ContainerTest extends AbstractUnitTestCase
             constructorArguments: [$constructorArgument],
         );
 
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $configFile = $this->generateConfig(services: ['include' => $files]);
+
         $this->expectException(UninstantiableEntryException::class);
         $this->expectExceptionMessage(sprintf('Cannot resolve internal entry "%s".', $argumentClassName));
 
-        $container = new Container($config);
-        $container->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     public function testDoesNotCompileDueToNonExistentBoundVariable(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_STUB_PATH."$className.php"];
-        $config = $this->getConfig(services: ['include' => $files]);
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
@@ -1189,6 +1055,11 @@ final class ContainerTest extends AbstractUnitTestCase
                 'public readonly int $age,',
             ],
         );
+
+        $configFile = $this->generateConfig(services: ['include' => $files]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
 
         $this->expectException(UnresolvableArgumentException::class);
         $this->expectExceptionMessage(
@@ -1200,8 +1071,7 @@ final class ContainerTest extends AbstractUnitTestCase
             ),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        $builder->compile();
     }
 
     /**
@@ -1212,9 +1082,7 @@ final class ContainerTest extends AbstractUnitTestCase
         string $constructorArgument,
         string $exceptionMessage,
     ): void {
-        $classPath = self::GENERATED_CLASS_STUB_PATH.$className.'.php';
-        $config = $this->getConfig(services: ['include' => [$classPath]]);
-
+        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php';
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
             className: $className,
@@ -1222,12 +1090,13 @@ final class ContainerTest extends AbstractUnitTestCase
             constructorArguments: [$constructorArgument],
         );
 
+        $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
+
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UnresolvableArgumentException::class);
         $this->expectExceptionMessage($exceptionMessage);
 
-        $container = new Container($config);
-        $container->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     /**
@@ -1239,15 +1108,6 @@ final class ContainerTest extends AbstractUnitTestCase
         string $exception,
         string $exceptionMessage,
     ): void {
-        $files = [self::GENERATED_CLASS_STUB_PATH."$className.php"];
-        $config = $this->getConfig(
-            services: ['include' => $files],
-            classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => ['bind' => ['$arg' => 'env(ENV_STRING_VAR)']],
-            ],
-        );
-        $env = ['ENV_STRING_VAR' => 'string'];
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
             className: $className,
@@ -1255,11 +1115,19 @@ final class ContainerTest extends AbstractUnitTestCase
             constructorArguments: $constructorArguments,
         );
 
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $configFile = $this->generateConfig(
+            services: ['include' => $files],
+            classBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$className => ['bind' => ['$arg' => 'env(ENV_STRING_VAR)']],
+            ],
+        );
+        putenv('ENV_STRING_VAR=string');
+
         $this->expectException($exception);
         $this->expectExceptionMessage($exceptionMessage);
 
-        $container = new Container($config, $env);
-        $container->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     public function testDoesNotCompileWithExcludedDependency(): void
@@ -1293,16 +1161,19 @@ final class ContainerTest extends AbstractUnitTestCase
         );
 
         $includeFiles = [
-            self::GENERATED_CLASS_STUB_PATH.$collectorName.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
-            self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className1.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className2.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
         ];
         $excludeFiles = [
-            self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
         ];
 
-        $config = $this->getConfig(services: ['include' => $includeFiles, 'exclude' => $excludeFiles]);
+        $configFile = $this->generateConfig(services: ['include' => $includeFiles, 'exclude' => $excludeFiles]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
 
         $this->expectException(NonAutowirableClassException::class);
         $this->expectExceptionMessage(
@@ -1312,8 +1183,7 @@ final class ContainerTest extends AbstractUnitTestCase
             ),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        $builder->compile();
     }
 
     public function testDoesNotCompileWithNonAutowirableAttributeClass(): void
@@ -1321,8 +1191,7 @@ final class ContainerTest extends AbstractUnitTestCase
         $collectorClassName = 'TestClass'.self::getNextGeneratedClassNumber();
         $invalidClassName = 'TestClass'.self::getNextGeneratedClassNumber();
 
-        $classPath = self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php';
-        $config = $this->getConfig(services: ['include' => [$classPath]]);
+        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php';
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php",
@@ -1343,6 +1212,11 @@ final class ContainerTest extends AbstractUnitTestCase
             hasConstructor: true,
         );
 
+        $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
+
+        $builder = new Builder();
+        $builder->add($configFile);
+
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(NonAutowirableClassException::class);
         $this->expectExceptionMessage(
@@ -1352,8 +1226,7 @@ final class ContainerTest extends AbstractUnitTestCase
             ),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        $builder->compile();
     }
 
     /**
@@ -1366,16 +1239,12 @@ final class ContainerTest extends AbstractUnitTestCase
         string $constructorVisibility,
         array $collectorConstructorArguments,
     ): void {
-        $classPath = self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php';
-        $config = $this->getConfig(services: ['include' => [$classPath]]);
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php",
             className: $collectorClassName,
             hasConstructor: true,
             constructorArguments: $collectorConstructorArguments,
         );
-
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$invalidClassName.php",
             className: $invalidClassName,
@@ -1385,31 +1254,36 @@ final class ContainerTest extends AbstractUnitTestCase
             constructorArguments: $collectorConstructorArguments,
         );
 
+        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php';
+        $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
+
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UninstantiableEntryException::class);
         $this->expectExceptionMessage(
             sprintf('Cannot instantiate entry with id "%s".', self::GENERATED_CLASS_NAMESPACE.$invalidClassName),
         );
 
-        $container = new Container($config);
-        $container->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     public function testWithoutCompiling(): void
     {
-        $container = new Container(config: ['config_dir' => __DIR__]);
+        $builder = new Builder();
+
+        $container = $builder->compile();
 
         $this->expectException(EntryNotFoundException::class);
         $this->expectExceptionMessage(sprintf('Could not find entry "%s".', 'asd'));
+
         $container->get('asd');
     }
 
-    private function getConfig(
+    private function generateConfig(
         array $services = [],
         array $interfaceBindings = [],
         array $classBindings = [],
-    ): array {
-        $config = ['config_dir' => __DIR__];
+    ): SplFileInfo {
+        $config = [];
 
         if ($services) {
             $config['services'] = $services;
@@ -1423,6 +1297,12 @@ final class ContainerTest extends AbstractUnitTestCase
             $config['class_bindings'] = $classBindings;
         }
 
-        return $config;
+        $configPath = realpath(__DIR__.self::GENERATED_CONFIG_STUB_PATH).'/config.yaml';
+        file_put_contents(
+            $configPath,
+            Yaml::dump($config),
+        );
+
+        return new SplFileInfo($configPath);
     }
 }

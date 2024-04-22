@@ -18,7 +18,6 @@ trait ClassStubGeneratorTrait
     {
     }
     CLASS;
-
     private const CLASS_STUB_WITH_CONSTRUCTOR = <<<CLASS
     <?php
     

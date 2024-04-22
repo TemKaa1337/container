@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer;
+namespace Temkaa\SimpleContainer\Util;
 
 use Psr\Container\ContainerExceptionInterface;
 use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
@@ -13,9 +13,10 @@ final class TypeCaster
 
     /**
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
      * @throws ContainerExceptionInterface
      */
-    public function cast(mixed $value, string $castTo): mixed
+    public static function cast(mixed $value, string $castTo): mixed
     {
         if (!in_array($castTo, self::SUPPORTED_TYPES, strict: true)) {
             throw new UnsupportedCastTypeException(
@@ -35,13 +36,6 @@ final class TypeCaster
 
                 return (bool) $value;
             case 'int':
-                if (!is_numeric($value)) {
-                    throw new UnsupportedCastTypeException(
-                        sprintf('Cannot cast value of type "%s" to "%s".', gettype($value), $castTo),
-                    );
-                }
-
-                return (int) $value;
             case 'float':
                 if (!is_numeric($value)) {
                     throw new UnsupportedCastTypeException(
@@ -49,7 +43,7 @@ final class TypeCaster
                     );
                 }
 
-                return (float) $value;
+                return $castTo === 'int' ? (int) $value : (float) $value;
             case 'string':
                 return (string) $value;
             case 'mixed':

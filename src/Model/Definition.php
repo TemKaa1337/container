@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Definition;
+namespace Temkaa\SimpleContainer\Model;
 
 final class Definition
 {
@@ -13,14 +13,17 @@ final class Definition
 
     private array $arguments = [];
 
+    /**
+     * @var class-string $id
+     */
     private string $id;
 
     /**
-     * @var string[]
+     * @var class-string[]
      */
     private array $implements = [];
 
-    private ?object $instance = null;
+    private object $instance;
 
     /**
      * @var string[]
@@ -56,10 +59,11 @@ final class Definition
     }
 
     /**
-     * @param string[] $interfaces
+     * @param class-string[] $interfaces
      */
     public function addImplements(array $interfaces): self
     {
+        /** @var class-string[] $interfaces */
         $interfaces = [...$this->getImplements(), ...$interfaces];
 
         $this->setImplements(array_values(array_unique($interfaces)));
@@ -102,11 +106,17 @@ final class Definition
         return $this->arguments;
     }
 
+    /**
+     * @return class-string
+     */
     public function getId(): string
     {
         return $this->id;
     }
 
+    /**
+     * @param class-string $id
+     */
     public function setId(string $id): self
     {
         $this->id = $id;
@@ -123,7 +133,7 @@ final class Definition
     }
 
     /**
-     * @param string[] $interfaces
+     * @param class-string[] $interfaces
      */
     public function setImplements(array $interfaces): self
     {
@@ -132,7 +142,7 @@ final class Definition
         return $this;
     }
 
-    public function getInstance(): ?object
+    public function getInstance(): object
     {
         return $this->instance;
     }
@@ -160,5 +170,11 @@ final class Definition
         $this->tags = $tags;
 
         return $this;
+    }
+
+    public function hasInstance(): bool
+    {
+        /** @psalm-suppress RedundantPropertyInitializationCheck */
+        return boolval($this->instance ?? null);
     }
 }

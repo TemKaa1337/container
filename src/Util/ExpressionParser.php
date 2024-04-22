@@ -2,15 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer;
+namespace Temkaa\SimpleContainer\Util;
 
-final readonly class ExpressionParser
+final class ExpressionParser
 {
-    public function __construct(private array $env)
-    {
-    }
-
-    public function parse(string $expression): string
+    public static function parse(string $expression): string
     {
         $matches = [];
         preg_match_all('#env\((.*?)\)#', $expression, matches: $matches);
@@ -20,7 +16,7 @@ final readonly class ExpressionParser
             foreach ($envVarsBindings as $binding) {
                 $expression = str_replace(
                     sprintf('env(%s)', $binding),
-                    $this->env[$binding],
+                    Env::get($binding),
                     $expression,
                 );
             }

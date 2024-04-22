@@ -6,7 +6,8 @@
     "autoload": {
         "psr-4": {
             "Temkaa\\SimpleContainer\\": "src/",
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Asd\\": "example/"
         }
     },
     "authors": [
@@ -22,6 +23,7 @@
     },
     "require": {
         "php": ">=8.2",
-        "psr/container": "^2.0"
+        "psr/container": "^2.0",
+        "symfony/yaml": "^7.0"
     }
 }

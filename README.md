@@ -134,18 +134,21 @@ class Example
 - if you have type hinted some class in class arguments, which is neither in `include` and `exclude` sections, it will also be autowired.
 
 ##### Here are some TODOs:
-- refactor config to php objects code
 - fix psalm errors
 - fix psr-2 to psr-12 if statements
 - Refactoring src + refactoring tests
 - Add env var resolving circular detection
-- Allow tagged iterator to be casted to specific class collection
 - Add Decorator (both from attribute and config)
 - Add singleton option (both from attribute and config)
-- Add reflection caching
-- remove array $env and replace with env getting everywhere
 - env var processors (Enum, ...)
-
+- add container compiling into cache
+- add global bindigs to config
 - automatic release tag drafter
 - automated git actions tests passing
+- refactor
+- update readme
+
+##### Here are some improvements which are gonna be implemented later:
+- reflection caching
+- container compiling into cache (+ clearing that cache)
 
