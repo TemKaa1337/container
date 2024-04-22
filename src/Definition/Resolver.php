@@ -66,8 +66,8 @@ final class Resolver
             return $this->definitions[$argument->id]->getInstance();
         }
 
-        /** @psalm-suppress NoInterfaceProperties */
         /** @var Definition[] $taggedDefinitions */
+        /** @psalm-suppress NoInterfaceProperties */
         $taggedDefinitions = array_values(
             array_filter(
                 $this->definitions,

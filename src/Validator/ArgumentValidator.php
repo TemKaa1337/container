@@ -8,6 +8,7 @@ use Psr\Container\ContainerExceptionInterface;
 use ReflectionIntersectionType;
 use ReflectionNamedType;
 use ReflectionParameter;
+use ReflectionType;
 use ReflectionUnionType;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
@@ -19,7 +20,11 @@ final readonly class ArgumentValidator
      */
     public function validate(ReflectionParameter $argument, string $id): void
     {
-        if (!$argumentType = $argument->getType()) {
+        // needed in order to suppress psalm undefined method messages
+        /** @var ReflectionType&ReflectionNamedType $argumentType */
+        $argumentType = $argument->getType();
+
+        if (!$argumentType) {
             throw new UninstantiableEntryException(
                 sprintf(
                     'Cannot instantiate entry with non-typed parameters "%s" -> "%s".',
