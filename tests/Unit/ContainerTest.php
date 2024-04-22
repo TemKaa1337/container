@@ -470,20 +470,20 @@ final class ContainerTest extends AbstractContainerTest
 
         $container = $builder->compile();
 
-        $this->assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
-        $this->assertInstanceOf(
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
+        self::assertInstanceOf(
             self::GENERATED_CLASS_NAMESPACE.$className1,
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
         );
 
-        $this->assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className2));
-        $this->assertInstanceOf(
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className2));
+        self::assertInstanceOf(
             self::GENERATED_CLASS_NAMESPACE.$className2,
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
         );
 
-        $this->assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className3));
-        $this->assertInstanceOf(
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className3));
+        self::assertInstanceOf(
             self::GENERATED_CLASS_NAMESPACE.$className3,
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className3),
         );
@@ -737,7 +737,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $container = $builder->compile();
 
-        $this->assertIsObject($container);
+        self::assertIsObject($container);
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
 
@@ -781,7 +781,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $container = $builder->compile();
 
-        $this->assertIsObject($container);
+        self::assertIsObject($container);
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
 
@@ -843,7 +843,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $container = $builder->compile();
 
-        $this->assertIsObject($container);
+        self::assertIsObject($container);
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
 
@@ -927,23 +927,23 @@ final class ContainerTest extends AbstractContainerTest
 
         $container = $builder->compile();
 
-        $this->assertIsObject($container);
+        self::assertIsObject($container);
 
-        $this->assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
-        $this->assertInstanceOf(
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
+        self::assertInstanceOf(
             self::GENERATED_CLASS_NAMESPACE.$className1,
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
         );
 
         // TODO: move everywhere $this to self
-        $this->assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className2));
-        $this->assertInstanceOf(
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className2));
+        self::assertInstanceOf(
             self::GENERATED_CLASS_NAMESPACE.$className2,
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
         );
 
-        $this->assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className3));
-        $this->assertInstanceOf(
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className3));
+        self::assertInstanceOf(
             self::GENERATED_CLASS_NAMESPACE.$className3,
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className3),
         );

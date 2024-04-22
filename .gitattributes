@@ -1,9 +1,9 @@
 /.idea export-ignore
 /tests export-ignore
+/.github export-ignore
 /.gitignore export-ignore
 /.gitattributes export-ignore
 /CODEOWNERS export-ignore
 /phpmd.xml export-ignore
 /psalm.xml export-ignore
 /Makefile export-ignore
-/.github export-ignore

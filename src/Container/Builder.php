@@ -15,6 +15,9 @@ use Temkaa\SimpleContainer\Provider\Config\ValidatorProvider;
 use Temkaa\SimpleContainer\Validator\Config\FileInfoValidator;
 use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
 
+/**
+ * @psalm-api
+ */
 final class Builder
 {
     /**

@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Attribute;
 
 use Attribute;
 
+/**
+ * @psalm-api
+ */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class Tag
 {

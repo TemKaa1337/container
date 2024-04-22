@@ -85,18 +85,18 @@ final class BuilderTest extends AbstractBuilderTest
         $interfaceName = array_keys($configContent['interface_bindings'])[0];
         $interfaceImplementationName = array_values($configContent['interface_bindings'])[0];
 
-        $this->assertEquals(
+        self::assertEquals(
             $interfaceImplementationName,
             $config->getInterfaceImplementation($interfaceName),
         );
-        $this->assertEquals(
+        self::assertEquals(
             [
                 'string' => 'string',
                 'float'  => '3.14',
             ],
             $config->getClassBoundVariables($this->classWithBuiltInArgumentTypesNamespace),
         );
-        $this->assertEquals(
+        self::assertEquals(
             ['tag_1', 'tag_2'],
             $config->getClassTags($this->classWithBuiltInArgumentTypesNamespace),
         );
@@ -210,7 +210,7 @@ final class BuilderTest extends AbstractBuilderTest
         $config = $this->getConfigContent($builder);
 
         /** @psalm-suppress ArgumentTypeCoercion, UndefinedClass */
-        $this->assertEmpty($config->getClassBoundVariables('NonExistentClass'));
+        self::assertEmpty($config->getClassBoundVariables('NonExistentClass'));
     }
 
     public function testConfigHasNoTagsForClass(): void
@@ -223,7 +223,7 @@ final class BuilderTest extends AbstractBuilderTest
         $config = $this->getConfigContent($builder);
 
         /** @psalm-suppress ArgumentTypeCoercion, UndefinedClass */
-        $this->assertEmpty($config->getClassTags('NonExistentClass'));
+        self::assertEmpty($config->getClassTags('NonExistentClass'));
     }
 
     public function testConfigHasNonExistentEnvBoundVariables(): void

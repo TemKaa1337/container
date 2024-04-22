@@ -138,17 +138,18 @@ class Example
 - fix psr-2 to psr-12 if statements
 - Refactoring src + refactoring tests
 - Add env var resolving circular detection
-- Add Decorator (both from attribute and config)
-- Add singleton option (both from attribute and config)
 - env var processors (Enum, ...)
-- add container compiling into cache
-- add global bindigs to config
 - automatic release tag drafter
 - automated git actions tests passing
 - refactor
 - update readme
+- suppress psalm errors in tests
+- refactor/rename/add new exceptions which are self descriptive in each case
 
 ##### Here are some improvements which are gonna be implemented later:
 - reflection caching
 - container compiling into cache (+ clearing that cache)
+- add decorator (both from attributes and config)
+- add singleton (both from attributes and config)
+- add global var bindings in config (variable name and value which will be bound everywhere with same name)
 

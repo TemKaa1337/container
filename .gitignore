@@ -1,3 +1,4 @@
 /vendor
 /tests/Fixture/Stub/Class/*
 !/tests/Fixture/Stub/Class/.gitkeep
+.phpunit.result.cache

@@ -8,7 +8,6 @@ use Psr\Container\ContainerInterface;
 use Temkaa\SimpleContainer\Attribute\NonAutowirable;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
-// TODO: add parameter repository?
 #[NonAutowirable]
 final readonly class Container implements ContainerInterface
 {

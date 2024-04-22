@@ -48,10 +48,10 @@ final class TypeCaster
                 return (string) $value;
             case 'mixed':
                 return $value;
-            default:
-                throw new UnsupportedCastTypeException(
-                    sprintf('Cannot cast value of type "%s" to "%s".', gettype($value), $castTo),
-                );
         }
+
+        throw new UnsupportedCastTypeException(
+            sprintf('Cannot cast value of type "%s" to "%s".', gettype($value), $castTo),
+        );
     }
 }

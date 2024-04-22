@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Attribute;
 
 use Attribute;
 
+/**
+ * @psalm-api
+ */
 #[Attribute(Attribute::TARGET_CLASS)]
 final readonly class NonAutowirable
 {
