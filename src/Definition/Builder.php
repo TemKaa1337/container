@@ -49,9 +49,9 @@ final class Builder
      */
     private array $definitionsBuilding = [];
 
-    private Config $resolvingConfig;
-
     private ExpressionParser $expressionParser;
+
+    private Config $resolvingConfig;
 
     public function __construct(array $configs)
     {
@@ -283,7 +283,8 @@ final class Builder
         foreach ($interfaces as $interface) {
             $interfaceName = $interface->getName();
 
-            if ($this->resolvingConfig->hasImplementation($interfaceName)
+            if (
+                $this->resolvingConfig->hasImplementation($interfaceName)
                 && $this->resolvingConfig->getInterfaceImplementation($interfaceName) === $r->getName()
             ) {
                 $definition->addAlias($interfaceName);

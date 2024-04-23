@@ -14,27 +14,56 @@ use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Model\Container\Config;
+use Tests\Helper\Service\ClassBuilder;
+use Tests\Helper\Service\ClassGenerator;
 use Throwable;
 
 /**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  */
 final class BuilderTest extends AbstractBuilderTestCase
 {
     /**
-     * @var class-string $classWithBuiltInArgumentTypesNamespace
-     */
-    private readonly string $classWithBuiltInArgumentTypesNamespace;
-
-    /**
      * @noinspection PhpUnhandledExceptionInspection
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     public function testBuild(): void
     {
-        // TODO: optimize generation process do we need THAT amount of files?(
+        $className1 = ClassGenerator::getClassName();
+        $classFullNamespace1 = self::GENERATED_CLASS_NAMESPACE.$className1;
+        $className2 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        $interfaceAbsoluteNamespace = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName;
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([$interfaceAbsoluteNamespace]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
         [$configContent, $configFile] = $this->generateConfig(
+            services: [
+                'include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php"],
+                'exclude' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php"],
+            ],
+            interfaceBindings: [$interfaceAbsoluteNamespace => $classFullNamespace1],
             classBindings: [
-                $this->classWithBuiltInArgumentTypesNamespace => [
+                $classFullNamespace1 => [
                     'bind' => [
                         '$string' => 'string',
                         '$float'  => '3.14',
@@ -88,16 +117,20 @@ final class BuilderTest extends AbstractBuilderTestCase
             $interfaceImplementationName,
             $config->getInterfaceImplementation($interfaceName),
         );
+
+        /** @psalm-suppress ArgumentTypeCoercion */
         self::assertEquals(
             [
                 'string' => 'string',
                 'float'  => '3.14',
             ],
-            $config->getClassBoundVariables($this->classWithBuiltInArgumentTypesNamespace),
+            $config->getClassBoundVariables($classFullNamespace1),
         );
+
+        /** @psalm-suppress ArgumentTypeCoercion */
         self::assertEquals(
             ['tag_1', 'tag_2'],
-            $config->getClassTags($this->classWithBuiltInArgumentTypesNamespace),
+            $config->getClassTags($classFullNamespace1),
         );
     }
 
@@ -171,9 +204,19 @@ final class BuilderTest extends AbstractBuilderTestCase
 
     public function testConfigHasEnvBoundVariables(): void
     {
+        $className = ClassGenerator::getClassName();
+        $classFullNamespace = self::GENERATED_CLASS_NAMESPACE.$className;
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className),
+            )
+            ->generate();
+
         $configFile = $this->generateConfig(
             classBindings: [
-                $this->classWithBuiltInArgumentTypesNamespace => ['bind' => ['string' => 'env(APP_BOUND_VAR)']],
+                $classFullNamespace => ['bind' => ['string' => 'env(APP_BOUND_VAR)']],
             ],
         )[1];
 
@@ -181,11 +224,12 @@ final class BuilderTest extends AbstractBuilderTestCase
 
         $config = $this->getConfigContent($builder);
 
+        /** @psalm-suppress ArgumentTypeCoercion */
         self::assertEquals(
             [
                 'string' => 'bound_variable_value',
             ],
-            $config->getClassBoundVariables($this->classWithBuiltInArgumentTypesNamespace),
+            $config->getClassBoundVariables($classFullNamespace),
         );
     }
 
@@ -215,9 +259,18 @@ final class BuilderTest extends AbstractBuilderTestCase
 
     public function testConfigHasNonExistentEnvBoundVariables(): void
     {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className),
+            )
+            ->generate();
+
         $configFile = $this->generateConfig(
             classBindings: [
-                $this->classWithBuiltInArgumentTypesNamespace => ['bind' => ['string' => 'env(APP_DEBUG)']],
+                self::GENERATED_CLASS_NAMESPACE.$className => ['bind' => ['string' => 'env(APP_DEBUG)']],
             ],
         )[1];
 
@@ -245,86 +298,13 @@ final class BuilderTest extends AbstractBuilderTestCase
         $config->getInterfaceImplementation('NonExistentInterface');
     }
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $classWithBuiltInArgumentTypesName = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classWithBuiltInArgumentTypesName.php",
-            className: $classWithBuiltInArgumentTypesName,
-            hasConstructor: true,
-            constructorArguments: [
-                'public readonly bool $bool,',
-                'public readonly float $float,',
-                'public readonly int $int,',
-                'public readonly string $string,',
-                'public readonly mixed $mixed,',
-            ],
-        );
-
-        /** @psalm-suppress InaccessibleProperty, PropertyTypeCoercion */
-        $this->classWithBuiltInArgumentTypesNamespace = self::GENERATED_CLASS_NAMESPACE.$classWithBuiltInArgumentTypesName;
-    }
-
     private function generateConfig(
         mixed $services = [],
         mixed $interfaceBindings = [],
         mixed $classBindings = [],
     ): array {
-        $emptyClassName1 = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$emptyClassName1.php",
-            className: $emptyClassName1,
-        );
-        $emptyClassName2 = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$emptyClassName2.php",
-            className: $emptyClassName2,
-        );
-        $emptyClassName3 = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$emptyClassName3.php",
-            className: $emptyClassName3,
-        );
 
-        $interfaceName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceNamespace = self::GENERATED_CLASS_NAMESPACE.$interfaceName;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php",
-            className: $interfaceName,
-            classNamePrefix: 'interface',
-        );
-        $interfaceImplementationName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceImplementationNamespace = self::GENERATED_CLASS_NAMESPACE.$interfaceImplementationName;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceImplementationName.php",
-            className: $interfaceImplementationName,
-            interfacesImplements: [self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName],
-        );
-
-        $config = [
-            'services'           => [
-                'include' => [
-                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$emptyClassName1.'.php',
-                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$emptyClassName2.'.php',
-                ],
-                'exclude' => [
-                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$emptyClassName3.'.php',
-                ],
-            ],
-            'interface_bindings' => [
-                $interfaceNamespace => $interfaceImplementationNamespace,
-            ],
-            'class_bindings'     => [
-                $this->classWithBuiltInArgumentTypesNamespace => [
-                    'bind' => [
-                        '$string' => 'string',
-                        '$float'  => '3.14',
-                    ],
-                ],
-            ],
-        ];
+        $config = [];
 
         if ($services !== []) {
             $config['services'] = $services;

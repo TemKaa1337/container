@@ -18,13 +18,16 @@ use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Model\Definition;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
+use Tests\Helper\Service\ClassBuilder;
+use Tests\Helper\Service\ClassGenerator;
 use Throwable;
 
 /**
  * @psalm-suppress ArgumentTypeCoercion
  *
- * @noinspection PhpArgumentWithoutNamedIdentifierInspection
+ * @noinspection   PhpArgumentWithoutNamedIdentifierInspection
  *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.TooManyMethods)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
@@ -36,15 +39,18 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileClassWithBuiltInTypedArgument(): void
     {
-        $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
-            className: $classPath,
-            hasConstructor: true,
-            constructorArguments: ['public readonly int $age,'],
-        );
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments(['public readonly int $age,']),
+            )
+            ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$classPath.php"];
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
         $this->expectException(ContainerExceptionInterface::class);
@@ -52,7 +58,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $this->expectExceptionMessage(
             sprintf(
                 'Cannot instantiate entry "%s" with argument "%s::%s".',
-                self::GENERATED_CLASS_NAMESPACE.$classPath,
+                self::GENERATED_CLASS_NAMESPACE.$className,
                 'age',
                 'int',
             ),
@@ -66,24 +72,34 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileClassWithCircularDependencies(): void
     {
-        $circularClassName1 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $circularClassName2 = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$circularClassName1.php",
-            className: $circularClassName1,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf('public readonly %s $arg', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$circularClassName2),
-            ],
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$circularClassName2.php",
-            className: $circularClassName2,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf('public readonly %s $arg', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$circularClassName1),
-            ],
-        );
+        $circularClassName1 = ClassGenerator::getClassName();
+        $circularClassName2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$circularClassName1.php")
+                    ->setName($circularClassName1)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $arg',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$circularClassName2,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$circularClassName2.php")
+                    ->setName($circularClassName2)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $arg',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$circularClassName1,
+                        ),
+                    ]),
+            )
+            ->generate();
 
         $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$circularClassName1.php"];
         $configFile = $this->generateConfig(services: ['include' => $files]);
@@ -106,15 +122,18 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileClassWithNonTypedArgument(): void
     {
-        $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
-            className: $classPath,
-            hasConstructor: true,
-            constructorArguments: ['$arg'],
-        );
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments(['$arg']),
+            )
+            ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$classPath.php"];
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
         $this->expectException(ContainerExceptionInterface::class);
@@ -122,7 +141,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $this->expectExceptionMessage(
             sprintf(
                 'Cannot instantiate entry with non-typed parameters "%s" -> "%s".',
-                self::GENERATED_CLASS_NAMESPACE.$classPath,
+                self::GENERATED_CLASS_NAMESPACE.$className,
                 'arg',
             ),
         );
@@ -135,21 +154,29 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileClassWithTypeHintedEnum(): void
     {
-        $collectorClassName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $enumClassName = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php",
-            className: $collectorClassName,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf('public readonly %s $arg', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$enumClassName),
-            ],
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$enumClassName.php",
-            className: $enumClassName,
-            classNamePrefix: 'enum',
-        );
+        $collectorClassName = ClassGenerator::getClassName();
+        $enumClassName = ClassGenerator::getClassName();
+
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $arg',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$enumClassName,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$enumClassName.php")
+                    ->setName($enumClassName)
+                    ->setPrefix('enum'),
+            )
+            ->generate();
 
         $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php"];
         $configFile = $this->generateConfig(services: ['include' => $files]);
@@ -167,21 +194,25 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileClassWithoutDependencies(): void
     {
-        $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
-            className: $classPath,
-        );
+        $className = ClassGenerator::getClassName();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$classPath.php"];
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className),
+            )
+            ->generate();
+
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
+        $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertIsObject($object);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classPath, $object);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $object);
     }
 
     /**
@@ -189,41 +220,44 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileWithCastedBoundVariablesFromAttributes(): void
     {
-        $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
-            className: $classPath,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
-                'public readonly int $varOne,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
-                'public readonly string $varTwo,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
-                'public readonly float $varThree,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
-                'public readonly bool $varFour,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_FLOAT_VAR)'),
-                'public readonly mixed $varFive,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_BOOL_VAL)'),
-                'public readonly mixed $varSix,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_INT_VAL)'),
-                'public readonly mixed $varSeven,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_STRING_VAL)'),
-                'public readonly mixed $varEight,',
-            ],
-        );
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
+                        'public readonly int $varOne,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
+                        'public readonly string $varTwo,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
+                        'public readonly float $varThree,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
+                        'public readonly bool $varFour,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_FLOAT_VAR)'),
+                        'public readonly mixed $varFive,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_BOOL_VAL)'),
+                        'public readonly mixed $varSix,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_INT_VAL)'),
+                        'public readonly mixed $varSeven,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_STRING_VAL)'),
+                        'public readonly mixed $varEight,',
+                    ]),
+            )
+            ->generate();
 
         $configFile = $this->generateConfig(
-            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
         );
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertIsObject($class);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classPath, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class);
 
         self::assertEquals(10, $class->varOne);
         self::assertEquals('10.1', $class->varTwo);
@@ -240,27 +274,30 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileWithCastedBoundVariablesFromConfig(): void
     {
-        $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
-            className: $classPath,
-            hasConstructor: true,
-            constructorArguments: [
-                'public readonly int $varOne,',
-                'public readonly string $varTwo,',
-                'public readonly float $varThree,',
-                'public readonly bool $varFour,',
-                'public readonly mixed $varFive,',
-                'public readonly mixed $varSix,',
-                'public readonly mixed $varSeven,',
-                'public readonly mixed $varEight,',
-            ],
-        );
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly int $varOne,',
+                        'public readonly string $varTwo,',
+                        'public readonly float $varThree,',
+                        'public readonly bool $varFour,',
+                        'public readonly mixed $varFive,',
+                        'public readonly mixed $varSix,',
+                        'public readonly mixed $varSeven,',
+                        'public readonly mixed $varEight,',
+                    ]),
+            )
+            ->generate();
 
         $configFile = $this->generateConfig(
-            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$classPath => [
+                self::GENERATED_CLASS_NAMESPACE.$className => [
                     'bind' => [
                         '$varOne'   => 'env(ENV_CASTABLE_STRING_VAR)',
                         'varTwo'    => 'env(ENV_CASTABLE_STRING_VAR)',
@@ -277,10 +314,10 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertIsObject($class);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classPath, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class);
 
         self::assertEquals(10, $class->varOne);
         self::assertEquals('10.1', $class->varTwo);
@@ -297,19 +334,22 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileWithCircularEnvVariableDependencies(): void
     {
-        $classWithEnvVariableBind = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classWithEnvVariableBind.php",
-            className: $classWithEnvVariableBind,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(CIRCULAR_ENV_VARIABLE_1)'),
-                'public readonly string $circular,',
-            ],
-        );
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(CIRCULAR_ENV_VARIABLE_1)'),
+                        'public readonly string $circular,',
+                    ]),
+            )
+            ->generate();
 
         $configFile = $this->generateConfig(
-            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classWithEnvVariableBind.'.php']],
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
         );
 
         $this->expectException(EnvVariableCircularException::class);
@@ -326,24 +366,27 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompileWithEnvVariableReferencingAnotherVariable(): void
     {
-        $classWithEnvVariableBind = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classWithEnvVariableBind.php",
-            className: $classWithEnvVariableBind,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VARIABLE_REFERENCE)'),
-                'public readonly string $envReference,',
-            ],
-        );
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VARIABLE_REFERENCE)'),
+                        'public readonly string $envReference,',
+                    ]),
+            )
+            ->generate();
 
         $configFile = $this->generateConfig(
-            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classWithEnvVariableBind.'.php']],
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
         );
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classWithEnvVariableBind);
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertEquals('string_additional_string', $class->envReference);
     }
@@ -364,41 +407,44 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithCastingStringsFromAttribute(): void
     {
-        $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
-            className: $classPath,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
-                'public readonly int $varOne,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
-                'public readonly string $varTwo,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
-                'public readonly float $varThree,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
-                'public readonly bool $varFour,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
-                'public readonly mixed $varFive,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'false'),
-                'public readonly mixed $varSix,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '3'),
-                'public readonly mixed $varSeven,',
-                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'string'),
-                'public readonly mixed $varEight,',
-            ],
-        );
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        'public readonly int $varOne,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        'public readonly string $varTwo,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        'public readonly float $varThree,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        'public readonly bool $varFour,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        'public readonly mixed $varFive,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'false'),
+                        'public readonly mixed $varSix,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '3'),
+                        'public readonly mixed $varSeven,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'string'),
+                        'public readonly mixed $varEight,',
+                    ]),
+            )
+            ->generate();
 
         $configFile = $this->generateConfig(
-            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
         );
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertIsObject($class);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classPath, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class);
 
         self::assertEquals(10, $class->varOne);
         self::assertEquals('10.1', $class->varTwo);
@@ -415,27 +461,30 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithCastingStringsFromConfig(): void
     {
-        $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
-            className: $classPath,
-            hasConstructor: true,
-            constructorArguments: [
-                'public readonly int $varOne,',
-                'public readonly string $varTwo,',
-                'public readonly float $varThree,',
-                'public readonly bool $varFour,',
-                'public readonly mixed $varFive,',
-                'public readonly mixed $varSix,',
-                'public readonly mixed $varSeven,',
-                'public readonly mixed $varEight,',
-            ],
-        );
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly int $varOne,',
+                        'public readonly string $varTwo,',
+                        'public readonly float $varThree,',
+                        'public readonly bool $varFour,',
+                        'public readonly mixed $varFive,',
+                        'public readonly mixed $varSix,',
+                        'public readonly mixed $varSeven,',
+                        'public readonly mixed $varEight,',
+                    ]),
+            )
+            ->generate();
 
         $configFile = $this->generateConfig(
-            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$classPath => [
+                self::GENERATED_CLASS_NAMESPACE.$className => [
                     'bind' => [
                         '$varOne'   => '10.1',
                         'varTwo'    => '10.1',
@@ -452,10 +501,10 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertIsObject($class);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classPath, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class);
 
         self::assertEquals(10, $class->varOne);
         self::assertEquals('10.1', $class->varTwo);
@@ -472,26 +521,29 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithClassAliases(): void
     {
-        $classWithAliases = 'TestClass'.self::getNextGeneratedClassNumber();
-        $classWithAliasesNamespace = self::GENERATED_CLASS_NAMESPACE.$classWithAliases;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classWithAliases.php",
-            className: $classWithAliases,
-            attributes: [
-                sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'empty_2'),
-                sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'empty2'),
-            ],
-        );
+        $className = ClassGenerator::getClassName();
+        $classFullNamespace = self::GENERATED_CLASS_NAMESPACE.$className;
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setAttributes([
+                        sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'empty_2'),
+                        sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'empty2'),
+                    ]),
+            )
+            ->generate();
 
         $configFile = $this->generateConfig(
-            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classWithAliases.'.php']],
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
         );
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get($classWithAliasesNamespace);
+        $class = $container->get($classFullNamespace);
 
-        self::assertInstanceOf($classWithAliasesNamespace, $class);
+        self::assertInstanceOf($classFullNamespace, $class);
         self::assertTrue($container->has('empty_2'));
         self::assertTrue($container->has('empty2'));
         self::assertSame($class, $container->get('empty_2'));
@@ -503,36 +555,50 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithExplicitDependencySetting(): void
     {
-        $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className1 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className2 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className3 = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php",
-            className: $className1,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php",
-            className: $className2,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php",
-            className: $className3,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorName.php",
-            className: $collectorName,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf('public readonly %s $dependency1,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1),
-                sprintf('public readonly %s $dependency2,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2),
-                sprintf('public readonly %s $dependency3,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3),
-            ],
-        );
+        $collectorClassName = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency1,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency2,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency3,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3,
+                        ),
+                    ]),
+            )
+            ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className1.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className2.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
@@ -560,7 +626,7 @@ final class ContainerTest extends AbstractContainerTestCase
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className3),
         );
 
-        $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
+        $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
         self::assertIsObject($object->dependency1);
         self::assertIsObject($object->dependency2);
         self::assertIsObject($object->dependency3);
@@ -575,25 +641,27 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithInterfaceBindingByClass(): void
     {
-        $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceName = 'Interface'.self::getNextGeneratedClassNumber();
+        $className = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
 
         $classPaths = [
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName.'.php',
         ];
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            interfacesImplements: [self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName],
-        );
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php",
-            className: $interfaceName,
-            classNamePrefix: 'interface',
-        );
 
         $configFile = $this->generateConfig(
             services: ['include' => $classPaths],
@@ -617,41 +685,47 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithInterfaceTagInheritance(): void
     {
-        $interfaceName1 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceAbsoluteNamespace1 = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName1.php",
-            className: $interfaceName1,
-            attributes: [sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'interface1')],
-            classNamePrefix: 'interface',
-        );
-        $interfaceName2 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceAbsoluteNamespace2 = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName2;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName2.php",
-            className: $interfaceName2,
-            attributes: [sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'interface2')],
-            classNamePrefix: 'interface',
-        );
-        $interfaceName3 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceAbsoluteNamespace3 = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName3;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName3.php",
-            className: $interfaceName3,
-            attributes: [sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'interface3')],
-            extends: [$interfaceAbsoluteNamespace1, $interfaceAbsoluteNamespace2],
-            classNamePrefix: 'interface',
-        );
-        $classImplementsName = 'TestClass'.self::getNextGeneratedClassNumber();
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classImplementsName.php",
-            className: $classImplementsName,
-            attributes: [sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'class1')],
-            interfacesImplements: [$interfaceAbsoluteNamespace3],
-        );
+        $className = ClassGenerator::getClassName();
+        $interfaceName1 = ClassGenerator::getClassName();
+        $interfaceFullNamespace1 = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1;
+        $interfaceName2 = ClassGenerator::getClassName();
+        $interfaceFullNamespace2 = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName2;
+        $interfaceName3 = ClassGenerator::getClassName();
+        $interfaceFullNamespace3 = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName3;
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName1.php")
+                    ->setName($interfaceName1)
+                    ->setPrefix('interface')
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'interface1')]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName2.php")
+                    ->setName($interfaceName2)
+                    ->setPrefix('interface')
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'interface2')]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName3.php")
+                    ->setName($interfaceName3)
+                    ->setPrefix('interface')
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'interface3')])
+                    ->setExtends([$interfaceFullNamespace1, $interfaceFullNamespace2]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'class1')])
+                    ->setInterfaceImplementations([$interfaceFullNamespace3]),
+            )
+            ->generate();
 
         $classes = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementsName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName3.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName1.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName2.'.php',
@@ -670,7 +744,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $definitions = $r->getProperty('definitions')->getValue($definitionRepository);
 
         /** @var Definition $classDefinition */
-        $classDefinition = $definitions[self::GENERATED_CLASS_NAMESPACE.$classImplementsName];
+        $classDefinition = $definitions[self::GENERATED_CLASS_NAMESPACE.$className];
 
         self::assertEqualsCanonicalizing(
             [
@@ -688,21 +762,24 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromAttribute(): void
     {
-        $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            self::ATTRIBUTE_PARAMETER_SIGNATURE,
+                            'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)',
+                        ),
+                        'public readonly string $arg,',
+                    ]),
+            )
+            ->generate();
 
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(
-                    self::ATTRIBUTE_PARAMETER_SIGNATURE,
-                    'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)',
-                ),
-                'public readonly string $arg,',
-            ],
-        );
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
@@ -720,17 +797,18 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromConfig(): void
     {
-        $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments(['public readonly string $arg',]),
+            )
+            ->generate();
 
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            hasConstructor: true,
-            constructorArguments: [
-                'public readonly string $arg',
-            ],
-        );
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
         $configFile = $this->generateConfig(
             services: ['include' => $files],
@@ -756,42 +834,47 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithTaggedInterfaceImplementation(): void
     {
-        $collectorClassName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $classImplementing1 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $classImplementing2 = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php",
-            className: $interfaceName,
-            attributes: [sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'Interface1')],
-            classNamePrefix: 'interface',
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classImplementing1.php",
-            className: $classImplementing1,
-            interfacesImplements: [self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName],
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classImplementing2.php",
-            className: $classImplementing2,
-            interfacesImplements: [self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName],
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php",
-            className: $collectorClassName,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'Interface1'),
-                'public readonly iterable $dependency,',
-            ],
-        );
+        $collectorClassName = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        $classImplementingName1 = ClassGenerator::getClassName();
+        $classImplementingName2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'Interface1')])
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classImplementingName1.php")
+                    ->setName($classImplementingName1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classImplementingName2.php")
+                    ->setName($classImplementingName2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'Interface1'),
+                        'public readonly iterable $dependency,',
+                    ]),
+            )
+            ->generate();
 
         $classes = [
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementing1.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementing2.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementingName1.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementingName2.'.php',
         ];
 
         $configFile = $this->generateConfig(services: ['include' => $classes]);
@@ -804,10 +887,10 @@ final class ContainerTest extends AbstractContainerTestCase
         self::assertCount(2, $class->dependency);
 
         /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementing1, $class->dependency[0]);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1, $class->dependency[0]);
 
         /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementing2, $class->dependency[1]);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName2, $class->dependency[1]);
     }
 
     /**
@@ -815,28 +898,31 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithTaggedIteratorFromAttribute(): void
     {
-        $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $taggedClassName = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorName.php",
-            className: $collectorName,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'tag_1'),
-                'public readonly array $dependency1,',
-                sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'tag_1'),
-                'public readonly iterable $dependency2,',
-            ],
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$taggedClassName.php",
-            className: $taggedClassName,
-            attributes: [sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'tag_1')],
-        );
+        $collectorClassName = ClassGenerator::getClassName();
+        $taggedClassName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'tag_1'),
+                        'public readonly array $dependency1,',
+                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'tag_1'),
+                        'public readonly iterable $dependency2,',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$taggedClassName.php")
+                    ->setName($taggedClassName)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'tag_1')]),
+            )
+            ->generate();
 
         $classes = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$taggedClassName.'.php',
         ];
 
@@ -844,9 +930,9 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
 
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorName, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorClassName, $class);
         self::assertIsArray($class->dependency1);
         self::assertIsArray($class->dependency2);
 
@@ -865,38 +951,41 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithTaggedIteratorFromConfig(): void
     {
-        $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $taggedClassName = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorName.php",
-            className: $collectorName,
-            hasConstructor: true,
-            constructorArguments: [
-                'public readonly array $dependency1,',
-                'public readonly iterable $dependency2,',
-            ],
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$taggedClassName.php",
-            className: $taggedClassName,
-        );
+        $collectorClassName = ClassGenerator::getClassName();
+        $taggedClassName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly array $dependency1,',
+                        'public readonly iterable $dependency2,',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$taggedClassName.php")
+                    ->setName($taggedClassName),
+            )
+            ->generate();
 
         $classes = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$taggedClassName.'.php',
         ];
 
         $configFile = $this->generateConfig(
             services: ['include' => $classes],
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$collectorName   => [
+                self::GENERATED_CLASS_NAMESPACE.$collectorClassName => [
                     'bind' => [
                         'dependency1' => '!tagged empty_2',
                         'dependency2' => '!tagged empty_2',
                     ],
                 ],
-                self::GENERATED_CLASS_NAMESPACE.$taggedClassName => [
+                self::GENERATED_CLASS_NAMESPACE.$taggedClassName    => [
                     'tags' => ['empty_2'],
                 ],
             ],
@@ -904,9 +993,9 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
 
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorName, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorClassName, $class);
         self::assertIsArray($class->dependency1);
         self::assertIsArray($class->dependency2);
 
@@ -931,14 +1020,21 @@ final class ContainerTest extends AbstractContainerTestCase
         array $attributes,
         string $constructorVisibility,
     ): void {
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            attributes: $attributes,
-            classNamePrefix: $classNamePrefix,
-            constructorVisibility: $constructorVisibility,
-            hasConstructor: true,
-        );
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setAttributes($attributes)
+                    ->setPrefix($classNamePrefix)
+                    ->setConstructorVisibility($constructorVisibility)
+                    ->setConstructorArguments([
+                        'public readonly array $dependency1,',
+                        'public readonly iterable $dependency2,',
+                    ]),
+            )
+            ->generate();
 
         $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php';
         $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
@@ -953,33 +1049,47 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithoutSettingAllDependenciesClassWithDependencies(): void
     {
-        $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className1 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className2 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className3 = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php",
-            className: $className1,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php",
-            className: $className2,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php",
-            className: $className3,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorName.php",
-            className: $collectorName,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf('public readonly %s $dependency1,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1),
-                sprintf('public readonly %s $dependency2,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2),
-                sprintf('public readonly %s $dependency3,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3),
-            ],
-        );
+        $collectorName = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorName.php")
+                    ->setName($collectorName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency1,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency2,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency3,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3,
+                        ),
+                    ]),
+            )
+            ->generate();
 
         $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php'];
 
@@ -1020,15 +1130,18 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompliesWithNullableVariable(): void
     {
-        $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments(['public readonly ?string $arg']),
+            )
+            ->generate();
 
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            hasConstructor: true,
-            constructorArguments: ['public readonly ?string $arg'],
-        );
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
@@ -1046,19 +1159,22 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testDoesNotCompileDueToCircularExceptionByTaggedBinding(): void
     {
-        $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'circular')])
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'circular'),
+                        'public readonly iterable $arg',
+                    ]),
+            )
+            ->generate();
 
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            attributes: [sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'circular')],
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'circular'),
-                'public readonly iterable $arg',
-            ],
-        );
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
@@ -1085,12 +1201,15 @@ final class ContainerTest extends AbstractContainerTestCase
         string $constructorArgument,
         string $argumentClassName,
     ): void {
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            hasConstructor: true,
-            constructorArguments: [$constructorArgument],
-        );
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([$constructorArgument]),
+            )
+            ->generate();
 
         $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
         $configFile = $this->generateConfig(services: ['include' => $files]);
@@ -1106,17 +1225,18 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testDoesNotCompileDueToNonExistentBoundVariable(): void
     {
-        $className = 'TestClass'.self::getNextGeneratedClassNumber();
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments(['public readonly int $age,']),
+            )
+            ->generate();
 
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            hasConstructor: true,
-            constructorArguments: [
-                'public readonly int $age,',
-            ],
-        );
+        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
@@ -1143,15 +1263,19 @@ final class ContainerTest extends AbstractContainerTestCase
         string $constructorArgument,
         string $exceptionMessage,
     ): void {
-        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php';
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            hasConstructor: true,
-            constructorArguments: [$constructorArgument],
-        );
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([$constructorArgument]),
+            )
+            ->generate();
 
-        $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
+        $configFile = $this->generateConfig(
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        );
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UnresolvableArgumentException::class);
@@ -1173,12 +1297,15 @@ final class ContainerTest extends AbstractContainerTestCase
         string $exception,
         string $exceptionMessage,
     ): void {
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
-            className: $className,
-            hasConstructor: true,
-            constructorArguments: $constructorArguments,
-        );
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments($constructorArguments),
+            )
+            ->generate();
 
         $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
         $configFile = $this->generateConfig(
@@ -1199,33 +1326,47 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testDoesNotCompileWithExcludedDependency(): void
     {
-        $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className1 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className2 = 'TestClass'.self::getNextGeneratedClassNumber();
-        $className3 = 'TestClass'.self::getNextGeneratedClassNumber();
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php",
-            className: $className1,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php",
-            className: $className2,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php",
-            className: $className3,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorName.php",
-            className: $collectorName,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf('public readonly %s $dependency1,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1),
-                sprintf('public readonly %s $dependency2,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2),
-                sprintf('public readonly %s $dependency3,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3),
-            ],
-        );
+        $collectorName = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorName.php")
+                    ->setName($collectorName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency1,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency2,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency3,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3,
+                        ),
+                    ]),
+            )
+            ->generate();
 
         $includeFiles = [
             self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
@@ -1255,31 +1396,33 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testDoesNotCompileWithNonAutowirableAttributeClass(): void
     {
-        $collectorClassName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $invalidClassName = 'TestClass'.self::getNextGeneratedClassNumber();
+        $collectorClassName = ClassGenerator::getClassName();
+        $collectorClassPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php';
+        $invalidClassName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
 
-        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php';
+                        sprintf(
+                            'public readonly %s $arg',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$invalidClassName.php")
+                    ->setName($invalidClassName)
+                    ->setHasConstructor(true)
+                    ->setAttributes([self::ATTRIBUTE_NON_AUTOWIRABLE_SIGNATURE]),
+            )
+            ->generate();
 
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php",
-            className: $collectorClassName,
-            hasConstructor: true,
-            constructorArguments: [
-                sprintf(
-                    'public readonly %s $arg',
-                    self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName,
-                ),
-            ],
-        );
-
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$invalidClassName.php",
-            className: $invalidClassName,
-            attributes: [self::ATTRIBUTE_NON_AUTOWIRABLE_SIGNATURE],
-            hasConstructor: true,
-        );
-
-        $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
+        $configFile = $this->generateConfig(services: ['include' => [$collectorClassPath]]);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(NonAutowirableClassException::class);
@@ -1305,20 +1448,24 @@ final class ContainerTest extends AbstractContainerTestCase
         string $constructorVisibility,
         array $collectorConstructorArguments,
     ): void {
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php",
-            className: $collectorClassName,
-            hasConstructor: true,
-            constructorArguments: $collectorConstructorArguments,
-        );
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$invalidClassName.php",
-            className: $invalidClassName,
-            classNamePrefix: $classNamePrefix,
-            constructorVisibility: $constructorVisibility,
-            hasConstructor: true,
-            constructorArguments: $collectorConstructorArguments,
-        );
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments($collectorConstructorArguments),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$invalidClassName.php")
+                    ->setName($invalidClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorVisibility($constructorVisibility)
+                    ->setPrefix($classNamePrefix)
+                    ->setConstructorArguments($collectorConstructorArguments),
+            )
+            ->generate();
 
         $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php';
         $configFile = $this->generateConfig(services: ['include' => [$classPath]]);

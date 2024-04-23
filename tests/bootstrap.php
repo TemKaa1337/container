@@ -16,7 +16,7 @@ $envVariables = [
     'ENV_VAR_4'               => 'true',
     'CIRCULAR_ENV_VARIABLE_1' => 'env(CIRCULAR_ENV_VARIABLE_2)',
     'CIRCULAR_ENV_VARIABLE_2' => 'env(CIRCULAR_ENV_VARIABLE_1)',
-    'ENV_VARIABLE_REFERENCE' => 'env(ENV_STRING_VAR)_additional_string',
+    'ENV_VARIABLE_REFERENCE'  => 'env(ENV_STRING_VAR)_additional_string',
 ];
 
 foreach ($envVariables as $name => $value) {

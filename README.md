@@ -86,7 +86,6 @@ class Example
         private readonly int $age,
     ) {}
 }
-
 ```
 
 ##### Important notes:
@@ -94,8 +93,7 @@ class Example
 - if you have type hinted some class in class arguments, which is neither in `include` and `exclude` sections, it will also be autowired.
 
 ##### Here are some TODOs:
-- Refactoring src + refactoring tests
-- add file generator builder
+- todos
 
 ##### Here are some improvements which will be implemented later:
 - reflection caching
@@ -104,4 +102,5 @@ class Example
 - add singleton (both from attributes and config)
 - add global var bindings in config (variable name and value which will be bound everywhere with same name)
 - add env variable processors (allow casting env variable to enums, strings, floats etc.)
+- refactoring
 

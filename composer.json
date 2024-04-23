@@ -6,8 +6,7 @@
     "autoload": {
         "psr-4": {
             "Temkaa\\SimpleContainer\\": "src/",
-            "Tests\\": "tests/",
-            "Asd\\": "example/"
+            "Tests\\": "tests/"
         }
     },
     "authors": [

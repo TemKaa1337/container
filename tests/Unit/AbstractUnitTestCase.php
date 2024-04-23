@@ -6,12 +6,9 @@ namespace Tests\Unit;
 
 use DirectoryIterator;
 use PHPUnit\Framework\TestCase;
-use Tests\Helper\ClassStubGeneratorTrait;
 
 abstract class AbstractUnitTestCase extends TestCase
 {
-    use ClassStubGeneratorTrait;
-
     protected const ATTRIBUTE_ALIAS_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Alias(name: \'%s\')]';
     protected const ATTRIBUTE_NON_AUTOWIRABLE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\NonAutowirable]';
     protected const ATTRIBUTE_PARAMETER_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
@@ -22,8 +19,6 @@ abstract class AbstractUnitTestCase extends TestCase
     protected const GENERATED_CLASS_NAMESPACE = 'Tests\Fixture\Stub\Class\\';
     protected const GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';
     protected const GITKEEP_FILENAME = '.gitkeep';
-
-    private static int $generatedClassNumber = 0;
 
     public static function tearDownAfterClass(): void
     {
@@ -38,10 +33,5 @@ abstract class AbstractUnitTestCase extends TestCase
 
             unlink($file->getRealPath());
         }
-    }
-
-    protected static function getNextGeneratedClassNumber(): int
-    {
-        return ++self::$generatedClassNumber;
     }
 }

@@ -7,6 +7,8 @@ namespace Tests\Unit\Config;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
+use Tests\Helper\Service\ClassBuilder;
+use Tests\Helper\Service\ClassGenerator;
 use Tests\Unit\AbstractUnitTestCase;
 
 abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
@@ -128,12 +130,15 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
             ];
         }
 
-        $emptyClassName = 'TestClass'.self::getNextGeneratedClassNumber();
+        $emptyClassName = ClassGenerator::getClassName();
         $emptyClassNamespace = self::GENERATED_CLASS_NAMESPACE.$emptyClassName;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$emptyClassName.php",
-            className: $emptyClassName,
-        );
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$emptyClassName.php")
+                    ->setName($emptyClassName),
+            )
+            ->generate();
 
         foreach ($invalidTypes as $invalidType) {
             $classBindings = [$emptyClassNamespace => $invalidType];
@@ -188,45 +193,50 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
 
     public static function getDataForInterfaceBindingErrorsTest(): iterable
     {
-        $interfaceName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceNamespace = self::GENERATED_CLASS_NAMESPACE.$interfaceName;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php",
-            className: $interfaceName,
-            classNamePrefix: 'interface',
-        );
-        $interfaceImplementationName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $interfaceImplementationNamespace = self::GENERATED_CLASS_NAMESPACE.$interfaceImplementationName;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceImplementationName.php",
-            className: $interfaceImplementationName,
-            interfacesImplements: [self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName],
-        );
+        $className = ClassGenerator::getClassName();
+        $classFullNamespace = self::GENERATED_CLASS_NAMESPACE.$className;
+        $interfaceName = ClassGenerator::getClassName();
+        $interfaceFullNamespace = self::GENERATED_CLASS_NAMESPACE.$interfaceName;
+        $emptyClassName = ClassGenerator::getClassName();
+        $emptyClassNamespace = self::GENERATED_CLASS_NAMESPACE.$emptyClassName;
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$emptyClassName.php")
+                    ->setName($emptyClassName),
+            )
+            ->generate();
 
         yield [
-            ['NonExistentInterface' => $interfaceImplementationNamespace],
+            ['NonExistentInterface' => $classFullNamespace],
             ClassNotFoundException::class,
             sprintf('Class "%s" is not found.', 'NonExistentInterface'),
         ];
 
         yield [
-            [$interfaceNamespace => 'NonExistentInterfaceImplementation'],
+            [$interfaceFullNamespace => 'NonExistentInterfaceImplementation'],
             ClassNotFoundException::class,
             sprintf('Class "%s" is not found.', 'NonExistentInterfaceImplementation'),
         ];
 
-        $emptyClassName = 'TestClass'.self::getNextGeneratedClassNumber();
-        $emptyClassNamespace = self::GENERATED_CLASS_NAMESPACE.$emptyClassName;
-        self::generateClass(
-            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$emptyClassName.php",
-            className: $emptyClassName,
-        );
         yield [
-            [$interfaceNamespace => $emptyClassNamespace],
+            [$interfaceFullNamespace => $emptyClassNamespace],
             CannotBindInterfaceException::class,
             sprintf(
-                'Cannot bind interface "%s" to class "%s" as it doesn\'t implement int.',
-                $interfaceNamespace,
+                'Cannot bind interface "%s" to class "%s" as it doesn\'t implement it.',
+                $interfaceFullNamespace,
                 $emptyClassNamespace,
             ),
         ];

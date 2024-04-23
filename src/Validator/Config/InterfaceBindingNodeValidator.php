@@ -72,7 +72,7 @@ final class InterfaceBindingNodeValidator implements ValidatorInterface
             if (!$reflection->implementsInterface($interfaceName)) {
                 throw new CannotBindInterfaceException(
                     sprintf(
-                        'Cannot bind interface "%s" to class "%s" as it doesn\'t implement int.',
+                        'Cannot bind interface "%s" to class "%s" as it doesn\'t implement it.',
                         $interfaceName,
                         $className,
                     ),

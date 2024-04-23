@@ -9,6 +9,7 @@ use Generator;
 use ReflectionAttribute;
 use ReflectionClass;
 use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
+use Tests\Helper\Service\ClassGenerator;
 
 abstract class AbstractContainerTestCase extends AbstractUnitTestCase
 {
@@ -17,14 +18,14 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
 
     public static function getDataForCompilesWithUninstantiableEntryTest(): iterable
     {
-        yield ['TestClass'.self::getNextGeneratedClassNumber(), 'abstract class', [], 'public'];
+        yield [ClassGenerator::getClassName(), 'abstract class', [], 'public'];
 
-        yield ['TestClass'.self::getNextGeneratedClassNumber(), 'final class', [], 'private'];
+        yield [ClassGenerator::getClassName(), 'final class', [], 'private'];
 
-        yield ['TestClass'.self::getNextGeneratedClassNumber(), 'final class', [], 'protected'];
+        yield [ClassGenerator::getClassName(), 'final class', [], 'protected'];
 
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             'final class',
             [self::ATTRIBUTE_NON_AUTOWIRABLE_SIGNATURE],
             'public',
@@ -34,22 +35,22 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
     public static function getDataForDoesNotCompileDueToInternalClassDependencyTest(): iterable
     {
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             'public readonly \Closure $generator',
             Closure::class,
         ];
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             'public readonly \Generator $generator',
             Generator::class,
         ];
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             'public readonly \ReflectionClass $r',
             ReflectionClass::class,
         ];
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             'public readonly \ReflectionAttribute $r',
             ReflectionAttribute::class,
         ];
@@ -58,7 +59,7 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
     public static function getDataForDoesNotCompileDueToNotDeterminedArgumentTypeTest(): iterable
     {
         yield [
-            $className = 'TestClass'.self::getNextGeneratedClassNumber(),
+            $className = ClassGenerator::getClassName(),
             'public readonly array|string $arg',
             sprintf(
                 'Cannot resolve argument "arg" with union type "array|string" in class "%s".',
@@ -67,7 +68,7 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
         ];
 
         yield [
-            $className = 'TestClass'.self::getNextGeneratedClassNumber(),
+            $className = ClassGenerator::getClassName(),
             'public readonly array|object $arg',
             sprintf(
                 'Cannot resolve argument "arg" with union type "object|array" in class "%s".',
@@ -76,7 +77,7 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
         ];
 
         yield [
-            $className = 'TestClass'.self::getNextGeneratedClassNumber(),
+            $className = ClassGenerator::getClassName(),
             'public readonly \Generator&\Iterator $arg',
             sprintf(
                 'Cannot resolve argument "arg" with intersection type "Generator&Iterator" in class "%s".',
@@ -85,7 +86,7 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
         ];
 
         yield [
-            $className = 'TestClass'.self::getNextGeneratedClassNumber(),
+            $className = ClassGenerator::getClassName(),
             'public readonly (\Generator&\Iterator)|array $arg',
             sprintf(
                 'Cannot resolve argument "arg" with union type "(Generator&Iterator)|array" in class "%s".',
@@ -97,35 +98,35 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
     public static function getDataForDoesNotCompileDueToVariableBindingErrorsTest(): iterable
     {
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             ['public readonly object $arg'],
             UnsupportedCastTypeException::class,
             sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'object'),
         ];
 
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             ['public readonly array $arg'],
             UnsupportedCastTypeException::class,
             sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'array'),
         ];
 
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             ['public readonly iterable $arg'],
             UnsupportedCastTypeException::class,
             sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'iterable'),
         ];
 
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             ['public readonly int $arg'],
             UnsupportedCastTypeException::class,
             sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'int'),
         ];
 
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
             ['public readonly float $arg'],
             UnsupportedCastTypeException::class,
             sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'float'),
@@ -135,24 +136,24 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
     public static function getDataForDoesNotCompileWithUninstantiableEntryTest(): iterable
     {
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            $invalidClassName = 'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
+            $invalidClassName = ClassGenerator::getClassName(),
             'abstract class',
             'public',
             [sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName)],
         ];
 
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            $invalidClassName = 'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
+            $invalidClassName = ClassGenerator::getClassName(),
             'final class',
             'protected',
             [sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName)],
         ];
 
         yield [
-            'TestClass'.self::getNextGeneratedClassNumber(),
-            $invalidClassName = 'TestClass'.self::getNextGeneratedClassNumber(),
+            ClassGenerator::getClassName(),
+            $invalidClassName = ClassGenerator::getClassName(),
             'final class',
             'private',
             [sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName)],

@@ -49,6 +49,11 @@ final class ExpressionParser
         return $matches[1] ?? [];
     }
 
+    private function isResolving(string $variableName): bool
+    {
+        return $this->variablesResolving[$variableName] ?? false;
+    }
+
     private function setResolving(string $variableName, bool $isResolving): void
     {
         if ($isResolving) {
@@ -56,10 +61,5 @@ final class ExpressionParser
         } else {
             unset($this->variablesResolving[$variableName]);
         }
-    }
-
-    private function isResolving(string $variableName): bool
-    {
-        return $this->variablesResolving[$variableName] ?? false;
     }
 }
