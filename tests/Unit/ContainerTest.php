@@ -10,6 +10,7 @@ use SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 use Temkaa\SimpleContainer\Container\Builder;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
+use Temkaa\SimpleContainer\Exception\Config\EnvVariableCircularException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
@@ -17,9 +18,22 @@ use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Model\Definition;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
+use Throwable;
 
+/**
+ * @psalm-suppress ArgumentTypeCoercion
+ *
+ * @noinspection   PhpArgumentWithoutNamedIdentifierInspection
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ */
 final class ContainerTest extends AbstractContainerTest
 {
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testCompileClassWithBuiltInTypedArgument(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -47,6 +61,9 @@ final class ContainerTest extends AbstractContainerTest
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testCompileClassWithCircularDependencies(): void
     {
         $circularClassName1 = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -84,6 +101,9 @@ final class ContainerTest extends AbstractContainerTest
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testCompileClassWithNonTypedArgument(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -110,6 +130,9 @@ final class ContainerTest extends AbstractContainerTest
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testCompileClassWithTypeHintedEnum(): void
     {
         $collectorClassName = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -139,6 +162,9 @@ final class ContainerTest extends AbstractContainerTest
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompileClassWithoutDependencies(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -158,6 +184,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classPath, $object);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompileWithCastedBoundVariablesFromAttributes(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -189,12 +218,6 @@ final class ContainerTest extends AbstractContainerTest
             services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
         );
 
-        putenv('ENV_CASTABLE_STRING_VAR=10.1');
-        putenv('ENV_FLOAT_VAR=10.1');
-        putenv('ENV_BOOL_VAL=false');
-        putenv('ENV_INT_VAL=3');
-        putenv('ENV_STRING_VAL=string');
-
         $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
@@ -212,9 +235,11 @@ final class ContainerTest extends AbstractContainerTest
         self::assertEquals('string', $class->varEight);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompileWithCastedBoundVariablesFromConfig(): void
     {
-        // TODO: rename methods names if they are incorrect
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classPath.php",
@@ -250,12 +275,6 @@ final class ContainerTest extends AbstractContainerTest
             ],
         );
 
-        putenv('ENV_CASTABLE_STRING_VAR=10.1');
-        putenv('ENV_FLOAT_VAR=10.1');
-        putenv('ENV_BOOL_VAL=false');
-        putenv('ENV_INT_VAL=3');
-        putenv('ENV_STRING_VAL=string');
-
         $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
@@ -273,19 +292,76 @@ final class ContainerTest extends AbstractContainerTest
         self::assertEquals('string', $class->varEight);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    public function testCompileWithCircularEnvVariableDependencies(): void
+    {
+        $classWithEnvVariableBind = 'TestClass'.self::getNextGeneratedClassNumber();
+        self::generateClass(
+            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classWithEnvVariableBind.php",
+            className: $classWithEnvVariableBind,
+            hasConstructor: true,
+            constructorArguments: [
+                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(CIRCULAR_ENV_VARIABLE_1)'),
+                'public readonly string $circular,',
+            ],
+        );
+
+        $configFile = $this->generateConfig(
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classWithEnvVariableBind.'.php']],
+        );
+
+        $this->expectException(EnvVariableCircularException::class);
+        $this->expectExceptionMessage(
+            'Cannot resolve env variable "env(CIRCULAR_ENV_VARIABLE_2)" as '
+            .'it has circular references "CIRCULAR_ENV_VARIABLE_1 -> CIRCULAR_ENV_VARIABLE_2".',
+        );
+
+        (new Builder())->add($configFile)->compile();
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    public function testCompileWithEnvVariableReferencingAnotherVariable(): void
+    {
+        $classWithEnvVariableBind = 'TestClass'.self::getNextGeneratedClassNumber();
+        self::generateClass(
+            absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classWithEnvVariableBind.php",
+            className: $classWithEnvVariableBind,
+            hasConstructor: true,
+            constructorArguments: [
+                sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VARIABLE_REFERENCE)'),
+                'public readonly string $envReference,',
+            ],
+        );
+
+        $configFile = $this->generateConfig(
+            services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classWithEnvVariableBind.'.php']],
+        );
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classWithEnvVariableBind);
+
+        self::assertEquals('string_additional_string', $class->envReference);
+    }
+
     public function testCompileWithNonExistentClass(): void
     {
         $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.'NonExistentClass.php';
         $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
 
-        $builder = new Builder();
-
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "'.$classPath.'" does not exist.');
 
-        $builder->add($configFile);
+        (new Builder())->add($configFile);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithCastingStringsFromAttribute(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -317,11 +393,7 @@ final class ContainerTest extends AbstractContainerTest
             services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classPath.'.php']],
         );
 
-        // TODO: make same constructions as one liners
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
 
@@ -338,6 +410,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertEquals('string', $class->varEight);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithCastingStringsFromConfig(): void
     {
         $classPath = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -375,10 +450,7 @@ final class ContainerTest extends AbstractContainerTest
             ],
         );
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$classPath);
 
@@ -395,6 +467,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertEquals('string', $class->varEight);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithClassAliases(): void
     {
         $classWithAliases = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -412,10 +487,7 @@ final class ContainerTest extends AbstractContainerTest
             services: ['include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classWithAliases.'.php']],
         );
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get($classWithAliasesNamespace);
 
@@ -426,6 +498,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertSame($class, $container->get('empty2'));
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithExplicitDependencySetting(): void
     {
         $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -465,10 +540,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
         self::assertInstanceOf(
@@ -498,6 +570,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $object->dependency3);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithInterfaceBindingByClass(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -527,10 +602,7 @@ final class ContainerTest extends AbstractContainerTest
             ],
         );
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
 
@@ -540,9 +612,11 @@ final class ContainerTest extends AbstractContainerTest
         self::assertSame($class, $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testCompilesWithInterfaceTagInheritance(): void
     {
-        // TODO: move to buuilder test?
         $interfaceName1 = 'TestClass'.self::getNextGeneratedClassNumber();
         $interfaceAbsoluteNamespace1 = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1;
         self::generateClass(
@@ -585,10 +659,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $classes]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         $r = new ReflectionClass($container);
 
@@ -612,15 +683,13 @@ final class ContainerTest extends AbstractContainerTest
         );
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromAttribute(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
         $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
-
-        putenv('ENV_VAR_1=test_one');
-        putenv('ENV_VAR_2=10.1');
-        putenv('ENV_VAR_3=test-three');
-        putenv('ENV_VAR_4=true');
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
@@ -637,10 +706,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -649,15 +715,13 @@ final class ContainerTest extends AbstractContainerTest
         self::assertEquals('test_one10.1_test-three-TEST-true', $class->arg);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromConfig(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
         $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
-
-        putenv('ENV_VAR_1=test_one');
-        putenv('ENV_VAR_2=10.1');
-        putenv('ENV_VAR_3=test-three');
-        putenv('ENV_VAR_4=true');
 
         self::generateClass(
             absolutePath: realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php",
@@ -677,10 +741,7 @@ final class ContainerTest extends AbstractContainerTest
             ],
         );
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         $fullClassNameSpace = self::GENERATED_CLASS_NAMESPACE.$className;
         $class = $container->get($fullClassNameSpace);
@@ -690,6 +751,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertEquals('test_one10.1_test-three-TEST-true', $class->arg);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithTaggedInterfaceImplementation(): void
     {
         $collectorClassName = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -732,21 +796,23 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $classes]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
-
-        self::assertIsObject($container);
+        $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
 
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorClassName, $class);
         self::assertCount(2, $class->dependency);
+
+        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementing1, $class->dependency[0]);
+
+        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementing2, $class->dependency[1]);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithTaggedIteratorFromAttribute(): void
     {
         $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -776,12 +842,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $classes]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
-
-        self::assertIsObject($container);
+        $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
 
@@ -799,6 +860,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$taggedClassName, $class->dependency2[0]);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithTaggedIteratorFromConfig(): void
     {
         $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -838,12 +902,7 @@ final class ContainerTest extends AbstractContainerTest
             ],
         );
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
-
-        self::assertIsObject($container);
+        $container = (new Builder())->add($configFile)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
 
@@ -862,6 +921,8 @@ final class ContainerTest extends AbstractContainerTest
     }
 
     /**
+     * @noinspection PhpUnhandledExceptionInspection
+     *
      * @dataProvider getDataForCompilesWithUninstantiableEntryTest
      */
     public function testCompilesWithUninstantiableEntry(
@@ -884,10 +945,12 @@ final class ContainerTest extends AbstractContainerTest
 
         $container = (new Builder())->add($configFile)->compile();
 
-        self::assertIsObject($container);
         self::assertFalse($container->has($className));
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompilesWithoutSettingAllDependenciesClassWithDependencies(): void
     {
         $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -922,12 +985,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
-
-        self::assertIsObject($container);
+        $container = (new Builder())->add($configFile)->compile();
 
         self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
         self::assertInstanceOf(
@@ -935,7 +993,6 @@ final class ContainerTest extends AbstractContainerTest
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
         );
 
-        // TODO: move everywhere $this to self
         self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className2));
         self::assertInstanceOf(
             self::GENERATED_CLASS_NAMESPACE.$className2,
@@ -958,6 +1015,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $object->dependency3);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
     public function testCompliesWithNullableVariable(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -972,10 +1032,7 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
-        $container = $builder->compile();
+        $container = (new Builder())->add($configFile)->compile();
 
         $classFullNamespace = self::GENERATED_CLASS_NAMESPACE.$className;
 
@@ -984,6 +1041,9 @@ final class ContainerTest extends AbstractContainerTest
         self::assertNull($class->arg);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testDoesNotCompileDueToCircularExceptionByTaggedBinding(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -1002,9 +1062,6 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(CircularReferenceException::class);
         $this->expectExceptionMessage(
@@ -1015,10 +1072,12 @@ final class ContainerTest extends AbstractContainerTest
             ),
         );
 
-        $builder->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     /**
+     * @noinspection PhpUnhandledExceptionInspection
+     *
      * @dataProvider getDataForDoesNotCompileDueToInternalClassDependencyTest
      */
     public function testDoesNotCompileDueToInternalClassDependency(
@@ -1042,6 +1101,9 @@ final class ContainerTest extends AbstractContainerTest
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testDoesNotCompileDueToNonExistentBoundVariable(): void
     {
         $className = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -1058,9 +1120,6 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $files]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
         $this->expectException(UnresolvableArgumentException::class);
         $this->expectExceptionMessage(
             sprintf(
@@ -1071,10 +1130,12 @@ final class ContainerTest extends AbstractContainerTest
             ),
         );
 
-        $builder->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     /**
+     * @noinspection PhpUnhandledExceptionInspection
+     *
      * @dataProvider getDataForDoesNotCompileDueToNotDeterminedArgumentTypeTest
      */
     public function testDoesNotCompileDueToNotDeterminedArgumentType(
@@ -1100,7 +1161,11 @@ final class ContainerTest extends AbstractContainerTest
     }
 
     /**
+     * @noinspection PhpDocMissingThrowsInspection,PhpUnhandledExceptionInspection
+     *
      * @dataProvider getDataForDoesNotCompileDueToVariableBindingErrorsTest
+     *
+     * @param class-string<Throwable> $exception
      */
     public function testDoesNotCompileDueToVariableBindingErrors(
         string $className,
@@ -1122,7 +1187,6 @@ final class ContainerTest extends AbstractContainerTest
                 self::GENERATED_CLASS_NAMESPACE.$className => ['bind' => ['$arg' => 'env(ENV_STRING_VAR)']],
             ],
         );
-        putenv('ENV_STRING_VAR=string');
 
         $this->expectException($exception);
         $this->expectExceptionMessage($exceptionMessage);
@@ -1130,6 +1194,9 @@ final class ContainerTest extends AbstractContainerTest
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testDoesNotCompileWithExcludedDependency(): void
     {
         $collectorName = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -1172,9 +1239,6 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => $includeFiles, 'exclude' => $excludeFiles]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
         $this->expectException(NonAutowirableClassException::class);
         $this->expectExceptionMessage(
             sprintf(
@@ -1183,9 +1247,12 @@ final class ContainerTest extends AbstractContainerTest
             ),
         );
 
-        $builder->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testDoesNotCompileWithNonAutowirableAttributeClass(): void
     {
         $collectorClassName = 'TestClass'.self::getNextGeneratedClassNumber();
@@ -1214,9 +1281,6 @@ final class ContainerTest extends AbstractContainerTest
 
         $configFile = $this->generateConfig(services: ['include' => [$classPath]]);
 
-        $builder = new Builder();
-        $builder->add($configFile);
-
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(NonAutowirableClassException::class);
         $this->expectExceptionMessage(
@@ -1226,10 +1290,12 @@ final class ContainerTest extends AbstractContainerTest
             ),
         );
 
-        $builder->compile();
+        (new Builder())->add($configFile)->compile();
     }
 
     /**
+     * @noinspection PhpUnhandledExceptionInspection
+     *
      * @dataProvider getDataForDoesNotCompileWithUninstantiableEntryTest
      */
     public function testDoesNotCompileWithUninstantiableEntry(
@@ -1266,11 +1332,12 @@ final class ContainerTest extends AbstractContainerTest
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testWithoutCompiling(): void
     {
-        $builder = new Builder();
-
-        $container = $builder->compile();
+        $container = (new Builder())->compile();
 
         $this->expectException(EntryNotFoundException::class);
         $this->expectExceptionMessage(sprintf('Could not find entry "%s".', 'asd'));

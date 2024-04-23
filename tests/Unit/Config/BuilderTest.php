@@ -8,11 +8,11 @@ use ReflectionClass;
 use SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 use Temkaa\SimpleContainer\Container\Builder;
+use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException as ConfigEntryNotFoundException;
+use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
-use Temkaa\SimpleContainer\Exception\ContainerConfigEntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
-use Temkaa\SimpleContainer\Exception\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Model\Container\Config;
 use Throwable;
 
@@ -44,8 +44,7 @@ final class BuilderTest extends AbstractBuilderTest
             ],
         );
 
-        $builder = new Builder();
-        $builder->add($configFile);
+        $builder = (new Builder())->add($configFile);
 
         $config = $this->getConfigContent($builder);
 
@@ -116,7 +115,7 @@ final class BuilderTest extends AbstractBuilderTest
     {
         $configFile = new SplFileInfo('/non_existing_configPath/file.yaml');
 
-        $this->expectException(ContainerConfigEntryNotFoundException::class);
+        $this->expectException(ConfigEntryNotFoundException::class);
         $this->expectExceptionMessage('Could not find container config in path "/non_existing_configPath/file.yaml".');
 
         (new Builder())->add($configFile);
@@ -134,24 +133,20 @@ final class BuilderTest extends AbstractBuilderTest
     ): void {
         $configFile = $this->generateConfig(interfaceBindings: $config)[1];
 
-        $builder = new Builder();
-
         $this->expectException($exceptionClass);
         $this->expectExceptionMessage($exceptionMessage);
 
-        $builder->add($configFile);
+        (new Builder())->add($configFile);
     }
 
     public function testConfigDoesNotInitDueToInvalidServicePath(): void
     {
         $configFile = $this->generateConfig(services: ['exclude' => ['src/Factory/']])[1];
 
-        $builder = new Builder();
-
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "src/Factory/" does not exist.');
 
-        $builder->add($configFile);
+        (new Builder())->add($configFile);
     }
 
     /**
@@ -168,12 +163,10 @@ final class BuilderTest extends AbstractBuilderTest
     ): void {
         $configFile = $this->generateConfig($services, $interfaceBindings, $classBindings)[1];
 
-        $builder = new Builder();
-
         $this->expectException($exceptionClass);
         $this->expectExceptionMessage($exceptionMessage);
 
-        $builder->add($configFile);
+        (new Builder())->add($configFile);
     }
 
     public function testConfigHasEnvBoundVariables(): void
@@ -184,11 +177,7 @@ final class BuilderTest extends AbstractBuilderTest
             ],
         )[1];
 
-        // TODO: somehow rework (mb move to bootstrap)
-        putenv('APP_BOUND_VAR=bound_variable_value');
-
-        $builder = new Builder();
-        $builder->add($configFile);
+        $builder = (new Builder())->add($configFile);
 
         $config = $this->getConfigContent($builder);
 
@@ -204,8 +193,7 @@ final class BuilderTest extends AbstractBuilderTest
     {
         $configFile = $this->generateConfig()[1];
 
-        $builder = new Builder();
-        $builder->add($configFile);
+        $builder = (new Builder())->add($configFile);
 
         $config = $this->getConfigContent($builder);
 
@@ -217,8 +205,7 @@ final class BuilderTest extends AbstractBuilderTest
     {
         $configFile = $this->generateConfig()[1];
 
-        $builder = new Builder();
-        $builder->add($configFile);
+        $builder = (new Builder())->add($configFile);
 
         $config = $this->getConfigContent($builder);
 
@@ -234,12 +221,10 @@ final class BuilderTest extends AbstractBuilderTest
             ],
         )[1];
 
-        $builder = new Builder();
-
         $this->expectException(EnvVariableNotFoundException::class);
-        $this->expectExceptionMessage('Variable "APP_DEBUG" is not found in dov env variables.');
+        $this->expectExceptionMessage('Variable "APP_DEBUG" is not found in env variables.');
 
-        $builder->add($configFile);
+        (new Builder())->add($configFile);
     }
 
     /**
@@ -249,8 +234,7 @@ final class BuilderTest extends AbstractBuilderTest
     {
         $configFile = $this->generateConfig()[1];
 
-        $builder = new Builder();
-        $builder->add($configFile);
+        $builder = (new Builder())->add($configFile);
 
         $config = $this->getConfigContent($builder);
 

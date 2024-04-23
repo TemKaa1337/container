@@ -7,9 +7,23 @@
 declare(strict_types=1);
 
 use Temkaa\SimpleContainer\Container;
+use Temkaa\SimpleContainer\Container\Builder;
 
-$container = new Container($config, $env);
-$container->compile();
+// you need to provide SplFileInfo of config file to builder
+$configFile = new SplFileInfo('/path/to/config/file.yaml');
+
+$container = (new Builder())->add($configFile)->compile();
+
+// or if you need multiple config files (for example for vendor package, why not?):
+$configFile1 = new SplFileInfo('/path/to/config/file_1.yaml');
+$configFile2 = new SplFileInfo('/path/to/config/file_2.yaml');
+$configFile3 = new SplFileInfo('/path/to/config/file_3.yaml');
+
+$container = (new Builder())
+  ->add($configFile1)
+  ->add($configFile2)
+  ->add($configFile3)
+  ->compile();
 
 /** @var ClassName $object */
 $object = $container->get(ClassName::class);
@@ -21,85 +35,31 @@ $object = $container->get('class_alias');
 $object = $container->get(InterfaceName::class);
 ```
 
-##### Env variables example:
-```php
-<?php
-
-declare(strict_types=1);
-
-$env = [
-    'variable_name_1' => 'variable_value_1',
-    'variable_name_2' => 'variable_value_2',
-];
-```
-
-```php
-<?php
-
-declare(strict_types=1);
-
-// if you are using Symfony\Component\Dotenv package then you will likely should do something like:
-use Symfony\Component\Dotenv\Dotenv;
-
-(new Dotenv())->loadEnv('/path/to/env/.env');
-
-$env = $_ENV;
-
-// or:
-
-(new Dotenv())->usePutEnv()->loadEnv('/path/to/env/.env');
-
-$env = getenv();
-
-// otherwise you can just fill key => value array with variable names and values (they are all must be strings!).
-```
-
 ##### Container config example:
-```php
-<?php
+```yaml
+services:
+  include:
+    # all class paths must be relative to config file to allow container find them
+    - '/../some/path/ClassName.php'
+    - '/../some/path/'
+  exclude:
+    - '/../some/path/ClassName.php'
+    - '/../some/path/'
 
-declare(strict_types=1);
+  interface_bindings:
+    interface_name: class_name
 
-$config = [
-    // always leave it as it is in example below
-    'config_dir' => __DIR__,
-    'services' => [
-        // this section includes files that will be autowired by container
-        // you can pass either filename or directory
-        // please note that class paths must be relative to `config_dir` path
-        'include' => [
-            '/../some/path/ClassName.php',
-            '/../some/path/'
-        ],
-        // this section includes files that will be excluded from autowiring by container
-        'exclude' => [
-            '/../some/path/ClassName.php',
-            '/../some/path/'
-        ],
-    ],
-    'interface_bindings' => [
-        // here you can bind interface implementation to a concrete class 
-        SomeInterface::class => SomeClass::class,
-    ],
-    'class_bindings' => [
-        SomeClass::class => [
-            // in `bind` section you can bind value to a variable in class constructor
-            'bind' => [
-                '$variableFirst' => 'variableValue',
-                // you can also bind env variable value to a variable in class constructor
-                '$variableSecond' => 'env(ENV_VARIABLE)',
-                // you can also bind `glued` env variables
-                '$variableThird' => 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)',
-                // this line will automatically pass an array of objects which have 
-                // 'tag_name' tag
-                '$variableFourth' => '!tagged tag_name'
-            ],
-            'tags' => [
-                'tag_1', 'tag_2', 'tag_3',
-            ],
-        ]
-    ],
-];
+  class_bindings:
+    class_name:
+      bind:
+        $variableName: 'variable_value'
+        $variableName2: 'env(ENV_VARIABLE)'
+        $variableName3: 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)'
+        $variableName4: !tagged tag_name
+      tags:
+        - tag1
+        - tag2
+        - tag3
 ```
 
 ### Container attributes example:
@@ -137,19 +97,17 @@ class Example
 - fix psalm errors
 - fix psr-2 to psr-12 if statements
 - Refactoring src + refactoring tests
-- Add env var resolving circular detection
-- env var processors (Enum, ...)
 - automatic release tag drafter
 - automated git actions tests passing
 - refactor
-- update readme
 - suppress psalm errors in tests
-- refactor/rename/add new exceptions which are self descriptive in each case
+- add file generator builder
 
-##### Here are some improvements which are gonna be implemented later:
+##### Here are some improvements which will be implemented later:
 - reflection caching
 - container compiling into cache (+ clearing that cache)
 - add decorator (both from attributes and config)
 - add singleton (both from attributes and config)
 - add global var bindings in config (variable name and value which will be bound everywhere with same name)
+- add env variable processors (allow casting env variable to enums, strings, floats etc.)
 

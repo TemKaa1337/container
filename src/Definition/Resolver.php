@@ -51,6 +51,8 @@ final class Resolver
     }
 
     /**
+     * @noinspection PhpPossiblePolymorphicInvocationInspection
+     *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */

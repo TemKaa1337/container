@@ -6,15 +6,15 @@ namespace Temkaa\SimpleContainer\Validator\Config;
 
 use SplFileInfo;
 use Symfony\Component\Filesystem\Exception\IOException;
+use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
-use Temkaa\SimpleContainer\Exception\ContainerConfigEntryNotFoundException;
 
 final class FileInfoValidator
 {
     public function validate(SplFileInfo $file): void
     {
         if (!$file->getRealPath()) {
-            throw new ContainerConfigEntryNotFoundException(
+            throw new EntryNotFoundException(
                 sprintf(
                     'Could not find container config in path "%s".',
                     $file->getPathname(),

@@ -39,9 +39,7 @@ final class Builder
     {
         (new FileInfoValidator())->validate($file);
 
-        // TODO: add maybe some validator here
         $config = Yaml::parseFile($file->getRealPath(), Yaml::PARSE_CUSTOM_TAGS);
-
         $config['file'] = $file;
 
         foreach ($this->validators as $validator) {

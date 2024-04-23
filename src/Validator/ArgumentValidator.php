@@ -54,7 +54,7 @@ final readonly class ArgumentValidator
                     'Cannot instantiate entry "%s" with argument "%s::%s".',
                     $id,
                     $argument->getName(),
-                    $argument->getType()->getName(),
+                    $argumentType->getName(),
                 ),
             );
         }

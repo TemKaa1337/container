@@ -51,9 +51,12 @@ final class Builder
 
     private Config $resolvingConfig;
 
+    private ExpressionParser $expressionParser;
+
     public function __construct(array $configs)
     {
         $this->configs = $configs;
+        $this->expressionParser = new ExpressionParser();
     }
 
     /**
@@ -122,7 +125,7 @@ final class Builder
         if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
             $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
 
-            $parsedValue = ExpressionParser::parse($expression);
+            $parsedValue = $this->expressionParser->parse($expression);
 
             return TypeCaster::cast($parsedValue, $argumentType->getName());
         }

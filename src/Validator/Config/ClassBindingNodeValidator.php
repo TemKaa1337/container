@@ -6,8 +6,8 @@ namespace Temkaa\SimpleContainer\Validator\Config;
 
 use Psr\Container\ContainerExceptionInterface;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
+use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
-use Temkaa\SimpleContainer\Exception\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Util\Env;
 
 final class ClassBindingNodeValidator implements ValidatorInterface
@@ -71,7 +71,7 @@ final class ClassBindingNodeValidator implements ValidatorInterface
                 foreach ($envVarsBindings as $binding) {
                     if (!Env::has($binding)) {
                         throw new EnvVariableNotFoundException(
-                            sprintf('Variable "%s" is not found in dov env variables.', $binding),
+                            sprintf('Variable "%s" is not found in env variables.', $binding),
                         );
                     }
                 }

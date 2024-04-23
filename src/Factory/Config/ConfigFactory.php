@@ -15,6 +15,7 @@ final readonly class ConfigFactory
         private array $config,
         private SplFileInfo $configFile,
         private ClassExtractor $classExtractor = new ClassExtractor(),
+        private ExpressionParser $expressionParser = new ExpressionParser(),
     ) {
     }
 
@@ -49,7 +50,7 @@ final readonly class ConfigFactory
 
             foreach ($variableBindings['bind'] ?? [] as $variableName => $variableValue) {
                 $variableName = str_replace('$', '', $variableName);
-                $variableValue = ExpressionParser::parse($variableValue);
+                $variableValue = $this->expressionParser->parse($variableValue);
 
                 $classVariables[$variableName] = $variableValue;
             }

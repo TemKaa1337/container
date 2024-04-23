@@ -10,12 +10,12 @@ use Temkaa\SimpleContainer\Model\Definition;
 final readonly class DefinitionRepository
 {
     /**
-     * @var array<class-string, \Temkaa\SimpleContainer\Model\Definition>
+     * @var array<class-string, Definition>
      */
     private array $definitions;
 
     /**
-     * @param \Temkaa\SimpleContainer\Model\Definition[] $definitions
+     * @param Definition[] $definitions
      */
     public function __construct(array $definitions)
     {
