@@ -23,13 +23,13 @@ use Throwable;
 /**
  * @psalm-suppress ArgumentTypeCoercion
  *
- * @noinspection   PhpArgumentWithoutNamedIdentifierInspection
+ * @noinspection PhpArgumentWithoutNamedIdentifierInspection
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.TooManyMethods)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  */
-final class ContainerTest extends AbstractContainerTest
+final class ContainerTest extends AbstractContainerTestCase
 {
     /**
      * @noinspection PhpUnhandledExceptionInspection

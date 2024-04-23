@@ -9,7 +9,7 @@ use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Tests\Unit\AbstractUnitTestCase;
 
-abstract class AbstractBuilderTest extends AbstractUnitTestCase
+abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
 {
     protected const GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
     protected const GENERATED_CONFIG_STUB_PATH = '/../../Fixture/Stub/Config/';

@@ -19,7 +19,7 @@ use Throwable;
 /**
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  */
-final class BuilderTest extends AbstractBuilderTest
+final class BuilderTest extends AbstractBuilderTestCase
 {
     /**
      * @var class-string $classWithBuiltInArgumentTypesNamespace

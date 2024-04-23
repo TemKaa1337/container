@@ -36,8 +36,7 @@ final readonly class ConfigFactory
     }
 
     /**
-     * @psalm-suppress InvalidReturnType
-     * @psalm-suppress InvalidReturnStatement
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement
      *
      * @return array<class-string, array<string, string>>
      */

@@ -94,13 +94,7 @@ class Example
 - if you have type hinted some class in class arguments, which is neither in `include` and `exclude` sections, it will also be autowired.
 
 ##### Here are some TODOs:
-- fix psalm errors
-- fix psr-2 to psr-12 if statements
 - Refactoring src + refactoring tests
-- automatic release tag drafter
-- automated git actions tests passing
-- refactor
-- suppress psalm errors in tests
 - add file generator builder
 
 ##### Here are some improvements which will be implemented later:

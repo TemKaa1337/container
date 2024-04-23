@@ -10,7 +10,7 @@ use ReflectionAttribute;
 use ReflectionClass;
 use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
 
-abstract class AbstractContainerTest extends AbstractUnitTestCase
+abstract class AbstractContainerTestCase extends AbstractUnitTestCase
 {
     protected const GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';
     protected const GENERATED_CONFIG_STUB_PATH = '/../Fixture/Stub/Config/';
