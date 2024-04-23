@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer;
+namespace Temkaa\SimpleContainer\Util;
 
 use DirectoryIterator;
 use Temkaa\SimpleContainer\Attribute\NonAutowirable;
@@ -30,18 +30,20 @@ final class ClassExtractor
             }
 
             $filePath = $file->getRealPath();
-            if ($file->isFile() && pathinfo($filePath, PATHINFO_EXTENSION) === 'php') {
-                $classes = [...$classes, ...$this->extractFromFile($filePath)];
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                $classes[] = $this->extractFromFile($filePath);
             } else if ($file->isDir()) {
-                $classes = [...$classes, ...$this->extract($filePath)];
+                $classes[] = $this->extract($filePath);
             }
         }
 
-        return $classes;
+        return array_merge(...$classes);
     }
 
     /**
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @psalm-suppress LessSpecificReturnStatement
+     * @psalm-suppress MoreSpecificReturnType
      *
      * @return class-string[]
      */
@@ -78,24 +80,18 @@ final class ClassExtractor
                 case T_CLASS:
                 case T_INTERFACE:
                 case T_TRAIT:
-                    $isClassConstant = false;
                     for ($j = $i - 1; $j > 0; --$j) {
                         if (!isset($tokens[$j][1])) {
                             break;
                         }
 
                         if ($tokens[$j][0] === T_DOUBLE_COLON) {
-                            $isClassConstant = true;
-                            break;
+                            break 2;
                         }
 
                         if (!in_array($tokens[$j][0], [T_WHITESPACE, T_DOC_COMMENT, T_COMMENT], true)) {
                             break;
                         }
-                    }
-
-                    if ($isClassConstant) {
-                        break;
                     }
 
                     while (isset($tokens[++$i][1])) {

@@ -5,29 +5,39 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Definition;
 
 use Psr\Container\ContainerExceptionInterface;
-use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionNamedType;
 use ReflectionParameter;
+use ReflectionType;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
 use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Attribute\NonAutowirable;
 use Temkaa\SimpleContainer\Attribute\Tag;
-use Temkaa\SimpleContainer\Config;
-use Temkaa\SimpleContainer\Definition\Deferred\TaggedReference;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
-use Temkaa\SimpleContainer\ExpressionParser;
-use Temkaa\SimpleContainer\TypeCaster;
+use Temkaa\SimpleContainer\Model\Container\Config;
+use Temkaa\SimpleContainer\Model\Definition;
+use Temkaa\SimpleContainer\Model\Definition\Deferred\TaggedReference;
+use Temkaa\SimpleContainer\Model\Definition\Reference;
+use Temkaa\SimpleContainer\Util\AttributeExtractor;
+use Temkaa\SimpleContainer\Util\ExpressionParser;
+use Temkaa\SimpleContainer\Util\TypeCaster;
 use Temkaa\SimpleContainer\Validator\ArgumentValidator;
 
+/**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
 final class Builder
 {
-    private readonly Config $config;
+    /**
+     * @var Config[] $configs
+     */
+    private readonly array $configs;
 
     /**
      * @var Definition[]
@@ -39,15 +49,14 @@ final class Builder
      */
     private array $definitionsBuilding = [];
 
-    private readonly ExpressionParser $expressionParser;
+    private ExpressionParser $expressionParser;
 
-    private readonly TypeCaster $typeCaster;
+    private Config $resolvingConfig;
 
-    public function __construct(Config $config, array $env)
+    public function __construct(array $configs)
     {
-        $this->config = $config;
-        $this->expressionParser = new ExpressionParser($env);
-        $this->typeCaster = new TypeCaster();
+        $this->configs = $configs;
+        $this->expressionParser = new ExpressionParser();
     }
 
     /**
@@ -58,28 +67,46 @@ final class Builder
      */
     public function build(): array
     {
-        foreach ($this->config->getAutowiredClasses() as $class) {
-            $this->buildDefinition($class, failIfUninstantiable: false);
+        foreach ($this->configs as $config) {
+            $this->resolvingConfig = $config;
+
+            foreach ($config->getIncludedClasses() as $class) {
+                $this->buildDefinition($class, failIfUninstantiable: false);
+            }
         }
 
         return $this->definitions;
     }
 
     /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @param class-string $id
+     *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
     private function buildArgument(ReflectionParameter $argument, string $id): mixed
     {
-        // TODO: what arguments cannot be solved in preparation time? (what can be deferred?)
-        // 1. tagged iterator (done)
-        // 2. decorator
-
         (new ArgumentValidator())->validate($argument, $id);
 
+        // needed in order to suppress psalm undefined method messages
+        /** @var ReflectionType&ReflectionNamedType $argumentType */
         $argumentType = $argument->getType();
+
+        if (!$argumentType) {
+            throw new UnresolvableArgumentException(
+                sprintf(
+                    'Cannot resolve argument "%s" in "%s" because of missing type.',
+                    $argument->getName(),
+                    $id,
+                ),
+            );
+        }
+
         if ($argumentAttributes = $argument->getAttributes(Tagged::class)) {
-            $boundTagName = $this->extractAttributeParameters($argumentAttributes, parameter: 'tag')[0];
+            $boundTagName = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'tag')[0];
 
             if (!$argumentType->isBuiltin() || !in_array($argumentType->getName(), ['iterable', 'array'])) {
                 throw new UnresolvableArgumentException(
@@ -96,17 +123,17 @@ final class Builder
         }
 
         if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
-            $expression = $this->extractAttributeParameters($argumentAttributes, parameter: 'expression')[0];
+            $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
 
             $parsedValue = $this->expressionParser->parse($expression);
 
-            return $this->typeCaster->cast($parsedValue, $argumentType->getName());
+            return TypeCaster::cast($parsedValue, $argumentType->getName());
         }
 
         if ($argumentType->isBuiltin()) {
             $argumentName = $argument->getName();
 
-            $boundVars = $this->config->getClassBoundVariables($id);
+            $boundVars = $this->resolvingConfig->getClassBoundVariables($id);
             if (isset($boundVars[$argumentName]) && str_starts_with($boundVars[$argumentName], '!tagged')) {
                 $tag = trim(str_replace('!tagged', '', $boundVars[$argumentName]));
 
@@ -125,17 +152,20 @@ final class Builder
 
                 $resolvedValue = $argumentType->allowsNull() && !isset($boundVars[$argumentName])
                     ? null
-                    : $this->typeCaster->cast($boundVars[$argumentName], $argumentType->getName());
+                    : TypeCaster::cast($boundVars[$argumentName], $argumentType->getName());
             }
 
             return $resolvedValue;
         }
 
+        /** @var class-string $entryId */
         $entryId = $argumentType->getName();
 
         $dependencyReflection = new ReflectionClass($entryId);
         if ($dependencyReflection->isInterface()) {
-            $interfaceImplementation = $this->config->getInterfaceImplementation($dependencyReflection->getName());
+            $interfaceImplementation = $this->resolvingConfig->getInterfaceImplementation(
+                $dependencyReflection->getName(),
+            );
 
             $this->buildDefinition($interfaceImplementation);
 
@@ -150,6 +180,9 @@ final class Builder
     }
 
     /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
      * @param class-string $id
      *
      * @throws ContainerExceptionInterface
@@ -185,7 +218,7 @@ final class Builder
             throw new UninstantiableEntryException(sprintf('Cannot instantiate entry with id "%s".', $id));
         }
 
-        if (in_array($id, $this->config->getNonAutowiredClasses(), strict: true)) {
+        if (in_array($id, $this->resolvingConfig->getExcludedClasses(), strict: true)) {
             throw new NonAutowirableClassException(
                 sprintf('Cannot autowire class "%s" as it is in "exclude" config parameter.', $id),
             );
@@ -193,7 +226,7 @@ final class Builder
 
         $definition = (new Definition())->setId($id);
 
-        $nonAutowirableTags = $this->extractAttributes($reflection->getAttributes(), NonAutowirable::class);
+        $nonAutowirableTags = $reflection->getAttributes(NonAutowirable::class);
         if ($nonAutowirableTags) {
             if (!$failIfUninstantiable) {
                 return;
@@ -225,44 +258,6 @@ final class Builder
     }
 
     /**
-     * @template T of ReflectionClass
-     * @template C of object
-     *
-     * @param T<C>[] $attributes
-     * @param string $parameter
-     *
-     * @return string[]
-     *
-     * @throws ReflectionException
-     */
-    private function extractAttributeParameters(array $attributes, string $parameter): array
-    {
-        return array_map(
-            static fn (ReflectionAttribute $attribute): string => $attribute->newInstance()->{$parameter},
-            $attributes,
-        );
-    }
-
-    /**
-     * @template T of ReflectionAttribute
-     * @template C of object
-     *
-     * @param T[]             $attributes
-     * @param class-string<C> $class
-     *
-     * @return T<C>[]
-     */
-    private function extractAttributes(array $attributes, string $class): array
-    {
-        return array_values(
-            array_filter(
-                $attributes,
-                static fn (ReflectionAttribute $attribute): bool => $attribute->getName() === $class,
-            ),
-        );
-    }
-
-    /**
      * @param class-string $id
      */
     private function isDefinitionBuilding(string $id): bool
@@ -272,32 +267,31 @@ final class Builder
 
     /**
      * @throws ContainerExceptionInterface
-     * @throws ReflectionException
      */
     private function populateDefinition(Definition $definition, ReflectionClass $r): void
     {
-        $classAttributes = $r->getAttributes();
-
-        $classTags = $this->extractAttributes($classAttributes, Tag::class);
-        $classAliases = $this->extractAttributes($classAttributes, Alias::class);
+        $classTags = $r->getAttributes(Tag::class);
+        $classAliases = $r->getAttributes(Alias::class);
 
         $definition
-            ->addTags($this->config->getClassTags($r->getName()))
-            ->addTags($this->extractAttributeParameters($classTags, 'name'))
-            ->addAliases($this->extractAttributeParameters($classAliases, 'name'));
+            ->addTags($this->resolvingConfig->getClassTags($r->getName()))
+            ->addTags(AttributeExtractor::extractParameters($classTags, 'name'))
+            ->addAliases(AttributeExtractor::extractParameters($classAliases, 'name'));
 
         $interfaces = $r->getInterfaces();
         $definition->addImplements(array_keys($interfaces));
         foreach ($interfaces as $interface) {
             $interfaceName = $interface->getName();
-            if ($this->config->hasImplementation($interfaceName)
-                && $this->config->getInterfaceImplementation($interfaceName) === $r->getName()
+
+            if (
+                $this->resolvingConfig->hasImplementation($interfaceName)
+                && $this->resolvingConfig->getInterfaceImplementation($interfaceName) === $r->getName()
             ) {
                 $definition->addAlias($interfaceName);
             }
 
-            $interfaceTags = $this->extractAttributes($interface->getAttributes(), Tag::class);
-            $definition->addTags($this->extractAttributeParameters($interfaceTags, 'name'));
+            $interfaceTags = $interface->getAttributes(Tag::class);
+            $definition->addTags(AttributeExtractor::extractParameters($interfaceTags, 'name'));
         }
     }
 
