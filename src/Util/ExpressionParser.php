@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Util;
 
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableCircularException;
+use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 
 final class ExpressionParser
 {
@@ -19,6 +20,12 @@ final class ExpressionParser
         }
 
         foreach ($envVarsBindings as $binding) {
+            if (!Env::has($binding)) {
+                throw new EnvVariableNotFoundException(
+                    sprintf('Variable "%s" is not found in env variables.', $binding),
+                );
+            }
+
             $expression = str_replace(
                 sprintf('env(%s)', $binding),
                 Env::get($binding),

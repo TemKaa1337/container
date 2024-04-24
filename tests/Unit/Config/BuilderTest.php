@@ -8,6 +8,7 @@ use ReflectionClass;
 use SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 use Temkaa\SimpleContainer\Container\Builder;
+use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException as ConfigEntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
@@ -35,13 +36,13 @@ final class BuilderTest extends AbstractBuilderTestCase
         $classFullNamespace1 = self::GENERATED_CLASS_NAMESPACE.$className1;
         $className2 = ClassGenerator::getClassName();
         $interfaceName = ClassGenerator::getClassName();
-        $interfaceAbsoluteNamespace = self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName;
+        $interfaceFullNamespace = self::GENERATED_CLASS_NAMESPACE.$interfaceName;
         (new ClassGenerator())
             ->addBuilder(
                 (new ClassBuilder())
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
                     ->setName($className1)
-                    ->setInterfaceImplementations([$interfaceAbsoluteNamespace]),
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
             )
             ->addBuilder(
                 (new ClassBuilder())
@@ -56,21 +57,27 @@ final class BuilderTest extends AbstractBuilderTestCase
             )
             ->generate();
 
+        /** @psalm-suppress PossiblyInvalidArrayAccess */
         [$configContent, $configFile] = $this->generateConfig(
             services: [
-                'include' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php"],
-                'exclude' => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php"],
+                Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php"],
+                Structure::Exclude->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php"],
             ],
-            interfaceBindings: [$interfaceAbsoluteNamespace => $classFullNamespace1],
+            globalBindings: [
+                '$variableOne' => 'env(APP_BOUND_VAR)',
+                '$variableTwo' => 'env(ENV_STRING_VAL)',
+            ],
+            interfaceBindings: [$interfaceFullNamespace => $classFullNamespace1],
             classBindings: [
                 $classFullNamespace1 => [
-                    'bind' => [
+                    Structure::Bind->value => [
                         '$string' => 'string',
                         '$float'  => '3.14',
                     ],
-                    'tags' => ['tag_1', 'tag_2'],
+                    Structure::Tags->value => ['tag_1', 'tag_2'],
                 ],
             ],
+            withConfig: true,
         );
 
         $builder = (new Builder())->add($configFile);
@@ -83,7 +90,7 @@ final class BuilderTest extends AbstractBuilderTestCase
                 '',
                 $classPath,
             ),
-            $configContent['services']['include'],
+            $configContent[Structure::Services->value][Structure::Include->value],
         );
         $nonAutowiredClassNames = array_map(
             static fn (string $classPath): string => str_replace(
@@ -94,7 +101,7 @@ final class BuilderTest extends AbstractBuilderTestCase
                 '',
                 $classPath,
             ),
-            $configContent['services']['exclude'],
+            $configContent[Structure::Services->value][Structure::Exclude->value],
         );
 
         $includedClassesNamespaces = array_map(
@@ -109,13 +116,21 @@ final class BuilderTest extends AbstractBuilderTestCase
         self::assertEquals($includedClassesNamespaces, $config->getIncludedClasses());
         self::assertEquals($excludedClassesNamespaces, $config->getExcludedClasses());
 
-        /** @var class-string $interfaceName */
-        $interfaceName = array_keys($configContent['interface_bindings'])[0];
-        $interfaceImplementationName = array_values($configContent['interface_bindings'])[0];
+        $interface = current(
+            array_values(
+                array_filter(
+                    array_keys($configContent[Structure::Services->value]),
+                    static fn (array|string $interfaceName): bool => is_string($interfaceName) && interface_exists(
+                            $interfaceName,
+                        ),
+                ),
+            ),
+        );
 
+        /** @psalm-suppress InvalidArrayOffset */
         self::assertEquals(
-            $interfaceImplementationName,
-            $config->getInterfaceImplementation($interfaceName),
+            [$interface => $configContent[Structure::Services->value][$interface]],
+            $config->getInterfaceImplementations(),
         );
 
         /** @psalm-suppress ArgumentTypeCoercion */
@@ -131,6 +146,14 @@ final class BuilderTest extends AbstractBuilderTestCase
         self::assertEquals(
             ['tag_1', 'tag_2'],
             $config->getClassTags($classFullNamespace1),
+        );
+
+        self::assertEquals(
+            [
+                'variableOne' => 'bound_variable_value',
+                'variableTwo' => 'string',
+            ],
+            $config->getGlobalBoundVariables()
         );
     }
 
@@ -164,21 +187,23 @@ final class BuilderTest extends AbstractBuilderTestCase
         string $exceptionClass,
         string $exceptionMessage,
     ): void {
-        $configFile = $this->generateConfig(interfaceBindings: $config)[1];
+        $configFile = $this->generateConfig(interfaceBindings: $config);
 
         $this->expectException($exceptionClass);
         $this->expectExceptionMessage($exceptionMessage);
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         (new Builder())->add($configFile);
     }
 
     public function testConfigDoesNotInitDueToInvalidServicePath(): void
     {
-        $configFile = $this->generateConfig(services: ['exclude' => ['src/Factory/']])[1];
+        $configFile = $this->generateConfig(services: [Structure::Exclude->value => ['src/Factory/']]);
 
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "src/Factory/" does not exist.');
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         (new Builder())->add($configFile);
     }
 
@@ -189,16 +214,18 @@ final class BuilderTest extends AbstractBuilderTestCase
      */
     public function testConfigDoesNotLoadDueToIncorrectConfigNodeTypes(
         mixed $services,
+        mixed $globalBindings,
         mixed $interfaceBindings,
         mixed $classBindings,
         string $exceptionClass,
         string $exceptionMessage,
     ): void {
-        $configFile = $this->generateConfig($services, $interfaceBindings, $classBindings)[1];
+        $configFile = $this->generateConfig($services, $globalBindings, $interfaceBindings, $classBindings);
 
         $this->expectException($exceptionClass);
         $this->expectExceptionMessage($exceptionMessage);
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         (new Builder())->add($configFile);
     }
 
@@ -216,10 +243,11 @@ final class BuilderTest extends AbstractBuilderTestCase
 
         $configFile = $this->generateConfig(
             classBindings: [
-                $classFullNamespace => ['bind' => ['string' => 'env(APP_BOUND_VAR)']],
+                $classFullNamespace => [Structure::Bind->value => ['string' => 'env(APP_BOUND_VAR)']],
             ],
-        )[1];
+        );
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         $builder = (new Builder())->add($configFile);
 
         $config = $this->getConfigContent($builder);
@@ -235,8 +263,9 @@ final class BuilderTest extends AbstractBuilderTestCase
 
     public function testConfigHasNoBoundVariables(): void
     {
-        $configFile = $this->generateConfig()[1];
+        $configFile = $this->generateConfig();
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         $builder = (new Builder())->add($configFile);
 
         $config = $this->getConfigContent($builder);
@@ -247,8 +276,9 @@ final class BuilderTest extends AbstractBuilderTestCase
 
     public function testConfigHasNoTagsForClass(): void
     {
-        $configFile = $this->generateConfig()[1];
+        $configFile = $this->generateConfig();
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         $builder = (new Builder())->add($configFile);
 
         $config = $this->getConfigContent($builder);
@@ -270,13 +300,14 @@ final class BuilderTest extends AbstractBuilderTestCase
 
         $configFile = $this->generateConfig(
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => ['bind' => ['string' => 'env(APP_DEBUG)']],
+                self::GENERATED_CLASS_NAMESPACE.$className => [Structure::Bind->value => ['string' => 'env(APP_DEBUG)']],
             ],
-        )[1];
+        );
 
         $this->expectException(EnvVariableNotFoundException::class);
         $this->expectExceptionMessage('Variable "APP_DEBUG" is not found in env variables.');
 
+        /** @psalm-suppress PossiblyInvalidArgument */
         (new Builder())->add($configFile);
     }
 
@@ -285,9 +316,8 @@ final class BuilderTest extends AbstractBuilderTestCase
      */
     public function testConfigHasNotInterfaceImplementation(): void
     {
-        $configFile = $this->generateConfig()[1];
-
-        $builder = (new Builder())->add($configFile);
+        /** @psalm-suppress PossiblyInvalidArgument */
+        $builder = (new Builder())->add($this->generateConfig());
 
         $config = $this->getConfigContent($builder);
 
@@ -298,24 +328,45 @@ final class BuilderTest extends AbstractBuilderTestCase
         $config->getInterfaceImplementation('NonExistentInterface');
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
     private function generateConfig(
         mixed $services = [],
+        mixed $globalBindings = [],
         mixed $interfaceBindings = [],
         mixed $classBindings = [],
-    ): array {
+        bool $withConfig = false,
+    ): array|SplFileInfo {
 
-        $config = [];
+        $config = [Structure::Services->value => []];
 
         if ($services !== []) {
-            $config['services'] = $services;
+            $config[Structure::Services->value] = $services;
+        }
+
+        if ($globalBindings !== []) {
+            $config[Structure::Services->value][Structure::Bind->value] = $globalBindings;
         }
 
         if ($interfaceBindings !== []) {
-            $config['interface_bindings'] = $interfaceBindings;
+            if (is_array($interfaceBindings)) {
+                foreach ($interfaceBindings as $interfaceName => $className) {
+                    $config[Structure::Services->value][$interfaceName] = $className;
+                }
+            } else {
+                $config[Structure::Services->value][] = $interfaceBindings;
+            }
         }
 
         if ($classBindings !== []) {
-            $config['class_bindings'] = $classBindings;
+            if (is_array($classBindings)) {
+                foreach ($classBindings as $className => $classInfo) {
+                    $config[Structure::Services->value][$className] = $classInfo;
+                }
+            } else {
+                $config[Structure::Services->value][] = $classBindings;
+            }
         }
 
         $configPath = realpath(__DIR__.self::GENERATED_CONFIG_STUB_PATH).'/config.yaml';
@@ -324,7 +375,9 @@ final class BuilderTest extends AbstractBuilderTestCase
             Yaml::dump($config),
         );
 
-        return [$config, new SplFileInfo($configPath)];
+        $configFile = new SplFileInfo($configPath);
+
+        return $withConfig ? [$config, $configFile] : $configFile;
     }
 
     private function getConfigContent(Builder $builder): Config

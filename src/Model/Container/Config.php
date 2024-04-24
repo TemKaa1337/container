@@ -25,6 +25,11 @@ final class Config
     private array $excludedClasses = [];
 
     /**
+     * @var array<string, string>
+     */
+    private array $globalBoundVariables = [];
+
+    /**
      * @var class-string[]
      */
     private array $includedClasses = [];
@@ -93,6 +98,24 @@ final class Config
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function getGlobalBoundVariables(): array
+    {
+        return $this->globalBoundVariables;
+    }
+
+    /**
+     * @param array<string, string> $globalBoundVariables
+     */
+    public function setGlobalBoundVariables(array $globalBoundVariables): Config
+    {
+        $this->globalBoundVariables = $globalBoundVariables;
+
+        return $this;
+    }
+
+    /**
      * @return class-string[]
      */
     public function getIncludedClasses(): array
@@ -126,11 +149,11 @@ final class Config
     }
 
     /**
-     * @param class-string $interface
+     * @return array<class-string, class-string>
      */
-    public function hasImplementation(string $interface): bool
+    public function getInterfaceImplementations(): array
     {
-        return isset($this->interfaceImplementations[$interface]);
+        return $this->interfaceImplementations;
     }
 
     /**
@@ -141,5 +164,13 @@ final class Config
         $this->interfaceImplementations = $interfaceImplementations;
 
         return $this;
+    }
+
+    /**
+     * @param class-string $interface
+     */
+    public function hasImplementation(string $interface): bool
+    {
+        return isset($this->interfaceImplementations[$interface]);
     }
 }

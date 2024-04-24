@@ -4,99 +4,91 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Validator\Config;
 
-use Psr\Container\ContainerExceptionInterface;
+use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
-use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
-use Temkaa\SimpleContainer\Util\Env;
+use Temkaa\SimpleContainer\Util\ExpressionParser;
 
+// TODO: add tests and edge cases on config where for example services is just array of keys without values
 final class ClassBindingNodeValidator implements ValidatorInterface
 {
     /**
-     * @throws ContainerExceptionInterface
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function validate(array $config): void
     {
-        if (!isset($config['class_bindings'])) {
-            return;
-        }
-
-        if (!is_array($config['class_bindings'])) {
-            throw new InvalidConfigNodeTypeException(
-                'Node "class_bindings" must be of "array<string, array>" type.',
-            );
-        }
-
-        foreach ($config['class_bindings'] as $className => $classInfo) {
-            if (!is_string($className) || !is_array($classInfo)) {
+        foreach ($config[Structure::Services->value] ?? [] as $nodeName => $nodeValue) {
+            if (!is_string($nodeName)) {
                 throw new InvalidConfigNodeTypeException(
-                    'Node "class_bindings" must be of "array<string, array>" type.',
+                    'Node "services.{className|interfaceName}" must be of "array<string, array|string>" type.',
                 );
             }
 
-            if (!class_exists($className)) {
-                throw new ClassNotFoundException($className);
+            if (Structure::tryFrom($nodeName)) {
+                continue;
             }
 
-            if (isset($classInfo['bind'])) {
-                $this->validateBoundVariables($classInfo);
+            if (!class_exists($nodeName) && !interface_exists($nodeName)) {
+                throw new ClassNotFoundException($nodeName);
             }
 
-            if (isset($classInfo['tags'])) {
-                $this->validateTags($classInfo);
+            if (interface_exists($nodeName)) {
+                continue;
+            }
+
+            if (!class_exists($nodeName)) {
+                throw new ClassNotFoundException($nodeName);
+            }
+
+            if (!is_array($nodeValue) || array_is_list($nodeValue)) {
+                throw new InvalidConfigNodeTypeException(
+                    sprintf('Node "services.%s" must be of "array<string, array<string, array>>" type.', $nodeName),
+                );
+            }
+
+            if (isset($nodeValue[Structure::Bind->value])) {
+                $this->validateBoundVariables($nodeValue);
+            }
+
+            if (isset($nodeValue[Structure::Tags->value])) {
+                $this->validateTags($nodeValue);
             }
         }
     }
 
     private function validateBoundVariables(array $classInfo): void
     {
-        if (!is_array($classInfo['bind'])) {
+        if (!is_array($classInfo[Structure::Bind->value])) {
             throw new InvalidConfigNodeTypeException(
-                'Node "class_bindings.{className}.bind" must be of "array<string, string>" type.',
+                'Node "services.{className}.bind" must be of "array<string, string>" type.',
             );
         }
 
-        foreach ($classInfo['bind'] as $variableName => $variableValue) {
+        $expressionParser = new ExpressionParser();
+        foreach ($classInfo[Structure::Bind->value] as $variableName => $variableValue) {
             if (!is_string($variableName) || !is_string($variableValue)) {
                 throw new InvalidConfigNodeTypeException(
-                    'Node "class_bindings.{className}.bind" must be of "array<string, string>" type.',
+                    'Node "services.{className}.bind" must be of "array<string, string>" type.',
                 );
             }
 
-            $matches = [];
-            preg_match_all('#env\((.*?)\)#', $variableValue, matches: $matches);
-
-            $envVarsBindings = $matches[1] ?? [];
-            if ($envVarsBindings) {
-                foreach ($envVarsBindings as $binding) {
-                    if (!Env::has($binding)) {
-                        throw new EnvVariableNotFoundException(
-                            sprintf('Variable "%s" is not found in env variables.', $binding),
-                        );
-                    }
-                }
-            }
+            $expressionParser->parse($variableValue);
         }
     }
 
     private function validateTags(array $classInfo): void
     {
-        if (!is_array($classInfo['tags'])) {
+        if (!is_array($classInfo[Structure::Tags->value]) || !array_is_list($classInfo[Structure::Tags->value])) {
             throw new InvalidConfigNodeTypeException(
-                'Node "class_bindings.{className}.tags" must be of "array<int, string>" type.',
+                'Node "services.{className}.tags" must be of "list<string>" type.',
             );
         }
 
-        if (!array_is_list($classInfo['tags'])) {
-            throw new InvalidConfigNodeTypeException(
-                'Node "class_bindings.{className}.tags" must be of "array<int, string>" type.',
-            );
-        }
-
-        foreach ($classInfo['tags'] as $tag) {
+        foreach ($classInfo[Structure::Tags->value] as $tag) {
             if (!is_string($tag)) {
                 throw new InvalidConfigNodeTypeException(
-                    'Node "class_bindings.{className}.tags" must be of "array<int, string>" type.',
+                    'Node "services.{className}.tags" must be of "list<string>" type.',
                 );
             }
         }
