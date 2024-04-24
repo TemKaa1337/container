@@ -9,7 +9,6 @@ use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 
-// TODO: add tests and edge cases on config where for example services is just array of keys without values
 final class ClassBindingNodeValidator implements ValidatorInterface
 {
     /**
