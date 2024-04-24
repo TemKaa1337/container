@@ -130,7 +130,7 @@ final class BuilderTest extends AbstractBuilderTestCase
         /** @psalm-suppress InvalidArrayOffset */
         self::assertEquals(
             [$interface => $configContent[Structure::Services->value][$interface]],
-            $config->getInterfaceImplementations(),
+            (new ReflectionClass($config))->getProperty('interfaceImplementations')->getValue($config),
         );
 
         /** @psalm-suppress ArgumentTypeCoercion */

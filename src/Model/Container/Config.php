@@ -149,11 +149,11 @@ final class Config
     }
 
     /**
-     * @return array<class-string, class-string>
+     * @param class-string $interface
      */
-    public function getInterfaceImplementations(): array
+    public function hasImplementation(string $interface): bool
     {
-        return $this->interfaceImplementations;
+        return isset($this->interfaceImplementations[$interface]);
     }
 
     /**
@@ -164,13 +164,5 @@ final class Config
         $this->interfaceImplementations = $interfaceImplementations;
 
         return $this;
-    }
-
-    /**
-     * @param class-string $interface
-     */
-    public function hasImplementation(string $interface): bool
-    {
-        return isset($this->interfaceImplementations[$interface]);
     }
 }
