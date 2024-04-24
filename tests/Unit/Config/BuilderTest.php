@@ -153,7 +153,7 @@ final class BuilderTest extends AbstractBuilderTestCase
                 'variableOne' => 'bound_variable_value',
                 'variableTwo' => 'string',
             ],
-            $config->getGlobalBoundVariables()
+            $config->getGlobalBoundVariables(),
         );
     }
 
