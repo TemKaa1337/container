@@ -9,6 +9,7 @@ use Psr\Container\ContainerInterface;
 use ReflectionException;
 use SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
+use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Factory\Config\ConfigFactory;
 use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Provider\Config\ValidatorProvider;
@@ -40,7 +41,7 @@ final class Builder
         (new FileInfoValidator())->validate($file);
 
         $config = Yaml::parseFile($file->getRealPath(), Yaml::PARSE_CUSTOM_TAGS);
-        $config['file'] = $file;
+        $config[Structure::File->value] = $file;
 
         foreach ($this->validators as $validator) {
             $validator->validate($config);

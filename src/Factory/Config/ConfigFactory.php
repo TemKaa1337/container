@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Factory\Config;
 
 use SplFileInfo;
+use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Util\ClassExtractor;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
@@ -21,13 +22,15 @@ final readonly class ConfigFactory
 
     public function create(): Config
     {
+        $globalBoundVariables = $this->getGlobalBoundVariables();
         $classBoundVariables = $this->getClassBoundVariables();
         $classTags = $this->getClassTags();
         $interfaceBindings = $this->parseInterfaceBindings();
-        $includedClasses = $this->getIncludeClasses();
+        $includedClasses = $this->getIncludedClasses();
         $excludedClasses = $this->getExcludedClasses();
 
         return (new Config())
+            ->setGlobalBoundVariables($globalBoundVariables)
             ->setClassBoundVariables($classBoundVariables)
             ->setClassTags($classTags)
             ->setInterfaceImplementations($interfaceBindings)
@@ -43,18 +46,12 @@ final readonly class ConfigFactory
     private function getClassBoundVariables(): array
     {
         $variables = [];
-
-        foreach ($this->config['class_bindings'] ?? [] as $className => $variableBindings) {
-            $classVariables = [];
-
-            foreach ($variableBindings['bind'] ?? [] as $variableName => $variableValue) {
-                $variableName = str_replace('$', '', $variableName);
-                $variableValue = $this->expressionParser->parse($variableValue);
-
-                $classVariables[$variableName] = $variableValue;
+        foreach ($this->config[Structure::Services->value] ?? [] as $nodeName => $nodeValue) {
+            if (!class_exists($nodeName)) {
+                continue;
             }
 
-            $variables[$className] = $classVariables;
+            $variables[$nodeName] = $this->parseVariables($nodeValue[Structure::Bind->value] ?? []);
         }
 
         return $variables;
@@ -66,8 +63,12 @@ final readonly class ConfigFactory
     private function getClassTags(): array
     {
         $tags = [];
-        foreach ($this->config['class_bindings'] ?? [] as $className => $variableBindings) {
-            $tags[$className] = $variableBindings['tags'] ?? [];
+        foreach ($this->config[Structure::Services->value] ?? [] as $nodeName => $nodeValue) {
+            if (!class_exists($nodeName)) {
+                continue;
+            }
+
+            $tags[$nodeName] = $nodeValue[Structure::Tags->value] ?? [];
         }
 
         return $tags;
@@ -79,7 +80,7 @@ final readonly class ConfigFactory
     private function getExcludedClasses(): array
     {
         $excludeAutowireClasses = [];
-        foreach ($this->config['services']['exclude'] ?? [] as $classPath) {
+        foreach ($this->config[Structure::Services->value][Structure::Exclude->value] ?? [] as $classPath) {
             $classFile = new SplFileInfo(sprintf('%s/%s', $this->configFile->getPath(), $classPath));
 
             $excludeAutowireClasses[] = $this->classExtractor->extract($classFile->getRealPath());
@@ -89,12 +90,20 @@ final readonly class ConfigFactory
     }
 
     /**
+     * @return array<string, string>
+     */
+    private function getGlobalBoundVariables(): array
+    {
+        return $this->parseVariables($this->config[Structure::Services->value][Structure::Bind->value] ?? []);
+    }
+
+    /**
      * @return class-string[]
      */
-    private function getIncludeClasses(): array
+    private function getIncludedClasses(): array
     {
         $includeAutowireClasses = [];
-        foreach ($this->config['services']['include'] ?? [] as $classPath) {
+        foreach ($this->config[Structure::Services->value][Structure::Include->value] ?? [] as $classPath) {
             $classFile = new SplFileInfo(sprintf('%s/%s', $this->configFile->getPath(), $classPath));
 
             $includeAutowireClasses[] = $this->classExtractor->extract($classFile->getRealPath());
@@ -108,6 +117,33 @@ final readonly class ConfigFactory
      */
     private function parseInterfaceBindings(): array
     {
-        return $this->config['interface_bindings'] ?? [];
+        $interfaceBindings = [];
+        foreach ($this->config[Structure::Services->value] ?? [] as $nodeName => $nodeValue) {
+            if (!interface_exists($nodeName)) {
+                continue;
+            }
+
+            $interfaceBindings[$nodeName] = $nodeValue;
+        }
+
+        return $interfaceBindings;
+    }
+
+    /**
+     * @param array<string, string> $variablesInfo
+     *
+     * @return array<string, string>
+     */
+    private function parseVariables(array $variablesInfo): array
+    {
+        $variables = [];
+
+        foreach ($variablesInfo as $variableName => $variableValue) {
+            $variableName = str_replace('$', '', $variableName);
+
+            $variables[$variableName] = $this->expressionParser->parse($variableValue);
+        }
+
+        return $variables;
     }
 }

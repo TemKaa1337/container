@@ -133,13 +133,19 @@ final class Builder
         if ($argumentType->isBuiltin()) {
             $argumentName = $argument->getName();
 
-            $boundVars = $this->resolvingConfig->getClassBoundVariables($id);
-            if (isset($boundVars[$argumentName]) && str_starts_with($boundVars[$argumentName], '!tagged')) {
-                $tag = trim(str_replace('!tagged', '', $boundVars[$argumentName]));
+            $classBoundVars = $this->resolvingConfig->getClassBoundVariables($id);
+            $globalBoundVars = $this->resolvingConfig->getGlobalBoundVariables();
+
+            $hasBoundVariable = $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? false;
+            $boundVariableValue = $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;
+
+            if ($hasBoundVariable && str_starts_with((string) $boundVariableValue, '!tagged')) {
+                /** @psalm-suppress PossiblyNullArgument */
+                $tag = trim(str_replace('!tagged', '', $boundVariableValue));
 
                 $resolvedValue = new TaggedReference($tag);
             } else {
-                if (!isset($boundVars[$argumentName]) && !$argumentType->allowsNull()) {
+                if (!$hasBoundVariable && !$argumentType->allowsNull()) {
                     throw new UnresolvableArgumentException(
                         sprintf(
                             'Cannot instantiate entry "%s" with argument "%s::%s".',
@@ -150,9 +156,9 @@ final class Builder
                     );
                 }
 
-                $resolvedValue = $argumentType->allowsNull() && !isset($boundVars[$argumentName])
+                $resolvedValue = $argumentType->allowsNull() && !$hasBoundVariable
                     ? null
-                    : TypeCaster::cast($boundVars[$argumentName], $argumentType->getName());
+                    : TypeCaster::cast($boundVariableValue, $argumentType->getName());
             }
 
             return $resolvedValue;

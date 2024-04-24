@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Config;
 
+use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
@@ -37,8 +38,9 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
                 $services,
                 [],
                 [],
+                [],
                 InvalidConfigNodeTypeException::class,
-                'Node "services" must be of "array<include|exclude, array>" type.',
+                'Node "services" must be of "array<string, array|string>" type.',
             ];
         }
 
@@ -49,12 +51,13 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
             '',
         ];
 
-        foreach (['include', 'exclude'] as $key) {
+        foreach ([Structure::Include->value, Structure::Exclude->value] as $key) {
             foreach ($invalidTypes as $invalidType) {
                 $services = [$key => $invalidType];
 
                 yield [
                     $services,
+                    [],
                     [],
                     [],
                     InvalidConfigNodeTypeException::class,
@@ -68,10 +71,11 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
 
             yield [
                 [],
+                [],
                 $interfaceBindings,
                 [],
                 InvalidConfigNodeTypeException::class,
-                'Node "interface_bindings" must be of "array<string, string>" type.',
+                'Node "services" must be of "array<string, array|string>" type.',
             ];
         }
 
@@ -87,10 +91,11 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
 
             yield [
                 [],
+                [],
                 $interfaceBindings,
                 [],
                 InvalidConfigNodeTypeException::class,
-                'Node "interface_bindings" must be of "array<string, string>" type.',
+                'Node "services.{className|interfaceName}" must be of "array<string, array|string>" type.',
             ];
         }
 
@@ -105,10 +110,11 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
 
             yield [
                 [],
+                [],
                 $interfaceBindings,
                 [],
-                InvalidConfigNodeTypeException::class,
-                'Node "interface_bindings" must be of "array<string, string>" type.',
+                ClassNotFoundException::class,
+                'Class "interface" is not found.',
             ];
         }
 
@@ -124,9 +130,23 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
             yield [
                 [],
                 [],
+                [],
                 $classBindings,
                 InvalidConfigNodeTypeException::class,
-                'Node "class_bindings" must be of "array<string, array>" type.',
+                'Node "services" must be of "array<string, array|string>" type.',
+            ];
+        }
+
+        foreach ($invalidTypes as $invalidType) {
+            $globalBoundVariables = $invalidType;
+
+            yield [
+                [],
+                $globalBoundVariables,
+                [],
+                [],
+                InvalidConfigNodeTypeException::class,
+                'Node "services.bind" must be of "array<string, string>" type.',
             ];
         }
 
@@ -146,47 +166,54 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
             yield [
                 [],
                 [],
+                [],
                 $classBindings,
                 InvalidConfigNodeTypeException::class,
-                'Node "class_bindings" must be of "array<string, array>" type.',
+                sprintf(
+                    'Node "services.%s" must be of "array<string, array<string, array>>" type.',
+                    $emptyClassNamespace,
+                ),
             ];
         }
 
         foreach ($invalidTypes as $invalidType) {
-            $classBindings = [$emptyClassNamespace => ['bind' => $invalidType]];
+            $classBindings = [$emptyClassNamespace => [Structure::Bind->value => $invalidType]];
 
             yield [
                 [],
                 [],
+                [],
                 $classBindings,
                 InvalidConfigNodeTypeException::class,
-                'Node "class_bindings.{className}.bind" must be of "array<string, string>" type.',
+                'Node "services.{className}.bind" must be of "array<string, string>" type.',
             ];
         }
 
         $invalidTypes[] = ['key' => 'value'];
 
         foreach ($invalidTypes as $invalidType) {
-            $classBindings = [$emptyClassNamespace => ['tags' => $invalidType]];
+            $classBindings = [$emptyClassNamespace => [Structure::Tags->value => $invalidType]];
 
             yield [
                 [],
                 [],
+                [],
                 $classBindings,
                 InvalidConfigNodeTypeException::class,
-                'Node "class_bindings.{className}.tags" must be of "array<int, string>" type.',
+                'Node "services.{className}.tags" must be of "list<string>" type.',
             ];
         }
 
         foreach ($invalidTypes as $invalidType) {
-            $classBindings = [$emptyClassNamespace => ['tags' => [$invalidType]]];
+            $classBindings = [$emptyClassNamespace => [Structure::Tags->value => [$invalidType]]];
 
             yield [
                 [],
                 [],
+                [],
                 $classBindings,
                 InvalidConfigNodeTypeException::class,
-                'Node "class_bindings.{className}.tags" must be of "array<int, string>" type.',
+                'Node "services.{className}.tags" must be of "list<string>" type.',
             ];
         }
     }

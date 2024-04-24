@@ -1,5 +1,10 @@
 ### This is a simple DI Container implementation.
 
+##### Installation:
+```composer
+composer require temkaa/simple-container
+```
+
 ##### Usage
 ```php
 <?php
@@ -38,6 +43,10 @@ $object = $container->get(InterfaceName::class);
 ##### Container config example:
 ```yaml
 services:
+  # list of global variable bindings which will be bound to variables with same name 
+  bind:
+    $variableName: env(GLOBAL_VARIABLE_VALUE)
+
   include:
     # all class paths must be relative to config file to allow container find them
     - '/../some/path/ClassName.php'
@@ -46,20 +55,17 @@ services:
     - '/../some/path/ClassName.php'
     - '/../some/path/'
 
-  interface_bindings:
-    interface_name: class_name
+  # interface binding
+  App\SomeInterface: App\SomeInterfaceImplementation
 
-  class_bindings:
-    class_name:
-      bind:
-        $variableName: 'variable_value'
-        $variableName2: 'env(ENV_VARIABLE)'
-        $variableName3: 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)'
-        $variableName4: !tagged tag_name
-      tags:
-        - tag1
-        - tag2
-        - tag3
+  # class info binding
+  App\SomeClass:
+    bind:
+      $variableName: 'variable_value'
+      $variableName2: 'env(ENV_VARIABLE)'
+      $variableName3: 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)'
+      $variableName4: !tagged tag_name
+    tags: [tag1, tag2, tag3]
 ```
 
 ### Container attributes example:
@@ -92,15 +98,14 @@ class Example
 - all classes for now are singletons, option with instantiating classes multiple times will be added later.
 - if you have type hinted some class in class arguments, which is neither in `include` and `exclude` sections, it will also be autowired.
 
-##### Here are some TODOs:
-- todos
-
 ##### Here are some improvements which will be implemented later:
+- refactoring
+- add singleton (both from attributes and config) (autowire attribute with true/false for autowiring and issingleton)
+- add decorator (both from attributes and config)
+- add option for binding objects through config and by attribute
+- add env variable processors (allow casting env variable to enums, strings, floats etc.)
+- add option to import config from another config
+- add Required attribute (to inject dependencies in methods)
 - reflection caching
 - container compiling into cache (+ clearing that cache)
-- add decorator (both from attributes and config)
-- add singleton (both from attributes and config)
-- add global var bindings in config (variable name and value which will be bound everywhere with same name)
-- add env variable processors (allow casting env variable to enums, strings, floats etc.)
-- refactoring
 

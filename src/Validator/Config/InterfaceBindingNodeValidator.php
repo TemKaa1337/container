@@ -6,6 +6,7 @@ namespace Temkaa\SimpleContainer\Validator\Config;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
+use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
@@ -13,6 +14,8 @@ use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 final class InterfaceBindingNodeValidator implements ValidatorInterface
 {
     /**
+     * @psalm-suppress ArgumentTypeCoercion
+     *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
@@ -20,61 +23,59 @@ final class InterfaceBindingNodeValidator implements ValidatorInterface
      */
     public function validate(array $config): void
     {
-        if (!isset($config['interface_bindings'])) {
-            return;
-        }
-
-        if (!is_array($config['interface_bindings'])) {
-            throw new InvalidConfigNodeTypeException(
-                'Node "interface_bindings" must be of "array<string, string>" type.',
-            );
-        }
-
-        foreach ($config['interface_bindings'] as $interfaceName => $className) {
-            if (!$interfaceName || !$className) {
-                throw new CannotBindInterfaceException(
-                    sprintf('Cannot bind interface "%s" to interface "%s".', $interfaceName, $className),
-                );
-            }
-
-            if (!is_string($interfaceName) || !is_string($className)) {
+        /** @var class-string $nodeName */
+        /** @var class-string $nodeValue */
+        foreach ($config[Structure::Services->value] ?? [] as $nodeName => $nodeValue) {
+            if (!is_string($nodeName)) {
                 throw new InvalidConfigNodeTypeException(
-                    'Node "interface_bindings" must be of "array<string, string>" type.',
+                    'Node "services.{className|interfaceName}" must be of "array<string, array|string>" type.',
                 );
             }
 
-            if (!interface_exists($interfaceName)) {
-                throw new ClassNotFoundException($interfaceName);
+            if (Structure::tryFrom($nodeName)) {
+                continue;
             }
 
-            if (!class_exists($className)) {
-                throw new ClassNotFoundException($className);
+            if (!class_exists($nodeName) && !interface_exists($nodeName)) {
+                throw new ClassNotFoundException($nodeName);
             }
 
-            $reflection = new ReflectionClass($interfaceName);
+            if (class_exists($nodeName)) {
+                continue;
+            }
+
+            if (!interface_exists($nodeName)) {
+                throw new ClassNotFoundException($nodeName);
+            }
+
+            if (!class_exists($nodeValue)) {
+                throw new ClassNotFoundException($nodeValue);
+            }
+
+            $reflection = new ReflectionClass($nodeName);
             if (!$reflection->isInterface()) {
                 throw new CannotBindInterfaceException(
-                    sprintf('Cannot bind interface "%s" as it not an interface.', $interfaceName),
+                    sprintf('Cannot bind interface "%s" as it not an interface.', $nodeName),
                 );
             }
 
-            $reflection = new ReflectionClass($className);
+            $reflection = new ReflectionClass($nodeValue);
             if ($reflection->isInterface()) {
                 throw new CannotBindInterfaceException(
                     sprintf(
                         'Cannot bind interface "%s" to class "%s" as it it as interface.',
-                        $interfaceName,
-                        $className,
+                        $nodeName,
+                        $nodeValue,
                     ),
                 );
             }
 
-            if (!$reflection->implementsInterface($interfaceName)) {
+            if (!$reflection->implementsInterface($nodeName)) {
                 throw new CannotBindInterfaceException(
                     sprintf(
                         'Cannot bind interface "%s" to class "%s" as it doesn\'t implement it.',
-                        $interfaceName,
-                        $className,
+                        $nodeName,
+                        $nodeValue,
                     ),
                 );
             }
