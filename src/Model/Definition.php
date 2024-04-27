@@ -25,6 +25,8 @@ final class Definition
 
     private object $instance;
 
+    private bool $isSingleton = true;
+
     /**
      * @var string[]
      */
@@ -176,5 +178,17 @@ final class Definition
     {
         /** @psalm-suppress RedundantPropertyInitializationCheck */
         return boolval($this->instance ?? null);
+    }
+
+    public function isSingleton(): bool
+    {
+        return $this->isSingleton;
+    }
+
+    public function setIsSingleton(bool $isSingleton): Definition
+    {
+        $this->isSingleton = $isSingleton;
+
+        return $this;
     }
 }

@@ -10,6 +10,11 @@ use Attribute;
  * @psalm-api
  */
 #[Attribute(Attribute::TARGET_CLASS)]
-final readonly class NonAutowirable
+final readonly class Autowire
 {
+    public function __construct(
+        public bool $load = true,
+        public bool $singleton = true,
+    ) {
+    }
 }

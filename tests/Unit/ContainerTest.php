@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use ReflectionClass;
+use ReflectionException;
 use SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 use Temkaa\SimpleContainer\Container\Builder;
@@ -212,6 +214,10 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
+        self::assertSame(
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
+        );
         self::assertIsObject($object);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $object);
     }
@@ -912,6 +918,208 @@ final class ContainerTest extends AbstractContainerTestCase
      * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
      */
 
+    public function testCompilesWithNonSingletonDependenciesAsTaggedIterator(): void
+    {
+        $collectorClassName = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        $classImplementingName1 = ClassGenerator::getClassName();
+        $classImplementingName2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'Interface1')])
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classImplementingName1.php")
+                    ->setName($classImplementingName1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName])
+                    ->setAttributes([sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false')]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classImplementingName2.php")
+                    ->setName($classImplementingName2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName])
+                    ->setAttributes([sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false')]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'Interface1'),
+                        'public readonly iterable $dependency,',
+                    ]),
+            )
+            ->generate();
+
+        $classes = [
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementingName1.'.php',
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementingName2.'.php',
+        ];
+
+        $configFile = $this->generateConfig(services: [Structure::Include->value => $classes]);
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $collectorClass = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
+        $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1);
+        $class2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$classImplementingName2);
+
+        self::assertInstanceOf($class1::class, $collectorClass->dependency[0]);
+        self::assertInstanceOf($class2::class, $collectorClass->dependency[1]);
+
+        self::assertNotSame(
+            $collectorClass->dependency[0],
+            $class1,
+        );
+        self::assertNotSame(
+            $collectorClass->dependency[1],
+            $class2,
+        );
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithNonSingletonDependency(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $arg',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $arg',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false')]),
+            )
+            ->generate();
+
+        $configFile = $this->generateConfig(
+            services: [
+                Structure::Include->value => [
+                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className1.'.php',
+                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className2.'.php',
+                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
+                ],
+            ],
+        );
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        $class2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+        $class3 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className3);
+
+        self::assertNotSame(
+            $class1,
+            $class2->arg,
+        );
+        self::assertNotSame(
+            $class2->arg,
+            $class3->arg,
+        );
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    public function testCompilesWithNonSingletonFromAttribute(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false')]),
+            )
+            ->generate();
+
+        $configFile = $this->generateConfig(
+            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        );
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        self::assertNotSame(
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
+        );
+    }
+
+    public function testCompilesWithNonSingletonFromConfig(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className),
+            )
+            ->generate();
+
+        $configFile = $this->generateConfig(
+            services: [
+                Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php'],
+            ],
+            classBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$className => [
+                    Structure::Singleton->value => false,
+                ],
+            ],
+        );
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        self::assertNotSame(
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
+        );
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     */
+
     public function testCompilesWithTaggedInterfaceImplementation(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -961,16 +1169,30 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
+        $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
+        $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1);
+        $class2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$classImplementingName2);
 
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorClassName, $class);
-        self::assertCount(2, $class->dependency);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorClassName, $collector);
+        self::assertCount(2, $collector->dependency);
+
+        self::assertInstanceOf($class1::class, $collector->dependency[0]);
+        self::assertInstanceOf($class2::class, $collector->dependency[1]);
 
         /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1, $class->dependency[0]);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1, $collector->dependency[0]);
 
         /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName2, $class->dependency[1]);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName2, $collector->dependency[1]);
+
+        self::assertSame(
+            $collector->dependency[0],
+            $class1,
+        );
+        self::assertSame(
+            $collector->dependency[1],
+            $class2,
+        );
     }
 
     /**
@@ -1028,7 +1250,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
 
     public function testCompilesWithTaggedIteratorFromConfig(): void
@@ -1127,8 +1349,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompilesWithoutSettingAllDependenciesClassWithDependencies(): void
     {
         $collectorName = ClassGenerator::getClassName();
@@ -1197,19 +1420,29 @@ final class ContainerTest extends AbstractContainerTestCase
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className3),
         );
 
-        $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
-        self::assertIsObject($object->dependency1);
-        self::assertIsObject($object->dependency2);
-        self::assertIsObject($object->dependency3);
+        $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorName);
+        self::assertIsObject($collector->dependency1);
+        self::assertIsObject($collector->dependency2);
+        self::assertIsObject($collector->dependency3);
 
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $object->dependency1);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $object->dependency2);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $object->dependency3);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $collector->dependency1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $collector->dependency2);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $collector->dependency3);
+
+        self::assertSame(
+            $collector->dependency1,
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+        );
+        self::assertSame(
+            $collector->dependency2,
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
+        );
+        self::assertSame(
+            $collector->dependency3,
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className3),
+        );
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
-     */
     public function testCompliesWithNullableVariable(): void
     {
         $className = ClassGenerator::getClassName();
@@ -1236,9 +1469,6 @@ final class ContainerTest extends AbstractContainerTestCase
         self::assertNull($class->arg);
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testDoesNotCompileDueToCircularExceptionByTaggedBinding(): void
     {
         $className = ClassGenerator::getClassName();
@@ -1275,6 +1505,10 @@ final class ContainerTest extends AbstractContainerTestCase
 
     /**
      * @noinspection PhpUnhandledExceptionInspection
+     */
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
      *
      * @dataProvider getDataForDoesNotCompileDueToInternalClassDependencyTest
      */
@@ -1305,6 +1539,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testDoesNotCompileDueToNonExistentBoundVariable(): void
     {
         $className = ClassGenerator::getClassName();
@@ -1405,9 +1640,6 @@ final class ContainerTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testDoesNotCompileWithExcludedDependency(): void
     {
         $collectorName = ClassGenerator::getClassName();
@@ -1480,9 +1712,6 @@ final class ContainerTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testDoesNotCompileWithNonAutowirableAttributeClass(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -1507,7 +1736,7 @@ final class ContainerTest extends AbstractContainerTestCase
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$invalidClassName.php")
                     ->setName($invalidClassName)
                     ->setHasConstructor(true)
-                    ->setAttributes([self::ATTRIBUTE_NON_AUTOWIRABLE_SIGNATURE]),
+                    ->setAttributes([sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'false', 'true')]),
             )
             ->generate();
 

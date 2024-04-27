@@ -1,2 +1,2 @@
 services:
-    include: [/../Class/TestClass26.php]
+  include: [ /../Class/TestClass24.php ]

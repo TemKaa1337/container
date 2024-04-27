@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Repository;
 
+use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Model\Definition;
 
+#[Autowire(load: false)]
 final readonly class DefinitionRepository
 {
     /**
@@ -39,6 +41,17 @@ final readonly class DefinitionRepository
         }
 
         throw new EntryNotFoundException(sprintf('Could not find entry "%s".', $id));
+    }
+
+    public function findByTag(string $tag): Definition
+    {
+        foreach ($this->definitions as $definition) {
+            if (in_array($tag, $definition->getTags(), strict: true)) {
+                return $definition;
+            }
+        }
+
+        throw new EntryNotFoundException(sprintf('Could not find entry with tag "%s".', $tag));
     }
 
     public function has(string $id): bool

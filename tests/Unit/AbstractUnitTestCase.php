@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 abstract class AbstractUnitTestCase extends TestCase
 {
     protected const ATTRIBUTE_ALIAS_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Alias(name: \'%s\')]';
-    protected const ATTRIBUTE_NON_AUTOWIRABLE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\NonAutowirable]';
+    protected const ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
     protected const ATTRIBUTE_PARAMETER_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
     protected const ATTRIBUTE_TAGGED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Tagged(tag: \'%s\')]';
     protected const ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Tag(name: \'%s\')]';

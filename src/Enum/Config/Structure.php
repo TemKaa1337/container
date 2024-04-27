@@ -11,5 +11,6 @@ enum Structure: string
     case File = 'file';
     case Include = 'include';
     case Services = 'services';
+    case Singleton = 'singleton';
     case Tags = 'tags';
 }

@@ -65,6 +65,7 @@ services:
       $variableName2: 'env(ENV_VARIABLE)'
       $variableName3: 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)'
       $variableName4: !tagged tag_name
+    singleton: false
     tags: [tag1, tag2, tag3]
 ```
 
@@ -100,12 +101,12 @@ class Example
 
 ##### Here are some improvements which will be implemented later:
 - refactoring
-- add singleton (both from attributes and config) (autowire attribute with true/false for autowiring and issingleton)
+- add validation on unique aliases
 - add decorator (both from attributes and config)
 - add option for binding objects through config and by attribute
 - add env variable processors (allow casting env variable to enums, strings, floats etc.)
-- add option to import config from another config
+- add option to import config from another config (?)
 - add Required attribute (to inject dependencies in methods)
 - reflection caching
-- container compiling into cache (+ clearing that cache)
+- container compiling into cache
 

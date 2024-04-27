@@ -15,6 +15,11 @@ final class Config
     private array $classBoundVariables = [];
 
     /**
+     * @var array<class-string, bool>
+     */
+    private array $classSingletons = [];
+
+    /**
      * @var array<class-string, string[]>
      */
     private array $classTags = [];
@@ -57,6 +62,16 @@ final class Config
         $this->classBoundVariables = $classBoundVariables;
 
         return $this;
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @return bool
+     */
+    public function getClassSingleton(string $class): bool
+    {
+        return $this->classSingletons[$class];
     }
 
     /**
@@ -149,11 +164,31 @@ final class Config
     }
 
     /**
+     * @param class-string $class
+     *
+     * @return bool
+     */
+    public function hasClassSingleton(string $class): bool
+    {
+        return isset($this->classSingletons[$class]);
+    }
+
+    /**
      * @param class-string $interface
      */
     public function hasImplementation(string $interface): bool
     {
         return isset($this->interfaceImplementations[$interface]);
+    }
+
+    /**
+     * @param array<class-string, bool> $classSingletons
+     */
+    public function setClassSingletons(array $classSingletons): self
+    {
+        $this->classSingletons = $classSingletons;
+
+        return $this;
     }
 
     /**
