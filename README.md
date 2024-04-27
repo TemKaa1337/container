@@ -103,7 +103,6 @@ class Example
 
 ##### Here are some improvements which will be implemented later:
 - refactoring
-- add validation on unique aliases
 - add decorator (both from attributes and config)
 - improve exception names and messages
 - add option for binding objects through config and by attribute

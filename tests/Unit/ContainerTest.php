@@ -13,6 +13,7 @@ use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableCircularException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
+use Temkaa\SimpleContainer\Exception\DuplicatedEntryAliasException;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
@@ -396,6 +397,9 @@ final class ContainerTest extends AbstractContainerTestCase
         self::assertEquals('string_additional_string', $class->envReference);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testCompileWithNonExistentClass(): void
     {
         $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.'NonExistentClass.php';
@@ -1167,7 +1171,10 @@ final class ContainerTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorClassName, $collector);
         self::assertCount(2, $collector->dependency);
 
+        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
         self::assertInstanceOf($class1::class, $collector->dependency[0]);
+
+        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
         self::assertInstanceOf($class2::class, $collector->dependency[1]);
 
         /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
@@ -1176,10 +1183,13 @@ final class ContainerTest extends AbstractContainerTestCase
         /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName2, $collector->dependency[1]);
 
+        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
         self::assertSame(
             $collector->dependency[0],
             $class1,
         );
+
+        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
         self::assertSame(
             $collector->dependency[1],
             $class2,
@@ -1491,6 +1501,51 @@ final class ContainerTest extends AbstractContainerTestCase
                 'Cannot instantiate class "%s" as it has circular references "%s".',
                 $className,
                 $className,
+            ),
+        );
+
+        (new Builder())->add($configFile)->compile();
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    public function testDoesNotCompileDueToDuplicatedAliases(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'NonUniqueAlias'),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setAttributes([
+                        sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'NonUniqueAlias'),
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
+        ];
+
+        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+
+        $this->expectException(DuplicatedEntryAliasException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Could not compile container as there are duplicated alias "NonUniqueAlias" in class "%s", found in "%s".',
+                self::GENERATED_CLASS_NAMESPACE.$className2,
+                self::GENERATED_CLASS_NAMESPACE.$className1,
             ),
         );
 
