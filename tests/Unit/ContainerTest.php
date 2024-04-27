@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use ReflectionClass;
-use ReflectionException;
 use SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 use Temkaa\SimpleContainer\Container\Builder;
@@ -193,7 +191,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompileClassWithoutDependencies(): void
     {
@@ -223,7 +221,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompileWithCastedBoundVariablesFromAttributes(): void
     {
@@ -277,7 +275,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompileWithCastedBoundVariablesFromConfig(): void
     {
@@ -410,7 +408,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompilesWithCastingStringsFromAttribute(): void
     {
@@ -464,7 +462,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompilesWithCastingStringsFromConfig(): void
     {
@@ -524,7 +522,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompilesWithClassAliases(): void
     {
@@ -558,7 +556,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompilesWithExplicitDependencySetting(): void
     {
@@ -644,7 +642,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompilesWithGlobalBoundVariable(): void
     {
@@ -679,7 +677,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompilesWithGlobalBoundVariableOverwrittenByClassBind(): void
     {
@@ -719,7 +717,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompilesWithInterfaceBindingByClass(): void
     {
@@ -763,9 +761,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testCompilesWithInterfaceTagInheritance(): void
     {
         $className = ClassGenerator::getClassName();
@@ -841,9 +838,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromAttribute(): void
     {
         $className = ClassGenerator::getClassName();
@@ -877,9 +873,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromConfig(): void
     {
         $className = ClassGenerator::getClassName();
@@ -915,9 +910,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testCompilesWithNonSingletonDependenciesAsTaggedIterator(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -954,7 +948,8 @@ final class ContainerTest extends AbstractContainerTestCase
                     ->setConstructorArguments([
                         sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'Interface1'),
                         'public readonly iterable $dependency,',
-                    ]),
+                    ])
+                    ->setAttributes([sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false')]),
             )
             ->generate();
 
@@ -987,13 +982,7 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
-     */
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
+     * @noinspection PhpUnhandledExceptionInspection
      */
     public function testCompilesWithNonSingletonDependency(): void
     {
@@ -1086,6 +1075,9 @@ final class ContainerTest extends AbstractContainerTestCase
         );
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testCompilesWithNonSingletonFromConfig(): void
     {
         $className = ClassGenerator::getClassName();
@@ -1117,9 +1109,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testCompilesWithTaggedInterfaceImplementation(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -1196,9 +1187,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection,UnnecessaryAssertionInspection
+     * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testCompilesWithTaggedIteratorFromAttribute(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -1252,7 +1242,6 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testCompilesWithTaggedIteratorFromConfig(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -1351,7 +1340,6 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testCompilesWithoutSettingAllDependenciesClassWithDependencies(): void
     {
         $collectorName = ClassGenerator::getClassName();
@@ -1443,6 +1431,9 @@ final class ContainerTest extends AbstractContainerTestCase
         );
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testCompliesWithNullableVariable(): void
     {
         $className = ClassGenerator::getClassName();
@@ -1469,6 +1460,9 @@ final class ContainerTest extends AbstractContainerTestCase
         self::assertNull($class->arg);
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testDoesNotCompileDueToCircularExceptionByTaggedBinding(): void
     {
         $className = ClassGenerator::getClassName();
@@ -1505,10 +1499,6 @@ final class ContainerTest extends AbstractContainerTestCase
 
     /**
      * @noinspection PhpUnhandledExceptionInspection
-     */
-
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
      *
      * @dataProvider getDataForDoesNotCompileDueToInternalClassDependencyTest
      */
@@ -1539,7 +1529,6 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
-
     public function testDoesNotCompileDueToNonExistentBoundVariable(): void
     {
         $className = ClassGenerator::getClassName();
@@ -1640,6 +1629,9 @@ final class ContainerTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testDoesNotCompileWithExcludedDependency(): void
     {
         $collectorName = ClassGenerator::getClassName();
@@ -1712,6 +1704,9 @@ final class ContainerTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
     }
 
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
     public function testDoesNotCompileWithNonAutowirableAttributeClass(): void
     {
         $collectorClassName = ClassGenerator::getClassName();

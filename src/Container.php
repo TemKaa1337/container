@@ -10,7 +10,6 @@ use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Definition\Instantiator;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
-// TODO: refactor
 #[Autowire(load: false)]
 final readonly class Container implements ContainerInterface
 {
@@ -26,9 +25,9 @@ final readonly class Container implements ContainerInterface
     {
         $definition = $this->definitionRepository->find($id);
 
-        return $definition->isSingleton()
-            ? $definition->getInstance()
-            : (new Instantiator($this->definitionRepository))->instantiate($definition);
+        $instantiator = new Instantiator($this->definitionRepository);
+
+        return $instantiator->instantiate($definition);
     }
 
     public function has(string $id): bool

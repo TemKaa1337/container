@@ -78,12 +78,14 @@ declare(strict_types=1);
 namespace App;
 
 use Temkaa\SimpleContainer\Attribute\Alias;
+use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
 use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Attribute\Tag
 
-#[Tag(name: 'tag_name')]
 #[Alias(name: 'class_alias')]
+#[Autowire(load: true, singleton: false)]
+#[Tag(name: 'tag_name')]
 class Example
 {
     public function __construct(
@@ -103,6 +105,7 @@ class Example
 - refactoring
 - add validation on unique aliases
 - add decorator (both from attributes and config)
+- improve exception names and messages
 - add option for binding objects through config and by attribute
 - add env variable processors (allow casting env variable to enums, strings, floats etc.)
 - add option to import config from another config (?)

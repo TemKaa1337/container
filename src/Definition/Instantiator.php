@@ -32,18 +32,21 @@ final readonly class Instantiator
         $arguments = [];
         foreach ($definition->getArguments() as $argument) {
             if ($argument instanceof ReferenceInterface) {
-                $definition = match (true) {
+                $resolvedArgument = match (true) {
                     $argument instanceof Reference       => $this->definitionRepository->find($argument->id),
-                    $argument instanceof TaggedReference => $this->definitionRepository->findByTag($argument->tag),
+                    $argument instanceof TaggedReference => $this->definitionRepository->findAllByTag($argument->tag),
                 };
 
-                $arguments[] = $definition->getInstance();
+                $arguments[] = $resolvedArgument instanceof Definition
+                    ? $resolvedArgument->getInstance()
+                    : array_map($this->instantiate(...), $resolvedArgument);
             } else {
                 $arguments[] = $argument;
             }
         }
 
         $reflection = new ReflectionClass($instance);
+
         return $reflection->getConstructor()
             ? $reflection->newInstanceArgs($arguments)
             : $reflection->newInstanceWithoutConstructor();
