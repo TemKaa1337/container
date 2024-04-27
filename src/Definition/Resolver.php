@@ -11,6 +11,7 @@ use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Model\Definition;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
 use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
+use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
 final class Resolver
 {
@@ -65,30 +66,24 @@ final class Resolver
         if ($argument instanceof Reference) {
             $this->resolveDefinition($this->definitions[$argument->id]);
 
-            return $this->definitions[$argument->id]->getInstance();
+            $instantiator = new Instantiator(new DefinitionRepository(array_values($this->definitions)));
+
+            return $instantiator->instantiate($this->definitions[$argument->id]);
         }
 
-        /** @var Definition[] $taggedDefinitions */
+        $definitionRepository = new DefinitionRepository(array_values($this->definitions));
         /** @psalm-suppress NoInterfaceProperties */
-        $taggedDefinitions = array_values(
-            array_filter(
-                $this->definitions,
-                static fn (Definition $definition): bool => in_array(
-                    $argument->tag,
-                    $definition->getTags(),
-                    strict: true,
-                ),
-            ),
-        );
+        $taggedDefinitions = $definitionRepository->findAllByTag($argument->tag);
 
-        $resolvedArgument = [];
+        $resolvedArguments = [];
         foreach ($taggedDefinitions as $taggedDefinition) {
             $this->resolveDefinition($this->definitions[$taggedDefinition->getId()]);
 
-            $resolvedArgument[] = $this->definitions[$taggedDefinition->getId()]->getInstance();
+            $instantiator = new Instantiator(new DefinitionRepository(array_values($this->definitions)));
+            $resolvedArguments[] = $instantiator->instantiate($this->definitions[$taggedDefinition->getId()]);
         }
 
-        return $resolvedArgument;
+        return $resolvedArguments;
     }
 
     /**

@@ -65,6 +65,7 @@ services:
       $variableName2: 'env(ENV_VARIABLE)'
       $variableName3: 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)'
       $variableName4: !tagged tag_name
+    singleton: false
     tags: [tag1, tag2, tag3]
 ```
 
@@ -77,12 +78,14 @@ declare(strict_types=1);
 namespace App;
 
 use Temkaa\SimpleContainer\Attribute\Alias;
+use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
 use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Attribute\Tag
 
-#[Tag(name: 'tag_name')]
 #[Alias(name: 'class_alias')]
+#[Autowire(load: true, singleton: false)]
+#[Tag(name: 'tag_name')]
 class Example
 {
     public function __construct(
@@ -100,12 +103,12 @@ class Example
 
 ##### Here are some improvements which will be implemented later:
 - refactoring
-- add singleton (both from attributes and config) (autowire attribute with true/false for autowiring and issingleton)
 - add decorator (both from attributes and config)
+- improve exception names and messages
 - add option for binding objects through config and by attribute
 - add env variable processors (allow casting env variable to enums, strings, floats etc.)
-- add option to import config from another config
+- add option to import config from another config (?)
 - add Required attribute (to inject dependencies in methods)
 - reflection caching
-- container compiling into cache (+ clearing that cache)
+- container compiling into cache
 

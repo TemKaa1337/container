@@ -27,7 +27,7 @@ abstract class AbstractContainerTestCase extends AbstractUnitTestCase
         yield [
             ClassGenerator::getClassName(),
             'final class',
-            [self::ATTRIBUTE_NON_AUTOWIRABLE_SIGNATURE],
+            [sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'false', 'true')],
             'public',
         ];
     }

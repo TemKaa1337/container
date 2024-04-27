@@ -12,6 +12,7 @@ use Temkaa\SimpleContainer\Definition\Builder;
 use Temkaa\SimpleContainer\Definition\Resolver;
 use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
+use Temkaa\SimpleContainer\Validator\DuplicatedDefinitionAliasValidator;
 
 final readonly class Compiler
 {
@@ -34,6 +35,8 @@ final readonly class Compiler
 
         $definitionResolver = new Resolver($definitions);
         $resolvedDefinitions = $definitionResolver->resolve();
+
+        (new DuplicatedDefinitionAliasValidator())->validate($resolvedDefinitions);
 
         $definitionRepository = new DefinitionRepository($resolvedDefinitions);
 

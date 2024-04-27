@@ -5,7 +5,7 @@
   </component>
   <component name="MessDetector">
     <phpmd_settings>
-      <MessDetectorConfiguration tool_path="$PROJECT_DIR$/vendor/bin/phpmd" />
+      <MessDetectorConfiguration tool_path="$PROJECT_DIR$/vendor/bin/phpmd" timeout="10000" />
     </phpmd_settings>
   </component>
   <component name="MessDetectorOptionsConfiguration">

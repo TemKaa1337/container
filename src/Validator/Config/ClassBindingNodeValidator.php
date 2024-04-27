@@ -53,6 +53,10 @@ final class ClassBindingNodeValidator implements ValidatorInterface
             if (isset($nodeValue[Structure::Tags->value])) {
                 $this->validateTags($nodeValue);
             }
+
+            if (isset($nodeValue[Structure::Singleton->value])) {
+                $this->validateSingleton($nodeValue);
+            }
         }
     }
 
@@ -73,6 +77,15 @@ final class ClassBindingNodeValidator implements ValidatorInterface
             }
 
             $expressionParser->parse($variableValue);
+        }
+    }
+
+    private function validateSingleton(array $classInfo): void
+    {
+        if (!is_bool($classInfo[Structure::Singleton->value])) {
+            throw new InvalidConfigNodeTypeException(
+                'Node "services.{className}.singleton" must be of "bool" type.',
+            );
         }
     }
 

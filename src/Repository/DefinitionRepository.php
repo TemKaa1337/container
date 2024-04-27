@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Repository;
 
+use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Model\Definition;
 
+#[Autowire(load: false)]
 final readonly class DefinitionRepository
 {
     /**
@@ -34,11 +36,26 @@ final readonly class DefinitionRepository
             return $entry;
         }
 
-        if ($entry = $this->findByAlias($id)) {
+        if ($entry = $this->findOneByAlias($id)) {
             return $entry;
         }
 
         throw new EntryNotFoundException(sprintf('Could not find entry "%s".', $id));
+    }
+
+    /**
+     * @return Definition[]
+     */
+    public function findAllByTag(string $tag): array
+    {
+        $taggedDefinitions = [];
+        foreach ($this->definitions as $definition) {
+            if (in_array($tag, $definition->getTags(), strict: true)) {
+                $taggedDefinitions[] = $definition;
+            }
+        }
+
+        return $taggedDefinitions;
     }
 
     public function has(string $id): bool
@@ -47,10 +64,10 @@ final readonly class DefinitionRepository
             return true;
         }
 
-        return (bool) $this->findByAlias($id);
+        return (bool) $this->findOneByAlias($id);
     }
 
-    private function findByAlias(string $alias): ?Definition
+    private function findOneByAlias(string $alias): ?Definition
     {
         foreach ($this->definitions as $definition) {
             if (in_array($alias, $definition->getAliases(), strict: true)) {

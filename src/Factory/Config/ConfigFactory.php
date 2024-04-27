@@ -28,6 +28,7 @@ final readonly class ConfigFactory
         $interfaceBindings = $this->parseInterfaceBindings();
         $includedClasses = $this->getIncludedClasses();
         $excludedClasses = $this->getExcludedClasses();
+        $classSingletons = $this->getClassSingletons();
 
         return (new Config())
             ->setGlobalBoundVariables($globalBoundVariables)
@@ -35,7 +36,8 @@ final readonly class ConfigFactory
             ->setClassTags($classTags)
             ->setInterfaceImplementations($interfaceBindings)
             ->setIncludedClasses(array_diff($includedClasses, $excludedClasses))
-            ->setExcludedClasses($excludedClasses);
+            ->setExcludedClasses($excludedClasses)
+            ->setClassSingletons($classSingletons);
     }
 
     /**
@@ -55,6 +57,31 @@ final readonly class ConfigFactory
         }
 
         return $variables;
+    }
+
+    /**
+     * @psalm-suppress InvalidReturnType,InvalidReturnStatement
+     *
+     * @return array<class-string, bool>
+     */
+    private function getClassSingletons(): array
+    {
+        /** @var array<class-string, bool> $singletons */
+        $singletons = [];
+        foreach ($this->config[Structure::Services->value] ?? [] as $nodeName => $nodeValue) {
+            if (!class_exists($nodeName)) {
+                continue;
+            }
+
+            $isSingleton = $nodeValue[Structure::Singleton->value] ?? null;
+            if ($isSingleton === null) {
+                continue;
+            }
+
+            $singletons[$nodeName] = $isSingleton;
+        }
+
+        return $singletons;
     }
 
     /**

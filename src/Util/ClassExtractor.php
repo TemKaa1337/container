@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Util;
 
 use DirectoryIterator;
-use Temkaa\SimpleContainer\Attribute\NonAutowirable;
 
-#[NonAutowirable]
 final class ClassExtractor
 {
     /**

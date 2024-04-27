@@ -1,5 +1,7 @@
 /vendor
 /tests/Fixture/Stub/Class/*
 !/tests/Fixture/Stub/Class/.gitkeep
+/tests/Fixture/Stub/Config/*
+!/tests/Fixture/Stub/Config/.gitkeep
 /.phpunit.cache
 .phpunit.result.cache

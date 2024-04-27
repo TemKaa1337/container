@@ -11,9 +11,9 @@ use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionType;
 use Temkaa\SimpleContainer\Attribute\Alias;
+use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
 use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
-use Temkaa\SimpleContainer\Attribute\NonAutowirable;
 use Temkaa\SimpleContainer\Attribute\Tag;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
@@ -232,8 +232,17 @@ final class Builder
 
         $definition = (new Definition())->setId($id);
 
-        $nonAutowirableTags = $reflection->getAttributes(NonAutowirable::class);
-        if ($nonAutowirableTags) {
+        if ($this->resolvingConfig->hasClassSingleton($id)) {
+            $definition->setIsSingleton($this->resolvingConfig->getClassSingleton($id));
+        }
+
+        if ($autowireTags = $reflection->getAttributes(Autowire::class)) {
+            $isSingleton = AttributeExtractor::extract($autowireTags, index: 0)->singleton;
+            $definition->setIsSingleton($isSingleton);
+        }
+
+        $isNonAutowirable = AttributeExtractor::hasParameterByValue($autowireTags, parameter: 'load', value: false);
+        if ($isNonAutowirable) {
             if (!$failIfUninstantiable) {
                 return;
             }
