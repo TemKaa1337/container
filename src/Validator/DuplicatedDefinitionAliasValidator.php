@@ -14,9 +14,16 @@ final readonly class DuplicatedDefinitionAliasValidator
      */
     public function validate(array $definitions): void
     {
+        $uniqueDefinitions = [];
         $uniqueAliases = [];
 
         foreach ($definitions as $definition) {
+            if (isset($uniqueDefinitions[$definition->getId()])) {
+                continue;
+            }
+
+            $uniqueDefinitions[$definition->getId()] = true;
+
             foreach ($definition->getAliases() as $alias) {
                 if (isset($uniqueAliases[$alias])) {
                     throw new DuplicatedEntryAliasException($alias, $uniqueAliases[$alias], $definition->getId());

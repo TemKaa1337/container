@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Config;
+namespace Tests\Integration\Config;
 
 use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
@@ -10,7 +10,7 @@ use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
-use Tests\Unit\AbstractUnitTestCase;
+use Tests\Integration\AbstractUnitTestCase;
 
 abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
 {
@@ -216,6 +216,28 @@ abstract class AbstractBuilderTestCase extends AbstractUnitTestCase
                 'Node "services.{className}.tags" must be of "list<string>" type.',
             ];
         }
+
+        foreach ($invalidTypes as $invalidType) {
+            $classBindings = [$emptyClassNamespace => [Structure::Decorates->value => [$invalidType]]];
+
+            yield [
+                [],
+                [],
+                [],
+                $classBindings,
+                InvalidConfigNodeTypeException::class,
+                'Node "services.{className}.decorates" must be of "array<string, string|int>" type.',
+            ];
+        }
+
+        yield [
+            [],
+            [],
+            [],
+            [$emptyClassNamespace => [Structure::Decorates->value => [Structure::Id->value => 'non_existent_class']]],
+            ClassNotFoundException::class,
+            'Class "non_existent_class" is not found.',
+        ];
     }
 
     public static function getDataForInterfaceBindingErrorsTest(): iterable

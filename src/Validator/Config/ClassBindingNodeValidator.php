@@ -4,16 +4,31 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Validator\Config;
 
+use ReflectionClass;
+use ReflectionException;
+use ReflectionParameter;
 use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
+use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 
 final class ClassBindingNodeValidator implements ValidatorInterface
 {
+    // TODO: add validations on this
+    private const ALLOWED_CLASS_INFO_STRUCTURE_NODE_NAMES = [
+        Structure::Bind,
+        Structure::Tags,
+        Structure::Decorates,
+        Structure::Singleton,
+    ];
+    private const ALLOWED_DECORATOR_STRUCTURE_NODE_NAMES = [Structure::Id, Structure::Priority, Structure::Signature];
+
     /**
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @throws ReflectionException
      */
     public function validate(array $config): void
     {
@@ -57,6 +72,10 @@ final class ClassBindingNodeValidator implements ValidatorInterface
             if (isset($nodeValue[Structure::Singleton->value])) {
                 $this->validateSingleton($nodeValue);
             }
+
+            if (isset($nodeValue[Structure::Decorates->value])) {
+                $this->validateDecorator($nodeName, $nodeValue);
+            }
         }
     }
 
@@ -77,6 +96,111 @@ final class ClassBindingNodeValidator implements ValidatorInterface
             }
 
             $expressionParser->parse($variableValue);
+        }
+    }
+
+    /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @param class-string $className
+     *
+     * @throws ReflectionException
+     */
+    private function validateDecorator(string $className, array $classInfo): void
+    {
+        if (
+            !is_array($classInfo[Structure::Decorates->value])
+            || array_is_list($classInfo[Structure::Decorates->value])
+        ) {
+            throw new InvalidConfigNodeTypeException(
+                'Node "services.{className}.decorates" must be of "array<string, string|int>" type.',
+            );
+        }
+
+        foreach (array_keys($classInfo[Structure::Decorates->value]) as $structureNode) {
+            if (!is_string($structureNode)) {
+                throw new InvalidConfigNodeTypeException(
+                    'Node "services.{className}.decorates" must be of "array<string, string|int>" type.',
+                );
+            }
+
+            if (
+                !in_array(
+                    Structure::tryFrom($structureNode),
+                    self::ALLOWED_DECORATOR_STRUCTURE_NODE_NAMES,
+                    strict: true,
+                )
+            ) {
+                throw new InvalidConfigNodeTypeException(
+                    sprintf(
+                        'Node "services.{className}.decorates" allows having only "%s" as keys.',
+                        implode(
+                            '|',
+                            array_map(
+                                static fn (Structure $node): string => $node->value,
+                                self::ALLOWED_DECORATOR_STRUCTURE_NODE_NAMES,
+                            ),
+                        ),
+                    ),
+                );
+            }
+        }
+
+        foreach (self::ALLOWED_DECORATOR_STRUCTURE_NODE_NAMES as $node) {
+            if (!isset($classInfo[Structure::Decorates->value][$node->value])) {
+                continue;
+            }
+
+            $value = $classInfo[Structure::Decorates->value][$node->value];
+            switch ($node) {
+                case Structure::Id:
+                    if (!is_string($value)) {
+                        throw new InvalidConfigNodeTypeException(
+                            'Node "services.{className}.decorates.id" must be of "string" type.',
+                        );
+                    }
+
+                    if (!class_exists($value) && !interface_exists($value)) {
+                        throw new ClassNotFoundException($value);
+                    }
+
+                    break;
+                case Structure::Signature:
+                    if (!is_string($value)) {
+                        throw new InvalidConfigNodeTypeException(
+                            'Node "services.{className}.decorates.signature" must be of "string" type.',
+                        );
+                    }
+
+                    $reflection = new ReflectionClass($className);
+
+                    $constructorArguments = $reflection->getConstructor()?->getParameters() ?? [];
+                    $argumentNames = array_map(
+                        static fn (ReflectionParameter $argument): string => $argument->getName(),
+                        $constructorArguments,
+                    );
+
+                    if (!in_array(str_replace('$', '', $value), $argumentNames, strict: true)) {
+                        throw new UnresolvableArgumentException(
+                            sprintf(
+                                'Could not resolve decorated class in class "%s" as it does not have argument named "%s".',
+                                $className,
+                                $value,
+                            ),
+                        );
+                    }
+
+                    break;
+                case Structure::Priority:
+                    if (!is_int($value)) {
+                        throw new InvalidConfigNodeTypeException(
+                            'Node "services.{className}.decorates.priority" must be of "int" type.',
+                        );
+                    }
+
+                    break;
+            }
         }
     }
 

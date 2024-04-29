@@ -21,8 +21,9 @@
         "vimeo/psalm": "5.*"
     },
     "require": {
-        "php": ">=8.2",
+        "php": "^8.2|^8.3",
         "psr/container": "^2.0",
-        "symfony/yaml": "^7.0"
+        "symfony/yaml": "^7.0",
+        "temkaa/simple-collections": "^0.0.1"
     }
 }

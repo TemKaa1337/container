@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Integration;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
@@ -25,6 +25,17 @@ use Tests\Helper\Service\ClassGenerator;
 use Throwable;
 
 /**
+ * TODOS (decorator):
+ * 6. when decorated class is used in another class (decorated class is injected as decorated)
+ * 8. add test on non-singleton when class is injected without constructor arguments (is this case really singleton)
+ * 9. add decorator by abstract class
+ * 10. add decorator tests when there are a lot of arguments that need to be resolved
+ * 11. добавить тесты когда декоратор инжектиться в 3 класс
+ * 12. добавить тесты когда в третий класс инжектяться части из иерархии декораторов
+ * 13. посмотреть как будт работать таггед итератор с декораборами по интерфейсу
+ */
+
+/**
  * @psalm-suppress ArgumentTypeCoercion
  *
  * @noinspection   PhpArgumentWithoutNamedIdentifierInspection
@@ -36,9 +47,6 @@ use Throwable;
  */
 final class ContainerTest extends AbstractContainerTestCase
 {
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testCompileClassWithBuiltInTypedArgument(): void
     {
         $className = ClassGenerator::getClassName();
@@ -69,9 +77,6 @@ final class ContainerTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testCompileClassWithCircularDependencies(): void
     {
         $circularClassName1 = ClassGenerator::getClassName();
@@ -119,9 +124,6 @@ final class ContainerTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testCompileClassWithNonTypedArgument(): void
     {
         $className = ClassGenerator::getClassName();
@@ -151,9 +153,6 @@ final class ContainerTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testCompileClassWithTypeHintedEnum(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -191,9 +190,6 @@ final class ContainerTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testCompileClassWithoutDependencies(): void
     {
         $className = ClassGenerator::getClassName();
@@ -224,6 +220,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompileWithCastedBoundVariablesFromAttributes(): void
     {
         $className = ClassGenerator::getClassName();
@@ -278,6 +275,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompileWithCastedBoundVariablesFromConfig(): void
     {
         $className = ClassGenerator::getClassName();
@@ -338,6 +336,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompileWithCircularEnvVariableDependencies(): void
     {
         $className = ClassGenerator::getClassName();
@@ -370,6 +369,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompileWithEnvVariableReferencingAnotherVariable(): void
     {
         $className = ClassGenerator::getClassName();
@@ -400,6 +400,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompileWithNonExistentClass(): void
     {
         $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.'NonExistentClass.php';
@@ -414,6 +415,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompilesWithCastingStringsFromAttribute(): void
     {
         $className = ClassGenerator::getClassName();
@@ -468,6 +470,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompilesWithCastingStringsFromConfig(): void
     {
         $className = ClassGenerator::getClassName();
@@ -528,6 +531,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompilesWithClassAliases(): void
     {
         $className = ClassGenerator::getClassName();
@@ -562,6 +566,202 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
+    public function testCompilesWithDecoratorFromAttribute(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
+                            0,
+                            'dependency',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+        ];
+        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorator);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $decorated->dependency);
+        self::assertSame($decorated, $decorator);
+    }
+
+    public function testCompilesWithDecoratorTypeHintedAsObject(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
+                            0,
+                            'dependency',
+                        ),
+                    ])
+                    ->setConstructorArguments(['public readonly object $dependency']),
+            )
+            ->generate();
+
+        $files = [
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+        ];
+        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorator);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $decorated->dependency);
+        self::assertSame($decorated, $decorator);
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    public function testCompilesWithDecoratorFromConfig(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+        ];
+        $configFile = $this->generateConfig(
+            services: [Structure::Include->value => $files],
+            classBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$className2 => [
+                    Structure::Decorates->value => [
+                        Structure::Id->value        => self::GENERATED_CLASS_NAMESPACE.$className1,
+                        Structure::Signature->value => '$dependency',
+                    ],
+                ],
+            ],
+        );
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorator);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $decorated->dependency);
+        self::assertSame($decorated, $decorator);
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+
+    public function testCompilesWithDecoratorWithoutDecoratedServiceInjected(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
+                            0,
+                            'dependency',
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+        ];
+        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorator);
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+
     public function testCompilesWithExplicitDependencySetting(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -648,6 +848,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompilesWithGlobalBoundVariable(): void
     {
         $className = ClassGenerator::getClassName();
@@ -683,6 +884,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompilesWithGlobalBoundVariableOverwrittenByClassBind(): void
     {
         $className = ClassGenerator::getClassName();
@@ -723,6 +925,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompilesWithInterfaceBindingByClass(): void
     {
         $className = ClassGenerator::getClassName();
@@ -767,6 +970,7 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
     public function testCompilesWithInterfaceTagInheritance(): void
     {
         $className = ClassGenerator::getClassName();
@@ -819,13 +1023,13 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $container = (new Builder())->add($configFile)->compile();
 
-        $r = new ReflectionClass($container);
+        $reflection = new ReflectionClass($container);
 
         /** @var DefinitionRepository $definitionRepository */
-        $definitionRepository = $r->getProperty('definitionRepository')->getValue($container);
+        $definitionRepository = $reflection->getProperty('definitionRepository')->getValue($container);
 
-        $r = new ReflectionClass($definitionRepository);
-        $definitions = $r->getProperty('definitions')->getValue($definitionRepository);
+        $reflection = new ReflectionClass($definitionRepository);
+        $definitions = $reflection->getProperty('definitions')->getValue($definitionRepository);
 
         /** @var Definition $classDefinition */
         $classDefinition = $definitions[self::GENERATED_CLASS_NAMESPACE.$className];
@@ -844,6 +1048,281 @@ final class ContainerTest extends AbstractContainerTestCase
     /**
      * @noinspection PhpUnhandledExceptionInspection
      */
+
+    public function testCompilesWithMultipleDecoratorsByClass(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
+                            3,
+                            'dependency',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
+                            2,
+                            'dependency',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
+                            1,
+                            'dependency',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className4.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className3.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+        ];
+        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $decorated->dependency);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated->dependency->dependency);
+        self::assertInstanceOf(
+            self::GENERATED_CLASS_NAMESPACE.$className1,
+            $decorated->dependency->dependency->dependency,
+        );
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    public function testCompilesWithMultipleDecoratorsByInterface(): void
+    {
+        $interfaceName = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        $collectorClassName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency1,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency2,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className4,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency3,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency4,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                        ),
+                        sprintf(
+                            'public readonly %s $dependency5,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
+                            3,
+                            'dependency',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                        ),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
+                            2,
+                            'dependency',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                        ),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
+                            1,
+                            'dependency',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                        ),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->generate();
+
+        $files = [
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$interfaceName.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className4.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className3.php",
+            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+        ];
+        $configFile = $this->generateConfig(
+            services: [Structure::Include->value => $files],
+            interfaceBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$className1,
+            ],
+        );
+
+        $container = (new Builder())->add($configFile)->compile();
+
+        $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
+        $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorClassName, $collector);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $collector->dependency1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $collector->dependency1->dependency);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $collector->dependency1->dependency->dependency);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $collector->dependency1->dependency->dependency->dependency);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $collector->dependency3);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $collector->dependency2->dependency);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $collector->dependency2->dependency->dependency);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $collector->dependency4);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $collector->dependency2->dependency);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $collector->dependency5);
+
+        $class4 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className4);
+        $class3 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className3);
+        $class2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+        $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $class4);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $class3);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $class2);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class1);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class2->dependency);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $class3->dependency);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $class4->dependency);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $decorated->dependency);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated->dependency->dependency);
+        self::assertInstanceOf(
+            self::GENERATED_CLASS_NAMESPACE.$className1,
+            $decorated->dependency->dependency->dependency,
+        );
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromAttribute(): void
     {
         $className = ClassGenerator::getClassName();

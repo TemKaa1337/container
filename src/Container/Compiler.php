@@ -33,6 +33,7 @@ final readonly class Compiler
         $definitionBuilder = new Builder($this->configs);
         $definitions = $definitionBuilder->build();
 
+        // TODO: remove in validator uniqueness by definiotn because of array values on builder->build
         $definitionResolver = new Resolver($definitions);
         $resolvedDefinitions = $definitionResolver->resolve();
 

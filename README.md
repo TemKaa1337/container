@@ -65,6 +65,10 @@ services:
       $variableName2: 'env(ENV_VARIABLE)'
       $variableName3: 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)'
       $variableName4: !tagged tag_name
+    decorates:
+      id: App\SomeInterface
+      priority: 1
+      signature: decorated
     singleton: false
     tags: [tag1, tag2, tag3]
 ```
@@ -102,9 +106,18 @@ class Example
 - if you have type hinted some class in class arguments, which is neither in `include` and `exclude` sections, it will also be autowired.
 
 ##### Here are some improvements which will be implemented later:
-- refactoring
 - add decorator (both from attributes and config)
+- refactoring
+- add ability to not bing interfaces if only one interface implementation exists
+- add decorator option to bind automatically decorated service if no other arguments exist
+- update readme
+- add performance tests
+- add internals to container
+- add circular reference decorators exception
+- reuse simple collections everywhere it is needed
+- 
 - improve exception names and messages
+- allow binding variables with php/const notation (constant from classes or enums)
 - add option for binding objects through config and by attribute
 - add env variable processors (allow casting env variable to enums, strings, floats etc.)
 - add option to import config from another config (?)

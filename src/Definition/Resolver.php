@@ -9,6 +9,7 @@ use ReflectionClass;
 use ReflectionException;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Model\Definition;
+use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
 use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
@@ -63,7 +64,7 @@ final class Resolver
             return $argument;
         }
 
-        if ($argument instanceof Reference) {
+        if ($argument instanceof Reference || $argument instanceof DecoratorReference) {
             $this->resolveDefinition($this->definitions[$argument->id]);
 
             $instantiator = new Instantiator(new DefinitionRepository(array_values($this->definitions)));
@@ -107,8 +108,8 @@ final class Resolver
             $resolvedArguments[] = $this->resolveArgument($argument);
         }
 
-        $r = new ReflectionClass($definition->getId());
-        $instance = $resolvedArguments ? $r->newInstanceArgs($resolvedArguments) : $r->newInstance();
+        $reflection = new ReflectionClass($definition->getId());
+        $instance = $resolvedArguments ? $reflection->newInstanceArgs($resolvedArguments) : $reflection->newInstance();
         $definition->setInstance($instance);
 
         $this->setResolving($definition->getId(), isResolving: false);

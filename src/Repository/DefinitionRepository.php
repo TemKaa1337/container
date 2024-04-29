@@ -33,11 +33,11 @@ final readonly class DefinitionRepository
     public function find(string $id): Definition
     {
         if ($entry = $this->definitions[$id] ?? null) {
-            return $entry;
+            return $this->resolveDecorators($id, $entry);
         }
 
         if ($entry = $this->findOneByAlias($id)) {
-            return $entry;
+            return $this->resolveDecorators($id, $entry);
         }
 
         throw new EntryNotFoundException(sprintf('Could not find entry "%s".', $id));
@@ -76,5 +76,32 @@ final readonly class DefinitionRepository
         }
 
         return null;
+    }
+
+    private function resolveDecorators(string $searchedById, Definition $definition): Definition
+    {
+        // TODO: add tests on when something is requiring not root decorated service
+        // TODO: refactor this condition
+        $decoratedBy = $definition->getDecoratedBy();
+        $decorates = $definition->getDecorates();
+
+        $isDecorationRoot = $decoratedBy && !$decorates;
+        if (!$isDecorationRoot) {
+            return $definition;
+        }
+
+        /** @psalm-suppress PossiblyNullArrayOffset */
+        $isDecoratedByInterface = $this->definitions[$definition->getDecoratedBy()]->getDecorates()->isByInterface();
+        if ($isDecoratedByInterface && !interface_exists($searchedById)) {
+            return $definition;
+        }
+
+        $currentDefinition = $definition;
+        while ($currentDefinition->getDecoratedBy()) {
+            /** @psalm-suppress PossiblyNullArrayOffset */
+            $currentDefinition = $this->definitions[$currentDefinition->getDecoratedBy()];
+        }
+
+        return $currentDefinition;
     }
 }

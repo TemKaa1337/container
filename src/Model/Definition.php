@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model;
 
+use Temkaa\SimpleContainer\Model\Definition\Decorator;
+
 final class Definition
 {
     /**
@@ -12,6 +14,13 @@ final class Definition
     private array $aliases = [];
 
     private array $arguments = [];
+
+    /**
+     * @var class-string|null
+     */
+    private ?string $decoratedBy = null;
+
+    private ?Decorator $decorates = null;
 
     /**
      * @var class-string $id
@@ -106,6 +115,43 @@ final class Definition
     public function getArguments(): array
     {
         return $this->arguments;
+    }
+
+    public function setArguments(array $arguments): self
+    {
+        $this->arguments = $arguments;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string|null
+     */
+    public function getDecoratedBy(): ?string
+    {
+        return $this->decoratedBy;
+    }
+
+    /**
+     * @param class-string $decoratedBy
+     */
+    public function setDecoratedBy(string $decoratedBy): self
+    {
+        $this->decoratedBy = $decoratedBy;
+
+        return $this;
+    }
+
+    public function getDecorates(): ?Decorator
+    {
+        return $this->decorates;
+    }
+
+    public function setDecorates(Decorator $decorator): self
+    {
+        $this->decorates = $decorator;
+
+        return $this;
     }
 
     /**
