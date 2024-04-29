@@ -11,7 +11,9 @@ use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionType;
 use Temkaa\SimpleCollections\Collection;
+use Temkaa\SimpleCollections\Enum\SortOrder;
 use Temkaa\SimpleCollections\Model\Sort\ByCallback;
+use Temkaa\SimpleCollections\Model\Sort\ByField;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
@@ -20,15 +22,18 @@ use Temkaa\SimpleContainer\Attribute\Decorates;
 use Temkaa\SimpleContainer\Attribute\Tag;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
+use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Model\Container\Config;
-use Temkaa\SimpleContainer\Model\Definition;
+use Temkaa\SimpleContainer\Model\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\TaggedReference;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
+use Temkaa\SimpleContainer\Model\DefinitionInterface;
+use Temkaa\SimpleContainer\Model\InterfaceDefinition;
 use Temkaa\SimpleContainer\Util\AttributeExtractor;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 use Temkaa\SimpleContainer\Util\TypeCaster;
@@ -48,7 +53,7 @@ final class Builder
     private DecoratorFactory $decoratorFactory;
 
     /**
-     * @var Definition[]
+     * @var DefinitionInterface[]
      */
     private array $definitions = [];
 
@@ -61,6 +66,9 @@ final class Builder
 
     private Config $resolvingConfig;
 
+    /**
+     * @param Config[] $configs
+     */
     public function __construct(array $configs)
     {
         $this->configs = $configs;
@@ -69,7 +77,7 @@ final class Builder
     }
 
     /**
-     * @return Definition[]
+     * @return DefinitionInterface[]
      *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
@@ -99,7 +107,7 @@ final class Builder
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    private function buildArgument(ReflectionParameter $argument, Definition $definition, string $id): mixed
+    private function buildArgument(ReflectionParameter $argument, ClassDefinition $definition, string $id): mixed
     {
         (new ArgumentValidator())->validate($argument, $id);
 
@@ -186,15 +194,28 @@ final class Builder
 
         $dependencyReflection = new ReflectionClass($entryId);
         if ($dependencyReflection->isInterface()) {
-            $interfaceImplementation = $this->resolvingConfig->getInterfaceImplementation(
-                $dependencyReflection->getName(),
-            );
+            $interfaceName = $dependencyReflection->getName();
+            if (!$this->resolvingConfig->hasImplementation($interfaceName)) {
+                throw new EntryNotFoundException(
+                    sprintf(
+                        'Could not find interface implementation for "%s".',
+                        $interfaceName,
+                    ),
+                );
+            }
+
+            $interfaceImplementation = $this->resolvingConfig->getInterfaceImplementation($interfaceName);
+
+            // TODO: add factory?
+            $interfaceDefinition = (new InterfaceDefinition())
+                ->setId($interfaceName)
+                ->setImplementedById($interfaceImplementation);
+
+            $this->definitions[$interfaceName] = $interfaceDefinition;
 
             $this->buildDefinition($interfaceImplementation);
 
-            $this->definitions[$dependencyReflection->getName()] = $this->definitions[$interfaceImplementation];
-
-            return new Reference($interfaceImplementation);
+            return new Reference($interfaceName);
         }
 
         if (!isset($this->definitions[$entryId])) {
@@ -249,7 +270,7 @@ final class Builder
             );
         }
 
-        $definition = (new Definition())->setId($id);
+        $definition = (new ClassDefinition())->setId($id);
 
         if ($this->resolvingConfig->hasClassSingleton($id)) {
             $definition->setIsSingleton($this->resolvingConfig->getClassSingleton($id));
@@ -302,7 +323,7 @@ final class Builder
     /**
      * @throws ContainerExceptionInterface
      */
-    private function populateDefinition(Definition $definition, ReflectionClass $reflection): void
+    private function populateDefinition(ClassDefinition $definition, ReflectionClass $reflection): void
     {
         $classTags = $reflection->getAttributes(Tag::class);
         $classAliases = $reflection->getAttributes(Alias::class);
@@ -321,9 +342,12 @@ final class Builder
                 $this->resolvingConfig->hasImplementation($interfaceName)
                 && $this->resolvingConfig->getInterfaceImplementation($interfaceName) === $reflection->getName()
             ) {
-                $definition->addAlias($interfaceName);
+                // TODO: add factory?
+                $interfaceDefinition = (new InterfaceDefinition())
+                    ->setId($interfaceName)
+                    ->setImplementedById($reflection->getName());
 
-                $this->definitions[$interfaceName] = $definition;
+                $this->definitions[$interfaceName] = $interfaceDefinition;
             }
 
             $interfaceTags = $interface->getAttributes(Tag::class);
@@ -358,10 +382,15 @@ final class Builder
      */
     private function updateDecoratorReferences(): void
     {
-        /** @var array<class-string, Definition[]> $decorators */
+        /** @var array<class-string, ClassDefinition[]> $decorators */
         $decorators = [];
 
-        foreach ($this->definitions as $definition) {
+        $definitions = array_filter(
+            $this->definitions,
+            static fn (DefinitionInterface $definition): bool => $definition instanceof ClassDefinition,
+        );
+
+        foreach ($definitions as $definition) {
             if ($decorates = $definition->getDecorates()) {
                 $decorators[$decorates->getId()] ??= [];
                 $decorators[$decorates->getId()][] = $definition;
@@ -369,14 +398,9 @@ final class Builder
         }
 
         foreach ($decorators as $id => $definitions) {
-            /** @var Definition[] $decoratorDefinitions */
-            /** @psalm-suppress PossiblyNullReference */
+            /** @var ClassDefinition[] $decoratorDefinitions */
             $decoratorDefinitions = (new Collection($definitions))
-                ->sort(
-                    new ByCallback(
-                        static fn (Definition $definition): int => $definition->getDecorates()->getPriority(),
-                    ),
-                )
+                ->sort(new ByField(field: 'decorates.priority', order: SortOrder::Desc))
                 ->toArray();
 
             $rootDecoratedDefinition = $this->definitions[$id];

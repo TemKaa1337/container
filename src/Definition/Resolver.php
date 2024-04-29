@@ -8,10 +8,12 @@ use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
-use Temkaa\SimpleContainer\Model\Definition;
+use Temkaa\SimpleContainer\Model\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
 use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
+use Temkaa\SimpleContainer\Model\DefinitionInterface;
+use Temkaa\SimpleContainer\Model\InterfaceDefinition;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
 final class Resolver
@@ -22,7 +24,7 @@ final class Resolver
     private array $definitionsResolving = [];
 
     /**
-     * @param Definition[] $definitions
+     * @param DefinitionInterface[] $definitions
      */
     public function __construct(
         private readonly array $definitions,
@@ -30,7 +32,7 @@ final class Resolver
     }
 
     /**
-     * @return Definition[]
+     * @return DefinitionInterface[]
      *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
@@ -65,11 +67,47 @@ final class Resolver
         }
 
         if ($argument instanceof Reference || $argument instanceof DecoratorReference) {
-            $this->resolveDefinition($this->definitions[$argument->id]);
+            $definitionToResolve = $this->definitions[$argument->id];
+
+            if ($definitionToResolve instanceof InterfaceDefinition) {
+                if ($definitionToResolve->getDecoratedBy()) {
+                    $currentDefinition = $this->definitions[$definitionToResolve->getDecoratedBy()];
+                    while ($currentDefinition->getDecoratedBy()) {
+                        $currentDefinition = $this->definitions[$currentDefinition->getDecoratedBy()];
+                    }
+
+                    if ($this->isDefinitionResolving($currentDefinition->getId())) {
+                        $interfaceImplementationDefinition = $this->definitions[$definitionToResolve->getId()];
+                        $this->resolveDefinition($interfaceImplementationDefinition);
+                        $definitionToInstantiate = $interfaceImplementationDefinition;
+                    } else {
+                        $this->resolveDefinition($currentDefinition);
+                        $definitionToInstantiate = $currentDefinition;
+                    }
+
+                    // $decoratorDefinition = $this->definitions[$definitionToResolve->getDecoratedBy()];
+                    // $interfaceImplementationDefinition = $this->definitions[$definitionToResolve->getId()];
+                    //
+                    // if ($this->isDefinitionResolving($decoratorDefinition->getId())) {
+                    //     $this->resolveDefinition($interfaceImplementationDefinition);
+                    //     $definitionToInstantiate = $interfaceImplementationDefinition;
+                    // } else {
+                    //     $this->resolveDefinition($decoratorDefinition);
+                    //     $definitionToInstantiate = $decoratorDefinition;
+                    // }
+                } else {
+                    $interfaceImplementationDefinition = $this->definitions[$definitionToResolve->getId()];
+                    $this->resolveDefinition($interfaceImplementationDefinition);
+                    $definitionToInstantiate = $interfaceImplementationDefinition;
+                }
+            } else {
+                $this->resolveDefinition($definitionToResolve);
+                $definitionToInstantiate = $definitionToResolve;
+            }
 
             $instantiator = new Instantiator(new DefinitionRepository(array_values($this->definitions)));
 
-            return $instantiator->instantiate($this->definitions[$argument->id]);
+            return $instantiator->instantiate($definitionToInstantiate);
         }
 
         $definitionRepository = new DefinitionRepository(array_values($this->definitions));
@@ -91,8 +129,19 @@ final class Resolver
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    private function resolveDefinition(Definition $definition): void
+    private function resolveDefinition(DefinitionInterface $definition): void
     {
+        if ($definition instanceof InterfaceDefinition) {
+            $this->resolveDefinition($this->definitions[$definition->getImplementedById()]);
+            //
+            // if ($decoratedById = $definition->getDecoratedBy()) {
+            //     $this->resolveDefinition($this->definitions[$decoratedById]);
+            // }
+
+            return;
+        }
+
+        /** @var ClassDefinition $definition */
         if ($definition->hasInstance()) {
             return;
         }

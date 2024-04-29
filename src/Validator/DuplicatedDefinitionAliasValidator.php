@@ -5,24 +5,22 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Validator;
 
 use Temkaa\SimpleContainer\Exception\DuplicatedEntryAliasException;
-use Temkaa\SimpleContainer\Model\Definition;
+use Temkaa\SimpleContainer\Model\ClassDefinition;
+use Temkaa\SimpleContainer\Model\DefinitionInterface;
 
 final readonly class DuplicatedDefinitionAliasValidator
 {
     /**
-     * @param Definition[] $definitions
+     * @param DefinitionInterface[] $definitions
      */
     public function validate(array $definitions): void
     {
-        $uniqueDefinitions = [];
         $uniqueAliases = [];
 
         foreach ($definitions as $definition) {
-            if (isset($uniqueDefinitions[$definition->getId()])) {
+            if (!$definition instanceof ClassDefinition) {
                 continue;
             }
-
-            $uniqueDefinitions[$definition->getId()] = true;
 
             foreach ($definition->getAliases() as $alias) {
                 if (isset($uniqueAliases[$alias])) {

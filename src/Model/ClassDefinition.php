@@ -6,7 +6,7 @@ namespace Temkaa\SimpleContainer\Model;
 
 use Temkaa\SimpleContainer\Model\Definition\Decorator;
 
-final class Definition
+final class ClassDefinition implements DefinitionInterface
 {
     /**
      * @var string[]
@@ -133,11 +133,11 @@ final class Definition
     }
 
     /**
-     * @param class-string $decoratedBy
+     * @param class-string $id
      */
-    public function setDecoratedBy(string $decoratedBy): self
+    public function setDecoratedBy(string $id): self
     {
-        $this->decoratedBy = $decoratedBy;
+        $this->decoratedBy = $id;
 
         return $this;
     }
@@ -231,7 +231,7 @@ final class Definition
         return $this->isSingleton;
     }
 
-    public function setIsSingleton(bool $isSingleton): Definition
+    public function setIsSingleton(bool $isSingleton): ClassDefinition
     {
         $this->isSingleton = $isSingleton;
 

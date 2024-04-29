@@ -108,14 +108,15 @@ class Example
 ##### Here are some improvements which will be implemented later:
 - add decorator (both from attributes and config)
 - refactoring
-- add ability to not bing interfaces if only one interface implementation exists
-- add decorator option to bind automatically decorated service if no other arguments exist
 - update readme
 - add performance tests
 - add internals to container
 - add circular reference decorators exception
 - reuse simple collections everywhere it is needed
-- 
+- refactor all places where possible InterfaceDefinition
+-
+- add decorator option to bind automatically decorated service if no other arguments exist (with different signature)
+- add ability to not bing interfaces if only one interface implementation exists
 - improve exception names and messages
 - allow binding variables with php/const notation (constant from classes or enums)
 - add option for binding objects through config and by attribute
