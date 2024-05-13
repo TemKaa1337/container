@@ -8,6 +8,9 @@ use Psr\Container\ContainerExceptionInterface;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Model\Definition\Decorator;
 
+/**
+ * @internal
+ */
 final class Config
 {
     /**
@@ -111,18 +114,6 @@ final class Config
     }
 
     /**
-     * @param array<class-string, Decorator> $decorators
-     *
-     * @return $this
-     */
-    public function setDecorators(array $decorators): self
-    {
-        $this->decorators = $decorators;
-
-        return $this;
-    }
-
-    /**
      * @return class-string[]
      */
     public function getExcludedClasses(): array
@@ -215,6 +206,18 @@ final class Config
     public function setClassSingletons(array $classSingletons): self
     {
         $this->classSingletons = $classSingletons;
+
+        return $this;
+    }
+
+    /**
+     * @param array<class-string, Decorator> $decorators
+     *
+     * @return $this
+     */
+    public function setDecorators(array $decorators): self
+    {
+        $this->decorators = $decorators;
 
         return $this;
     }

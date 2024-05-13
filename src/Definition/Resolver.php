@@ -16,6 +16,9 @@ use Temkaa\SimpleContainer\Model\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\InterfaceDefinition;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
+/**
+ * @internal
+ */
 final class Resolver
 {
     /**
@@ -66,44 +69,22 @@ final class Resolver
             return $argument;
         }
 
+        /** @psalm-suppress NoInterfaceProperties */
+        $definitionToInstantiate = $this->definitions[$argument->id];
         if ($argument instanceof Reference || $argument instanceof DecoratorReference) {
-            $definitionToResolve = $this->definitions[$argument->id];
-
-            if ($definitionToResolve instanceof InterfaceDefinition) {
-                if ($definitionToResolve->getDecoratedBy()) {
-                    $currentDefinition = $this->definitions[$definitionToResolve->getDecoratedBy()];
-                    while ($currentDefinition->getDecoratedBy()) {
-                        $currentDefinition = $this->definitions[$currentDefinition->getDecoratedBy()];
+            if ($definitionToInstantiate instanceof InterfaceDefinition) {
+                if ($definitionToInstantiate->getDecoratedBy()) {
+                    $definitionToInstantiate = $this->definitions[$definitionToInstantiate->getDecoratedBy()];
+                    while ($definitionToInstantiate->getDecoratedBy()) {
+                        /** @psalm-suppress PossiblyNullArrayOffset */
+                        $definitionToInstantiate = $this->definitions[$definitionToInstantiate->getDecoratedBy()];
                     }
-
-                    if ($this->isDefinitionResolving($currentDefinition->getId())) {
-                        $interfaceImplementationDefinition = $this->definitions[$definitionToResolve->getId()];
-                        $this->resolveDefinition($interfaceImplementationDefinition);
-                        $definitionToInstantiate = $interfaceImplementationDefinition;
-                    } else {
-                        $this->resolveDefinition($currentDefinition);
-                        $definitionToInstantiate = $currentDefinition;
-                    }
-
-                    // $decoratorDefinition = $this->definitions[$definitionToResolve->getDecoratedBy()];
-                    // $interfaceImplementationDefinition = $this->definitions[$definitionToResolve->getId()];
-                    //
-                    // if ($this->isDefinitionResolving($decoratorDefinition->getId())) {
-                    //     $this->resolveDefinition($interfaceImplementationDefinition);
-                    //     $definitionToInstantiate = $interfaceImplementationDefinition;
-                    // } else {
-                    //     $this->resolveDefinition($decoratorDefinition);
-                    //     $definitionToInstantiate = $decoratorDefinition;
-                    // }
                 } else {
-                    $interfaceImplementationDefinition = $this->definitions[$definitionToResolve->getId()];
-                    $this->resolveDefinition($interfaceImplementationDefinition);
-                    $definitionToInstantiate = $interfaceImplementationDefinition;
+                    $definitionToInstantiate = $this->definitions[$definitionToInstantiate->getId()];
                 }
-            } else {
-                $this->resolveDefinition($definitionToResolve);
-                $definitionToInstantiate = $definitionToResolve;
             }
+
+            $this->resolveDefinition($definitionToInstantiate);
 
             $instantiator = new Instantiator(new DefinitionRepository(array_values($this->definitions)));
 
@@ -133,10 +114,6 @@ final class Resolver
     {
         if ($definition instanceof InterfaceDefinition) {
             $this->resolveDefinition($this->definitions[$definition->getImplementedById()]);
-            //
-            // if ($decoratedById = $definition->getDecoratedBy()) {
-            //     $this->resolveDefinition($this->definitions[$decoratedById]);
-            // }
 
             return;
         }

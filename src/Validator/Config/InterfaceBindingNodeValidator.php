@@ -11,6 +11,9 @@ use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 
+/**
+ * @internal
+ */
 final class InterfaceBindingNodeValidator implements ValidatorInterface
 {
     /**

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model\Definition;
 
+/**
+ * @internal
+ */
 final class Decorator
 {
-    private bool $byInterface;
-
     /**
      * @var class-string
      */
@@ -55,18 +56,6 @@ final class Decorator
     public function setSignature(string $signature): self
     {
         $this->signature = $signature;
-
-        return $this;
-    }
-
-    public function isByInterface(): bool
-    {
-        return $this->byInterface;
-    }
-
-    public function setByInterface(bool $byInterface): Decorator
-    {
-        $this->byInterface = $byInterface;
 
         return $this;
     }

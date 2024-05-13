@@ -10,6 +10,9 @@ use Temkaa\SimpleContainer\Model\ClassDefinition;
 use Temkaa\SimpleContainer\Model\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\InterfaceDefinition;
 
+/**
+ * @internal
+ */
 #[Autowire(load: false)]
 final readonly class DefinitionRepository
 {
@@ -92,7 +95,6 @@ final readonly class DefinitionRepository
 
     private function resolveDecorators(DefinitionInterface $definition): DefinitionInterface
     {
-        // TODO: add tests on when something is requiring not root decorated service
         // TODO: refactor this condition
         if ($definition instanceof InterfaceDefinition) {
             if (!$definition->getDecoratedBy()) {
@@ -101,6 +103,7 @@ final readonly class DefinitionRepository
 
             $currentDefinition = $definition;
             while ($currentDefinition->getDecoratedBy()) {
+                /** @psalm-suppress PossiblyNullArrayOffset */
                 $currentDefinition = $this->definitions[$currentDefinition->getDecoratedBy()];
             }
 
@@ -118,6 +121,7 @@ final readonly class DefinitionRepository
 
         $currentDefinition = $definition;
         while ($currentDefinition->getDecoratedBy()) {
+            /** @psalm-suppress PossiblyNullArrayOffset */
             $currentDefinition = $this->definitions[$currentDefinition->getDecoratedBy()];
         }
 

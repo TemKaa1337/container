@@ -8,6 +8,9 @@ use Temkaa\SimpleContainer\Exception\DuplicatedEntryAliasException;
 use Temkaa\SimpleContainer\Model\ClassDefinition;
 use Temkaa\SimpleContainer\Model\DefinitionInterface;
 
+/**
+ * @internal
+ */
 final readonly class DuplicatedDefinitionAliasValidator
 {
     /**

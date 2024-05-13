@@ -12,7 +12,6 @@ use ReflectionParameter;
 use ReflectionType;
 use Temkaa\SimpleCollections\Collection;
 use Temkaa\SimpleCollections\Enum\SortOrder;
-use Temkaa\SimpleCollections\Model\Sort\ByCallback;
 use Temkaa\SimpleCollections\Model\Sort\ByField;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Autowire;
@@ -27,8 +26,9 @@ use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
-use Temkaa\SimpleContainer\Model\Container\Config;
+use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\ClassDefinition;
+use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\TaggedReference;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
@@ -42,6 +42,8 @@ use Temkaa\SimpleContainer\Validator\ArgumentValidator;
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ *
+ * @internal
  */
 final class Builder
 {
@@ -64,6 +66,8 @@ final class Builder
 
     private ExpressionParser $expressionParser;
 
+    private InterfaceFactory $interfaceFactory;
+
     private Config $resolvingConfig;
 
     /**
@@ -74,6 +78,7 @@ final class Builder
         $this->configs = $configs;
         $this->decoratorFactory = new DecoratorFactory();
         $this->expressionParser = new ExpressionParser();
+        $this->interfaceFactory = new InterfaceFactory();
     }
 
     /**
@@ -206,12 +211,10 @@ final class Builder
 
             $interfaceImplementation = $this->resolvingConfig->getInterfaceImplementation($interfaceName);
 
-            // TODO: add factory?
-            $interfaceDefinition = (new InterfaceDefinition())
-                ->setId($interfaceName)
-                ->setImplementedById($interfaceImplementation);
-
-            $this->definitions[$interfaceName] = $interfaceDefinition;
+            $this->definitions[$interfaceName] = $this->interfaceFactory->create(
+                $interfaceName,
+                $interfaceImplementation,
+            );
 
             $this->buildDefinition($interfaceImplementation);
 
@@ -342,12 +345,10 @@ final class Builder
                 $this->resolvingConfig->hasImplementation($interfaceName)
                 && $this->resolvingConfig->getInterfaceImplementation($interfaceName) === $reflection->getName()
             ) {
-                // TODO: add factory?
-                $interfaceDefinition = (new InterfaceDefinition())
-                    ->setId($interfaceName)
-                    ->setImplementedById($reflection->getName());
-
-                $this->definitions[$interfaceName] = $interfaceDefinition;
+                $this->definitions[$interfaceName] = $this->interfaceFactory->create(
+                    $interfaceName,
+                    implementedById: $reflection->getName(),
+                );
             }
 
             $interfaceTags = $interface->getAttributes(Tag::class);
@@ -390,6 +391,7 @@ final class Builder
             static fn (DefinitionInterface $definition): bool => $definition instanceof ClassDefinition,
         );
 
+        /** @var ClassDefinition $definition */
         foreach ($definitions as $definition) {
             if ($decorates = $definition->getDecorates()) {
                 $decorators[$decorates->getId()] ??= [];
@@ -416,14 +418,25 @@ final class Builder
 
                 $currentDecoratorArguments = $currentDecorator->getArguments();
                 foreach ($currentDecoratorArguments as $index => $argument) {
-                    if ($argument instanceof DecoratorReference && $argument->id === $id && $previousDecorator) {
-                        $currentDecoratorArguments[$index] = new DecoratorReference(
-                            $previousDecorator->getId(),
-                            $argument->priority,
-                            $argument->signature,
-                        );
+                    if ($argument instanceof DecoratorReference) {
+                        if ($argument->id === $id && $previousDecorator) {
+                            $currentDecoratorArguments[$index] = new DecoratorReference(
+                                $i === 0 && $rootDecoratedDefinition instanceof InterfaceDefinition
+                                    ? $this->definitions[$rootDecoratedDefinition->getImplementedById()]->getId()
+                                    : $previousDecorator->getId(),
+                                $argument->priority,
+                                $argument->signature,
+                            );
+                        } else if ($i === 0 && $rootDecoratedDefinition instanceof InterfaceDefinition) {
+                            $currentDecoratorArguments[$index] = new DecoratorReference(
+                                $this->definitions[$rootDecoratedDefinition->getImplementedById()]->getId(),
+                                $argument->priority,
+                                $argument->signature,
+                            );
+                        }
                     }
                 }
+
                 $currentDecorator->setArguments($currentDecoratorArguments);
 
                 if ($previousDecorator) {

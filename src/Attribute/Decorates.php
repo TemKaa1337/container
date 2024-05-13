@@ -25,7 +25,3 @@ final readonly class Decorates
     ) {
     }
 }
-/**
- * 1. Decorates by interface
- * 2. Just decorates by class name
- */

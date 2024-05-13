@@ -106,14 +106,12 @@ class Example
 - if you have type hinted some class in class arguments, which is neither in `include` and `exclude` sections, it will also be autowired.
 
 ##### Here are some improvements which will be implemented later:
-- add decorator (both from attributes and config)
 - refactoring
 - update readme
 - add performance tests
-- add internals to container
 - add circular reference decorators exception
 - reuse simple collections everywhere it is needed
-- refactor all places where possible InterfaceDefinition
+- refactor interfaces (to remove psalm suppressions)
 -
 - add decorator option to bind automatically decorated service if no other arguments exist (with different signature)
 - add ability to not bing interfaces if only one interface implementation exists

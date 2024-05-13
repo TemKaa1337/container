@@ -12,6 +12,9 @@ use Temkaa\SimpleContainer\Model\Definition\Decorator;
 use Temkaa\SimpleContainer\Util\ClassExtractor;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 
+/**
+ * @internal
+ */
 final readonly class ConfigFactory
 {
     public function __construct(

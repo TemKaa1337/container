@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Model\Definition\Deferred;
 
 use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
 
+/**
+ * @internal
+ */
 final readonly class DecoratorReference implements ReferenceInterface
 {
     public function __construct(

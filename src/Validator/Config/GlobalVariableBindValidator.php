@@ -8,6 +8,9 @@ use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 
+/**
+ * @internal
+ */
 final class GlobalVariableBindValidator implements ValidatorInterface
 {
     public function validate(array $config): void

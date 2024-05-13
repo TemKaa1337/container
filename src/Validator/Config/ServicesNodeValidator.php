@@ -10,6 +10,9 @@ use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 
+/**
+ * @internal
+ */
 final class ServicesNodeValidator implements ValidatorInterface
 {
     /**

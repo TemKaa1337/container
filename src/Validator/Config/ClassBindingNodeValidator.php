@@ -13,6 +13,9 @@ use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 
+/**
+ * @internal
+ */
 final class ClassBindingNodeValidator implements ValidatorInterface
 {
     // TODO: add validations on this

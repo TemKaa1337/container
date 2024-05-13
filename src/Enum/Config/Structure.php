@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Enum\Config;
 
+/**
+ * @internal
+ */
 enum Structure: string
 {
     case Bind = 'bind';

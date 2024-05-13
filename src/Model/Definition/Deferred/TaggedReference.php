@@ -8,6 +8,8 @@ use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
 
 /**
  * @psalm-api
+ *
+ * @internal
  */
 final readonly class TaggedReference implements ReferenceInterface
 {

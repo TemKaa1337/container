@@ -7,6 +7,9 @@ namespace Temkaa\SimpleContainer\Util;
 use Psr\Container\ContainerExceptionInterface;
 use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
 
+/**
+ * @internal
+ */
 final class TypeCaster
 {
     private const SUPPORTED_TYPES = ['bool', 'float', 'int', 'string', 'mixed'];

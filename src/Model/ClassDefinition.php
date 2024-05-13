@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Model;
 
 use Temkaa\SimpleContainer\Model\Definition\Decorator;
 
+/**
+ * @internal
+ */
 final class ClassDefinition implements DefinitionInterface
 {
     /**
@@ -40,15 +43,6 @@ final class ClassDefinition implements DefinitionInterface
      * @var string[]
      */
     private array $tags = [];
-
-    public function addAlias(string $alias): self
-    {
-        if (!in_array($alias, $this->getAliases(), strict: true)) {
-            $this->aliases[] = $alias;
-        }
-
-        return $this;
-    }
 
     /**
      * @param string[] $aliases

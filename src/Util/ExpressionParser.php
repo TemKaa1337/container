@@ -7,6 +7,9 @@ namespace Temkaa\SimpleContainer\Util;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableCircularException;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 
+/**
+ * @internal
+ */
 final class ExpressionParser
 {
     private const ENV_VARIABLE_PATTERN = '#env\((.*?)\)#';

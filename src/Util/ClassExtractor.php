@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Util;
 
 use DirectoryIterator;
 
+/**
+ * @internal
+ */
 final class ClassExtractor
 {
     /**

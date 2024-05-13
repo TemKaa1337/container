@@ -10,6 +10,9 @@ use Temkaa\SimpleContainer\Validator\Config\InterfaceBindingNodeValidator;
 use Temkaa\SimpleContainer\Validator\Config\ServicesNodeValidator;
 use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
 
+/**
+ * @internal
+ */
 final class ValidatorProvider
 {
     /**

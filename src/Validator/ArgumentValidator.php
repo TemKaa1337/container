@@ -13,6 +13,9 @@ use ReflectionUnionType;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 
+/**
+ * @internal
+ */
 final readonly class ArgumentValidator
 {
     /**

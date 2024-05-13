@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model;
 
+/**
+ * @internal
+ */
 final class InterfaceDefinition implements DefinitionInterface
 {
     /**
