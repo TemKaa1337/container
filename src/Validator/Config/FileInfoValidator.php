@@ -9,6 +9,9 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
 
+/**
+ * @internal
+ */
 final class FileInfoValidator
 {
     public function validate(SplFileInfo $file): void

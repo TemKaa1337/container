@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model;
 
-final class Definition
+use Temkaa\SimpleContainer\Model\Definition\Decorator;
+
+/**
+ * @internal
+ */
+final class ClassDefinition implements DefinitionInterface
 {
     /**
      * @var string[]
@@ -12,6 +17,13 @@ final class Definition
     private array $aliases = [];
 
     private array $arguments = [];
+
+    /**
+     * @var class-string|null
+     */
+    private ?string $decoratedBy = null;
+
+    private ?Decorator $decorates = null;
 
     /**
      * @var class-string $id
@@ -31,15 +43,6 @@ final class Definition
      * @var string[]
      */
     private array $tags = [];
-
-    public function addAlias(string $alias): self
-    {
-        if (!in_array($alias, $this->getAliases(), strict: true)) {
-            $this->aliases[] = $alias;
-        }
-
-        return $this;
-    }
 
     /**
      * @param string[] $aliases
@@ -106,6 +109,43 @@ final class Definition
     public function getArguments(): array
     {
         return $this->arguments;
+    }
+
+    public function setArguments(array $arguments): self
+    {
+        $this->arguments = $arguments;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string|null
+     */
+    public function getDecoratedBy(): ?string
+    {
+        return $this->decoratedBy;
+    }
+
+    /**
+     * @param class-string $id
+     */
+    public function setDecoratedBy(string $id): self
+    {
+        $this->decoratedBy = $id;
+
+        return $this;
+    }
+
+    public function getDecorates(): ?Decorator
+    {
+        return $this->decorates;
+    }
+
+    public function setDecorates(Decorator $decorator): self
+    {
+        $this->decorates = $decorator;
+
+        return $this;
     }
 
     /**
@@ -185,7 +225,7 @@ final class Definition
         return $this->isSingleton;
     }
 
-    public function setIsSingleton(bool $isSingleton): Definition
+    public function setIsSingleton(bool $isSingleton): ClassDefinition
     {
         $this->isSingleton = $isSingleton;
 

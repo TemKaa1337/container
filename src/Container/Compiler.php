@@ -14,6 +14,9 @@ use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 use Temkaa\SimpleContainer\Validator\DuplicatedDefinitionAliasValidator;
 
+/**
+ * @internal
+ */
 final readonly class Compiler
 {
     /**

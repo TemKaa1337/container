@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Util;
 
 use ReflectionAttribute;
 
+/**
+ * @internal
+ */
 final class AttributeExtractor
 {
     /**

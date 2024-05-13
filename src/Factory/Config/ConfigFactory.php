@@ -6,16 +6,22 @@ namespace Temkaa\SimpleContainer\Factory\Config;
 
 use SplFileInfo;
 use Temkaa\SimpleContainer\Enum\Config\Structure;
+use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Model\Container\Config;
+use Temkaa\SimpleContainer\Model\Definition\Decorator;
 use Temkaa\SimpleContainer\Util\ClassExtractor;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 
+/**
+ * @internal
+ */
 final readonly class ConfigFactory
 {
     public function __construct(
         private array $config,
         private SplFileInfo $configFile,
         private ClassExtractor $classExtractor = new ClassExtractor(),
+        private DecoratorFactory $decoratorFactory = new DecoratorFactory(),
         private ExpressionParser $expressionParser = new ExpressionParser(),
     ) {
     }
@@ -29,6 +35,7 @@ final readonly class ConfigFactory
         $includedClasses = $this->getIncludedClasses();
         $excludedClasses = $this->getExcludedClasses();
         $classSingletons = $this->getClassSingletons();
+        $decorators = $this->getDecorators();
 
         return (new Config())
             ->setGlobalBoundVariables($globalBoundVariables)
@@ -37,7 +44,8 @@ final readonly class ConfigFactory
             ->setInterfaceImplementations($interfaceBindings)
             ->setIncludedClasses(array_diff($includedClasses, $excludedClasses))
             ->setExcludedClasses($excludedClasses)
-            ->setClassSingletons($classSingletons);
+            ->setClassSingletons($classSingletons)
+            ->setDecorators($decorators);
     }
 
     /**
@@ -99,6 +107,27 @@ final readonly class ConfigFactory
         }
 
         return $tags;
+    }
+
+    /**
+     * @return array<class-string, Decorator>
+     */
+    private function getDecorators(): array
+    {
+        $decorators = [];
+        foreach ($this->config[Structure::Services->value] ?? [] as $nodeName => $nodeValue) {
+            if (!class_exists($nodeName)) {
+                continue;
+            }
+
+            if (!$decorates = $nodeValue[Structure::Decorates->value] ?? []) {
+                continue;
+            }
+
+            $decorators[$nodeName] = $this->decoratorFactory->createFromConfig($decorates);
+        }
+
+        return $decorators;
     }
 
     /**

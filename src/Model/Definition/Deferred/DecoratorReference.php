@@ -7,19 +7,25 @@ namespace Temkaa\SimpleContainer\Model\Definition\Deferred;
 use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
 
 /**
- * @psalm-api
- *
  * @internal
  */
-final readonly class TaggedReference implements ReferenceInterface
+final readonly class DecoratorReference implements ReferenceInterface
 {
+    /**
+     * @param class-string $id
+     */
     public function __construct(
-        public string $tag,
+        public string $id,
+        public int $priority,
+        public string $signature,
     ) {
     }
 
+    /**
+     * @return class-string
+     */
     public function getId(): string
     {
-        return $this->tag;
+        return $this->id;
     }
 }

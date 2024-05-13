@@ -6,7 +6,11 @@ namespace Temkaa\SimpleContainer\Model\Container;
 
 use Psr\Container\ContainerExceptionInterface;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
+use Temkaa\SimpleContainer\Model\Definition\Decorator;
 
+/**
+ * @internal
+ */
 final class Config
 {
     /**
@@ -23,6 +27,11 @@ final class Config
      * @var array<class-string, string[]>
      */
     private array $classTags = [];
+
+    /**
+     * @var array<class-string, Decorator>
+     */
+    private array $decorators = [];
 
     /**
      * @var class-string[]
@@ -57,7 +66,7 @@ final class Config
     /**
      * @param array<class-string, array<string, string>> $classBoundVariables
      */
-    public function setClassBoundVariables(array $classBoundVariables): Config
+    public function setClassBoundVariables(array $classBoundVariables): self
     {
         $this->classBoundVariables = $classBoundVariables;
 
@@ -87,11 +96,21 @@ final class Config
     /**
      * @param array<class-string, string[]> $classTags
      */
-    public function setClassTags(array $classTags): Config
+    public function setClassTags(array $classTags): self
     {
         $this->classTags = $classTags;
 
         return $this;
+    }
+
+    /**
+     * @param class-string $className
+     *
+     * @return Decorator|null
+     */
+    public function getDecorator(string $className): ?Decorator
+    {
+        return $this->decorators[$className] ?? null;
     }
 
     /**
@@ -105,7 +124,7 @@ final class Config
     /**
      * @param class-string[] $classes
      */
-    public function setExcludedClasses(array $classes): Config
+    public function setExcludedClasses(array $classes): self
     {
         $this->excludedClasses = $classes;
 
@@ -123,7 +142,7 @@ final class Config
     /**
      * @param array<string, string> $globalBoundVariables
      */
-    public function setGlobalBoundVariables(array $globalBoundVariables): Config
+    public function setGlobalBoundVariables(array $globalBoundVariables): self
     {
         $this->globalBoundVariables = $globalBoundVariables;
 
@@ -141,7 +160,7 @@ final class Config
     /**
      * @param class-string[] $classes
      */
-    public function setIncludedClasses(array $classes): Config
+    public function setIncludedClasses(array $classes): self
     {
         $this->includedClasses = $classes;
 
@@ -192,9 +211,21 @@ final class Config
     }
 
     /**
+     * @param array<class-string, Decorator> $decorators
+     *
+     * @return $this
+     */
+    public function setDecorators(array $decorators): self
+    {
+        $this->decorators = $decorators;
+
+        return $this;
+    }
+
+    /**
      * @param array<class-string, class-string> $interfaceImplementations
      */
-    public function setInterfaceImplementations(array $interfaceImplementations): Config
+    public function setInterfaceImplementations(array $interfaceImplementations): self
     {
         $this->interfaceImplementations = $interfaceImplementations;
 

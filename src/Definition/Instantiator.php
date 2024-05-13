@@ -6,12 +6,17 @@ namespace Temkaa\SimpleContainer\Definition;
 
 use ReflectionClass;
 use ReflectionException;
-use Temkaa\SimpleContainer\Model\Definition;
-use Temkaa\SimpleContainer\Model\Definition\Deferred\TaggedReference;
+use Temkaa\SimpleContainer\Model\ClassDefinition;
+use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
 use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
+use Temkaa\SimpleContainer\Model\DefinitionInterface;
+use Temkaa\SimpleContainer\Model\InterfaceDefinition;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
+/**
+ * @internal
+ */
 final readonly class Instantiator
 {
     public function __construct(
@@ -22,30 +27,37 @@ final readonly class Instantiator
     /**
      * @throws ReflectionException
      */
-    public function instantiate(Definition $definition): object
+    public function instantiate(DefinitionInterface $definition): object
     {
-        $instance = $definition->getInstance();
+        if ($definition instanceof InterfaceDefinition) {
+            return $this->instantiate(
+                $this->definitionRepository->find(
+                    id: $definition->getImplementedById(),
+                ),
+            );
+        }
+
+        /** @var ClassDefinition $definition */
         if ($definition->isSingleton()) {
-            return $instance;
+            return $definition->getInstance();
         }
 
         $arguments = [];
         foreach ($definition->getArguments() as $argument) {
-            if ($argument instanceof ReferenceInterface) {
-                $resolvedArgument = match (true) {
-                    $argument instanceof Reference       => $this->definitionRepository->find($argument->id),
-                    $argument instanceof TaggedReference => $this->definitionRepository->findAllByTag($argument->tag),
-                };
-
-                $arguments[] = $resolvedArgument instanceof Definition
-                    ? $resolvedArgument->getInstance()
-                    : array_map($this->instantiate(...), $resolvedArgument);
-            } else {
+            if (!$argument instanceof ReferenceInterface) {
                 $arguments[] = $argument;
+
+                continue;
             }
+
+            $resolvedArgument = $argument instanceof Reference || $argument instanceof DecoratorReference
+                ? $this->instantiate($this->definitionRepository->find($argument->getId()))
+                : array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getId()));
+
+            $arguments[] = $resolvedArgument;
         }
 
-        $reflection = new ReflectionClass($instance);
+        $reflection = new ReflectionClass($definition->getId());
 
         return $reflection->getConstructor()
             ? $reflection->newInstanceArgs($arguments)

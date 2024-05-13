@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Config;
+namespace Tests\Integration\Config;
 
 use ReflectionClass;
 use SplFileInfo;
@@ -382,8 +382,8 @@ final class BuilderTest extends AbstractBuilderTestCase
 
     private function getConfigContent(Builder $builder): Config
     {
-        $r = new ReflectionClass($builder);
+        $reflection = new ReflectionClass($builder);
 
-        return $r->getProperty('configs')->getValue($builder)[0];
+        return $reflection->getProperty('configs')->getValue($builder)[0];
     }
 }

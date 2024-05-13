@@ -8,11 +8,17 @@ use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
-use Temkaa\SimpleContainer\Model\Definition;
+use Temkaa\SimpleContainer\Model\ClassDefinition;
+use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
 use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
+use Temkaa\SimpleContainer\Model\DefinitionInterface;
+use Temkaa\SimpleContainer\Model\InterfaceDefinition;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
+/**
+ * @internal
+ */
 final class Resolver
 {
     /**
@@ -21,7 +27,7 @@ final class Resolver
     private array $definitionsResolving = [];
 
     /**
-     * @param Definition[] $definitions
+     * @param DefinitionInterface[] $definitions
      */
     public function __construct(
         private readonly array $definitions,
@@ -29,7 +35,7 @@ final class Resolver
     }
 
     /**
-     * @return Definition[]
+     * @return DefinitionInterface[]
      *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
@@ -52,8 +58,6 @@ final class Resolver
     }
 
     /**
-     * @noinspection PhpPossiblePolymorphicInvocationInspection
-     *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
@@ -63,17 +67,29 @@ final class Resolver
             return $argument;
         }
 
-        if ($argument instanceof Reference) {
-            $this->resolveDefinition($this->definitions[$argument->id]);
+        if ($argument instanceof Reference || $argument instanceof DecoratorReference) {
+            $definitionToInstantiate = $this->definitions[$argument->getId()];
+            if ($definitionToInstantiate instanceof InterfaceDefinition) {
+                if ($definitionToInstantiate->getDecoratedBy()) {
+                    $definitionToInstantiate = $this->definitions[$definitionToInstantiate->getDecoratedBy()];
+                    while ($definitionToInstantiate->getDecoratedBy()) {
+                        /** @psalm-suppress PossiblyNullArrayOffset */
+                        $definitionToInstantiate = $this->definitions[$definitionToInstantiate->getDecoratedBy()];
+                    }
+                } else {
+                    $definitionToInstantiate = $this->definitions[$definitionToInstantiate->getId()];
+                }
+            }
+
+            $this->resolveDefinition($definitionToInstantiate);
 
             $instantiator = new Instantiator(new DefinitionRepository(array_values($this->definitions)));
 
-            return $instantiator->instantiate($this->definitions[$argument->id]);
+            return $instantiator->instantiate($definitionToInstantiate);
         }
 
         $definitionRepository = new DefinitionRepository(array_values($this->definitions));
-        /** @psalm-suppress NoInterfaceProperties */
-        $taggedDefinitions = $definitionRepository->findAllByTag($argument->tag);
+        $taggedDefinitions = $definitionRepository->findAllByTag($argument->getId());
 
         $resolvedArguments = [];
         foreach ($taggedDefinitions as $taggedDefinition) {
@@ -90,8 +106,15 @@ final class Resolver
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    private function resolveDefinition(Definition $definition): void
+    private function resolveDefinition(DefinitionInterface $definition): void
     {
+        if ($definition instanceof InterfaceDefinition) {
+            $this->resolveDefinition($this->definitions[$definition->getImplementedById()]);
+
+            return;
+        }
+
+        /** @var ClassDefinition $definition */
         if ($definition->hasInstance()) {
             return;
         }
@@ -107,8 +130,8 @@ final class Resolver
             $resolvedArguments[] = $this->resolveArgument($argument);
         }
 
-        $r = new ReflectionClass($definition->getId());
-        $instance = $resolvedArguments ? $r->newInstanceArgs($resolvedArguments) : $r->newInstance();
+        $reflection = new ReflectionClass($definition->getId());
+        $instance = $resolvedArguments ? $reflection->newInstanceArgs($resolvedArguments) : $reflection->newInstance();
         $definition->setInstance($instance);
 
         $this->setResolving($definition->getId(), isResolving: false);
