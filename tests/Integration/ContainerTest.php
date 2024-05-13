@@ -33,7 +33,7 @@ use Throwable;
 /**
  * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod
  *
- * @noinspection PhpArgumentWithoutNamedIdentifierInspection
+ * @noinspection   PhpArgumentWithoutNamedIdentifierInspection
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
@@ -1487,7 +1487,6 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testCompilesWithMultipleDecoratorsByInterfaceDeclaredAsNonSingletons(): void
     {
-        // TODO: remove everywhere postfixes
         $interfaceName = ClassGenerator::getClassName();
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();

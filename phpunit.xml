@@ -6,9 +6,11 @@
         bootstrap="tests/bootstrap.php"
         cacheDirectory=".phpunit.cache"
         displayDetailsOnTestsThatTriggerWarnings="true"
-        convertErrorsToExceptions="true"
-        convertNoticesToExceptions="true"
-        convertWarningsToExceptions="true"
+        failOnNotice="true"
+        failOnDeprecation="true"
+        failOnEmptyTestSuite="true"
+        failOnWarning="true"
+        failOnIncomplete="true"
 >
     <testsuites>
         <testsuite name="units">

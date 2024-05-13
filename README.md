@@ -73,7 +73,7 @@ services:
     tags: [tag1, tag2, tag3]
 ```
 
-### Container attributes example:
+##### Container attributes example:
 ```php
 <?php
 
@@ -97,29 +97,89 @@ class Example
         private readonly iterable $tagged,
         #[Parameter(expression: 'env(INT_VARIABLE)')]
         private readonly int $age,
-    ) {}
+    ) {
+    }
 }
 ```
 
+##### Decorators:
+```yaml
+services:
+  include:
+    - '/../some/path/'
+
+  App\SomeInterface: App\ClassImplementing
+```
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App;
+
+use Temkaa\SimpleContainer\Attribute\Decorates;
+use Temkaa\SimpleContainer\Container\Builder;
+
+interface SomeInterface
+{
+}
+
+final class ClassImplementing implements SomeInterface
+{
+}
+
+#[Decorates(id: SomeInterface::class, priority: 0, signature: 'decorated')]
+final class Decorator1 implements SomeInterface
+{
+    public function __construct(
+        private readonly SomeInterface $decorated, 
+    ) {
+    }
+}
+
+/**
+ * the higher priority is, the closer is decorator to decorated service
+ * in current example the result of decorators chain is:
+ * Decorator1 decorates Decorator2, Decorator2 decorates ClassImplementing class.
+ */
+#[Decorates(id: SomeInterface::class, priority: 1)]
+final class Decorator2 implements SomeInterface
+{
+    public function __construct(
+        private readonly SomeInterface $inner, 
+    ) {
+    }
+}
+
+final class Collector
+{
+    public function __construct(
+        private readonly SomeInterface $decoratedInterface, 
+    ) {
+    }
+}
+
+$container = (new Builder())->add($configFile)->compile();
+
+/* $object1 = new Collector(new Decorator1(new Decorator2(new ClassImplementing()))); */
+$object1 = $container->get(Collector::class);
+
+/* $object2 = new Decorator1(new Decorator2(new ClassImplementing())); */
+$object2 = $container->get(SomeInterface::class);
+```
+
 ##### Important notes:
-- all classes for now are singletons, option with instantiating classes multiple times will be added later.
-- if you have type hinted some class in class arguments, which is neither in `include` and `exclude` sections, it will also be autowired.
+- if you have type hinted some class in class arguments of class, which is in `include` section 
+and which argument is neither in `include` and `exclude` sections, it will also be autowired.
 
 ##### Here are some improvements which will be implemented later:
 - refactoring
-- update readme
-- add performance tests
-- add circular reference decorators exception
-- reuse simple collections everywhere it is needed
-- refactor interfaces (to remove psalm suppressions)
--
 - add decorator option to bind automatically decorated service if no other arguments exist (with different signature)
 - add ability to not bing interfaces if only one interface implementation exists
 - improve exception names and messages
 - allow binding variables with php/const notation (constant from classes or enums)
 - add option for binding objects through config and by attribute
 - add env variable processors (allow casting env variable to enums, strings, floats etc.)
-- add option to import config from another config (?)
 - add Required attribute (to inject dependencies in methods)
 - reflection caching
 - container compiling into cache

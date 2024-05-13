@@ -20,6 +20,8 @@ interface DefinitionInterface
     public function getId(): string;
 
     /**
+     * @psalm-suppress PossiblyUnusedReturnValue
+     *
      * @param class-string $id
      */
     public function setDecoratedBy(string $id): self;

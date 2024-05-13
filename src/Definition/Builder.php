@@ -391,8 +391,8 @@ final class Builder
             static fn (DefinitionInterface $definition): bool => $definition instanceof ClassDefinition,
         );
 
-        /** @var ClassDefinition $definition */
         foreach ($definitions as $definition) {
+            /** @noinspection PhpPossiblePolymorphicInvocationInspection */
             if ($decorates = $definition->getDecorates()) {
                 $decorators[$decorates->getId()] ??= [];
                 $decorators[$decorates->getId()][] = $definition;

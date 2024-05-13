@@ -50,14 +50,9 @@ final readonly class Instantiator
                 continue;
             }
 
-            /**
-             * @noinspection   PhpPossiblePolymorphicInvocationInspection
-             *
-             * @psalm-suppress NoInterfaceProperties
-             */
             $resolvedArgument = $argument instanceof Reference || $argument instanceof DecoratorReference
-                ? $this->instantiate($this->definitionRepository->find($argument->id))
-                : array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->tag));
+                ? $this->instantiate($this->definitionRepository->find($argument->getId()))
+                : array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getId()));
 
             $arguments[] = $resolvedArgument;
         }

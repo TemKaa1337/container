@@ -93,21 +93,24 @@ final readonly class DefinitionRepository
         return null;
     }
 
+    private function resolveDecoratorDefinition(DefinitionInterface $definition): DefinitionInterface
+    {
+        while ($definition->getDecoratedBy()) {
+            /** @psalm-suppress PossiblyNullArrayOffset */
+            $definition = $this->definitions[$definition->getDecoratedBy()];
+        }
+
+        return $definition;
+    }
+
     private function resolveDecorators(DefinitionInterface $definition): DefinitionInterface
     {
-        // TODO: refactor this condition
         if ($definition instanceof InterfaceDefinition) {
             if (!$definition->getDecoratedBy()) {
                 return $this->definitions[$definition->getImplementedById()];
             }
 
-            $currentDefinition = $definition;
-            while ($currentDefinition->getDecoratedBy()) {
-                /** @psalm-suppress PossiblyNullArrayOffset */
-                $currentDefinition = $this->definitions[$currentDefinition->getDecoratedBy()];
-            }
-
-            return $currentDefinition;
+            return $this->resolveDecoratorDefinition($definition);
         }
 
         /** @var ClassDefinition $definition */
@@ -119,12 +122,6 @@ final readonly class DefinitionRepository
             return $definition;
         }
 
-        $currentDefinition = $definition;
-        while ($currentDefinition->getDecoratedBy()) {
-            /** @psalm-suppress PossiblyNullArrayOffset */
-            $currentDefinition = $this->definitions[$currentDefinition->getDecoratedBy()];
-        }
-
-        return $currentDefinition;
+        return $this->resolveDecoratorDefinition($definition);
     }
 }

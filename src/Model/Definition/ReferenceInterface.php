@@ -9,4 +9,8 @@ namespace Temkaa\SimpleContainer\Model\Definition;
  */
 interface ReferenceInterface
 {
+    /**
+     * @return class-string|string
+     */
+    public function getId(): string;
 }

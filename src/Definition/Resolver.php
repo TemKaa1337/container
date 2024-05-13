@@ -58,8 +58,6 @@ final class Resolver
     }
 
     /**
-     * @noinspection PhpPossiblePolymorphicInvocationInspection
-     *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
@@ -69,9 +67,8 @@ final class Resolver
             return $argument;
         }
 
-        /** @psalm-suppress NoInterfaceProperties */
-        $definitionToInstantiate = $this->definitions[$argument->id];
         if ($argument instanceof Reference || $argument instanceof DecoratorReference) {
+            $definitionToInstantiate = $this->definitions[$argument->getId()];
             if ($definitionToInstantiate instanceof InterfaceDefinition) {
                 if ($definitionToInstantiate->getDecoratedBy()) {
                     $definitionToInstantiate = $this->definitions[$definitionToInstantiate->getDecoratedBy()];
@@ -92,8 +89,7 @@ final class Resolver
         }
 
         $definitionRepository = new DefinitionRepository(array_values($this->definitions));
-        /** @psalm-suppress NoInterfaceProperties */
-        $taggedDefinitions = $definitionRepository->findAllByTag($argument->tag);
+        $taggedDefinitions = $definitionRepository->findAllByTag($argument->getId());
 
         $resolvedArguments = [];
         foreach ($taggedDefinitions as $taggedDefinition) {

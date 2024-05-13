@@ -18,13 +18,6 @@ use Temkaa\SimpleContainer\Util\ExpressionParser;
  */
 final class ClassBindingNodeValidator implements ValidatorInterface
 {
-    // TODO: add validations on this
-    private const ALLOWED_CLASS_INFO_STRUCTURE_NODE_NAMES = [
-        Structure::Bind,
-        Structure::Tags,
-        Structure::Decorates,
-        Structure::Singleton,
-    ];
     private const ALLOWED_DECORATOR_STRUCTURE_NODE_NAMES = [Structure::Id, Structure::Priority, Structure::Signature];
 
     /**

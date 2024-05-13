@@ -17,4 +17,9 @@ final readonly class TaggedReference implements ReferenceInterface
         public string $tag,
     ) {
     }
+
+    public function getId(): string
+    {
+        return $this->tag;
+    }
 }
