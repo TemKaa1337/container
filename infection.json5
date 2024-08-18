@@ -8,5 +8,5 @@
     "logs": {
         "text": "infection.log"
     },
-    "minMsi": 85
+    "minMsi": 75
 }
