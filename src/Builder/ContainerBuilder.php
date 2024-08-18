@@ -27,6 +27,11 @@ final class ContainerBuilder
      */
     private array $validators;
 
+    public static function make(): self
+    {
+        return new self();
+    }
+
     public function __construct()
     {
         $this->validators = (new ValidatorProvider())->provide();
