@@ -3,6 +3,7 @@
     "description": "A simple implementation of DI Container",
     "type": "library",
     "license": "MIT",
+    "keywords": ["dependency injection", "di", "container", "di container"],
     "autoload": {
         "psr-4": {
             "Temkaa\\SimpleContainer\\": "src/",
