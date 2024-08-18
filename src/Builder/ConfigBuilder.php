@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Builder;
 
-// TODO: fix tests
-// TODO: correct namespaces
-// TODO: write some tests on decorates by alias
 use Temkaa\SimpleContainer\Model\Container\ClassConfig;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
+use Temkaa\SimpleContainer\Model\Container\Config;
 
+/**
+ * @psalm-api
+ */
 final class ConfigBuilder
 {
     /**
@@ -37,6 +37,11 @@ final class ConfigBuilder
      */
     private array $include = [];
 
+    public static function make(): self
+    {
+        return new self();
+    }
+
     public function bindClass(ClassConfig $class): self
     {
         $this->boundedClasses[$class->getClass()] = $class;
@@ -62,11 +67,11 @@ final class ConfigBuilder
         return $this;
     }
 
-    public function build(): ConfigNew
+    public function build(): Config
     {
         $includedPaths = array_diff($this->include, $this->exclude);
 
-        return new ConfigNew(
+        return new Config(
             $this->boundedClasses,
             $this->boundedInterfaces,
             $this->boundedVariables,
@@ -87,10 +92,5 @@ final class ConfigBuilder
         $this->include[] = $path;
 
         return $this;
-    }
-
-    public static function make(): self
-    {
-        return new self();
     }
 }

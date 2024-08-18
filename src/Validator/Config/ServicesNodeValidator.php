@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Validator\Config;
 
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
+use Temkaa\SimpleContainer\Model\Container\Config;
 
 /**
  * @internal
  */
 final class ServicesNodeValidator implements ValidatorInterface
 {
-    public function validate(ConfigNew $config): void
+    public function validate(Config $config): void
     {
         $this->validateNode($config->getIncludedPaths());
         $this->validateNode($config->getExcludedPaths());

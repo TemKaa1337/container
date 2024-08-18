@@ -7,14 +7,14 @@ namespace Temkaa\SimpleContainer\Validator\Config;
 use ReflectionClass;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
+use Temkaa\SimpleContainer\Model\Container\Config;
 
 /**
  * @internal
  */
 final class InterfaceBindingNodeValidator implements ValidatorInterface
 {
-    public function validate(ConfigNew $config): void
+    public function validate(Config $config): void
     {
         foreach ($config->getBoundedInterfaces() as $interface => $class) {
             if (!interface_exists($interface)) {

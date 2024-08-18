@@ -13,21 +13,21 @@ declare(strict_types=1);
 
 use Temkaa\SimpleContainer\Container;
 use Temkaa\SimpleContainer\Container\Builder;
+use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 
 // you need to provide SplFileInfo of config file to builder
-$configFile = new SplFileInfo('/path/to/config/file.yaml');
-
-$container = (new Builder())->add($configFile)->compile();
+$config = ConfigBuilder::make()->build();
+$container = (new Builder())->add($config)->compile();
 
 // or if you need multiple config files (for example for vendor package, why not?):
-$configFile1 = new SplFileInfo('/path/to/config/file_1.yaml');
-$configFile2 = new SplFileInfo('/path/to/config/file_2.yaml');
-$configFile3 = new SplFileInfo('/path/to/config/file_3.yaml');
+$config1 = ConfigBuilder::make()->build();
+$config2 = ConfigBuilder::make()->build();
+$config3 = ConfigBuilder::make()->build();
 
 $container = (new Builder())
-  ->add($configFile1)
-  ->add($configFile2)
-  ->add($configFile3)
+  ->add($config1)
+  ->add($config2)
+  ->add($config3)
   ->compile();
 
 /** @var ClassName $object */
@@ -41,36 +41,44 @@ $object = $container->get(InterfaceName::class);
 ```
 
 ##### Container config example:
-```yaml
-services:
-  # list of global variable bindings which will be bound to variables with same name 
-  bind:
-    $variableName: env(GLOBAL_VARIABLE_VALUE)
+```php
+<?php
 
-  include:
-    # all class paths must be relative to config file to allow container find them
-    - '/../some/path/ClassName.php'
-    - '/../some/path/'
-  exclude:
-    - '/../some/path/ClassName.php'
-    - '/../some/path/'
+declare(strict_types=1);
 
-  # interface binding
-  App\SomeInterface: App\SomeInterfaceImplementation
+use Temkaa\SimpleContainer\Builder\ConfigBuilder;
+use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
 
-  # class info binding
-  App\SomeClass:
-    bind:
-      $variableName: 'variable_value'
-      $variableName2: 'env(ENV_VARIABLE)'
-      $variableName3: 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)'
-      $variableName4: !tagged tag_name
-    decorates:
-      id: App\SomeInterface
-      priority: 1
-      signature: decorated
-    singleton: false
-    tags: [tag1, tag2, tag3]
+$config = ConfigBuilder::make()
+    # all class absolute paths that must be included
+    ->include(__DIR__.'../../some/path/')
+    ->include(__DIR__.'../../some/ClassName.php')
+    # all class absolute paths that must be excluded
+    ->exclude(__DIR__.'../../some2/')
+    ->exclude(__DIR__.'../../some2/ClassName2.php')
+    # list of global variable bindings which will be bound to variables with same name 
+    ->bindVariable('variableName1', 'variableValue1')
+    ->bindVariable('variableName2', 'env(ENV_VAR_2)')
+    # bounded interfaces
+    ->bindInterface(SomeInterface::class, SomeInterfaceImplementation::class)
+    ->bindClass(
+        # class info binding
+        ClassBuilder::make(SomeClass::class)
+            # bound variables in class context
+            ->bindVariable('$variableName1', 'variable_value')
+            ->bindVariable('variableName2', 'env(ENV_VARIABLE)')
+            ->bindVariable('variableName3', 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)')
+            ->bindVariable('$variableName4', '!tagged tag_name')
+            # decorated class
+            ->decorates(id: DecoratedClass::class, signature: '$inner', priority: 2)
+            # is class singleton or not (true by default)
+            ->singleton(false)
+            # class tags
+            ->tag('tag1')
+            ->tag('tag2')
+            ->build()
+    )
+    ->build();
 ```
 
 ##### Container attributes example:
@@ -103,12 +111,18 @@ class Example
 ```
 
 ##### Decorators:
-```yaml
-services:
-  include:
-    - '/../some/path/'
+```php
+<?php
 
-  App\SomeInterface: App\ClassImplementing
+declare(strict_types=1);
+
+use Temkaa\SimpleContainer\Builder\ConfigBuilder;
+use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
+
+$config = ConfigBuilder::make()
+    ->include(__DIR__.'../../some/path/')
+    ->bindInterface(SomeInterface::class, ClassImplementing::class)
+    ->build();
 ```
 ```php
 <?php

@@ -10,7 +10,7 @@ use ReflectionException;
 use Temkaa\SimpleContainer\Container;
 use Temkaa\SimpleContainer\Definition\Builder;
 use Temkaa\SimpleContainer\Definition\Resolver;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
+use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 use Temkaa\SimpleContainer\Validator\DuplicatedDefinitionAliasValidator;
 
@@ -20,7 +20,7 @@ use Temkaa\SimpleContainer\Validator\DuplicatedDefinitionAliasValidator;
 final readonly class Compiler
 {
     /**
-     * @param ConfigNew[] $configs
+     * @param Config[] $configs
      */
     public function __construct(
         private array $configs,

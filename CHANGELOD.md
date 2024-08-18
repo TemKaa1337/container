@@ -1,3 +1,9 @@
+### v0.0.5
+##### Features:
+- Changed config from yaml file to php object;
+- Changed php version to `^8.3`;
+- Added infection.
+
 ### v0.0.4
 ##### Features:
 - Added ability to declare non-singleton classes.

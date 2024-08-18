@@ -7,7 +7,7 @@ namespace Temkaa\SimpleContainer\Container;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
+use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Provider\Config\ValidatorProvider;
 use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
 
@@ -17,7 +17,7 @@ use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
 final class Builder
 {
     /**
-     * @var ConfigNew[]
+     * @var Config[]
      */
     private array $configs = [];
 
@@ -31,7 +31,7 @@ final class Builder
         $this->validators = (new ValidatorProvider())->provide();
     }
 
-    public function add(ConfigNew $config): self
+    public function add(Config $config): self
     {
         foreach ($this->validators as $validator) {
             $validator->validate($config);

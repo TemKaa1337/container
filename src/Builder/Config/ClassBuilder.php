@@ -7,7 +7,9 @@ namespace Temkaa\SimpleContainer\Builder\Config;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Temkaa\SimpleContainer\Model\Container\ClassConfig;
 
-// TODO: add aliases here?
+/**
+ * @psalm-api
+ */
 final class ClassBuilder
 {
     /**
@@ -23,6 +25,14 @@ final class ClassBuilder
      * @var string[]
      */
     private array $tags = [];
+
+    /**
+     * @param class-string $class
+     */
+    public static function make(string $class): self
+    {
+        return new self($class);
+    }
 
     /**
      * @param class-string $class
@@ -44,6 +54,9 @@ final class ClassBuilder
         return new ClassConfig($this->class, $this->boundedVariables, $this->decorates, $this->singleton, $this->tags);
     }
 
+    /**
+     * @param class-string $id
+     */
     public function decorates(
         string $id,
         int $priority = Decorator::DEFAULT_PRIORITY,
@@ -52,14 +65,6 @@ final class ClassBuilder
         $this->decorates = new Decorator($id, $priority, str_replace('$', '', $signature));
 
         return $this;
-    }
-
-    /**
-     * @param class-string $class
-     */
-    public static function make(string $class): self
-    {
-        return new self($class);
     }
 
     public function singleton(bool $singleton = true): self

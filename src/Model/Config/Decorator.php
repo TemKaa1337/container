@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model\Config;
 
+/**
+ * @internal
+ */
 final readonly class Decorator
 {
-    public const DEFAULT_PRIORITY = 0;
-    public const DEFAULT_SIGNATURE = 'inner';
+    public const int DEFAULT_PRIORITY = 0;
+    public const string DEFAULT_SIGNATURE = 'inner';
 
     /**
      * @param class-string $id
@@ -19,6 +22,9 @@ final readonly class Decorator
     ) {
     }
 
+    /**
+     * @return class-string
+     */
     public function getId(): string
     {
         return $this->id;

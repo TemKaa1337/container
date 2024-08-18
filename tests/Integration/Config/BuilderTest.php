@@ -4,25 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Config;
 
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder as ClassConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Container\Builder;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
-use Temkaa\SimpleContainer\Model\Container\ClassConfig;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\AbstractUnitTestCase;
 
-/**
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- */
 final class BuilderTest extends AbstractUnitTestCase
 {
-    protected const GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
+    protected const string GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
 
     public function testConfigDoesNotInitDueToInvalidServicePath(): void
     {
@@ -162,51 +155,5 @@ final class BuilderTest extends AbstractUnitTestCase
         $this->expectExceptionMessage('Variable "APP_DEBUG" is not found in env variables.');
 
         (new Builder())->add($config);
-    }
-
-    private function generateClassConfig(
-        string $className,
-        array $variableBindings = [],
-        ?Decorator $decorates = null,
-    ): ClassConfig {
-        $builder = ClassConfigBuilder::make($className);
-
-        foreach ($variableBindings as $variableName => $variableValue) {
-            $builder->bindVariable($variableName, $variableValue);
-        }
-
-        if ($decorates) {
-            $builder->decorates($decorates->getId(), $decorates->getPriority(), $decorates->getSignature());
-        }
-
-        return $builder->build();
-    }
-
-    private function generateConfig(
-        array $includedPaths = [],
-        array $interfaceBindings = [],
-        array $classBindings = [],
-    ): ConfigNew {
-        $builder = new ConfigBuilder();
-
-        if ($includedPaths) {
-            foreach ($includedPaths as $path) {
-                $builder->include($path);
-            }
-        }
-
-        if ($interfaceBindings) {
-            foreach ($interfaceBindings as $interface => $class) {
-                $builder->bindInterface($interface, $class);
-            }
-        }
-
-        if ($classBindings) {
-            foreach ($classBindings as $classBinding) {
-                $builder->bindClass($classBinding);
-            }
-        }
-
-        return $builder->build();
     }
 }

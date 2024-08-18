@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Validator\Config;
 
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
+use Temkaa\SimpleContainer\Model\Container\Config;
 
 /**
  * @internal
+ *
+ * @psalm-api
  */
 interface ValidatorInterface
 {
-    public function validate(ConfigNew $config): void;
+    public function validate(Config $config): void;
 }

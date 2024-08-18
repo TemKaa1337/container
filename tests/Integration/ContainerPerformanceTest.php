@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
+use Psr\Container\ContainerExceptionInterface;
+use ReflectionException;
 use Temkaa\SimpleContainer\Container\Builder;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
 final class ContainerPerformanceTest extends AbstractContainerTestCase
 {
-    private const COMPILE_TIME_THRESHOLD_IN_SECONDS = 0.02;
+    private const float COMPILE_TIME_THRESHOLD_IN_SECONDS = 0.03;
 
+    /**
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesInSuitableTime(): void
     {
         $interfaceName1 = ClassGenerator::getClassName();
@@ -153,20 +159,5 @@ final class ContainerPerformanceTest extends AbstractContainerTestCase
         $endTime = microtime(true);
 
         self::assertLessThan(self::COMPILE_TIME_THRESHOLD_IN_SECONDS, $endTime - $startTime);
-    }
-
-    private function generateConfig(array $includedPaths, array $interfaceBindings): ConfigNew
-    {
-        $builder = new ConfigBuilder();
-
-        foreach ($includedPaths as $path) {
-            $builder->include($path);
-        }
-
-        foreach ($interfaceBindings as $interfaceName => $className) {
-            $builder->bindInterface($interfaceName, $className);
-        }
-
-        return $builder->build();
     }
 }

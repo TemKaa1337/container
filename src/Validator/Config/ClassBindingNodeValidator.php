@@ -10,7 +10,7 @@ use ReflectionParameter;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Model\Container\ClassConfig;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
+use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 
 /**
@@ -21,7 +21,7 @@ final class ClassBindingNodeValidator implements ValidatorInterface
     /**
      * @throws ReflectionException
      */
-    public function validate(ConfigNew $config): void
+    public function validate(Config $config): void
     {
         foreach ($config->getBoundedClasses() as $classConfig) {
             if (!class_exists($classConfig->getClass())) {

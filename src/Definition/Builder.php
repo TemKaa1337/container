@@ -25,11 +25,10 @@ use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
-use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
-use Temkaa\SimpleContainer\Model\Container\ConfigNew;
+use Temkaa\SimpleContainer\Model\Container\Config;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\TaggedReference;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
@@ -52,11 +51,9 @@ final class Builder
     private ClassExtractor $classExtractor;
 
     /**
-     * @var ConfigNew[] $configs
+     * @var Config[] $configs
      */
     private readonly array $configs;
-
-    private DecoratorFactory $decoratorFactory;
 
     /**
      * @var DefinitionInterface[]
@@ -68,23 +65,23 @@ final class Builder
      */
     private array $definitionsBuilding = [];
 
+    /**
+     * @var string[]
+     */
     private array $excludedClasses;
 
     private ExpressionParser $expressionParser;
 
-    private array $includedClasses;
-
     private InterfaceFactory $interfaceFactory;
 
-    private ConfigNew $resolvingConfig;
+    private Config $resolvingConfig;
 
     /**
-     * @param ConfigNew[] $configs
+     * @param Config[] $configs
      */
     public function __construct(array $configs)
     {
         $this->configs = $configs;
-        $this->decoratorFactory = new DecoratorFactory();
         $this->expressionParser = new ExpressionParser();
         $this->interfaceFactory = new InterfaceFactory();
         $this->classExtractor = new ClassExtractor();
@@ -101,13 +98,15 @@ final class Builder
         foreach ($this->configs as $config) {
             $this->resolvingConfig = $config;
 
-            $this->includedClasses = array_merge(
+            /** @psalm-suppress NamedArgumentNotAllowed */
+            $includedClasses = array_merge(
                 ...array_map(
                 fn (string $path): array => $this->classExtractor->extract(realpath($path)),
                 $config->getIncludedPaths(),
             ),
             );
 
+            /** @psalm-suppress NamedArgumentNotAllowed */
             $this->excludedClasses = array_merge(
                 ...array_map(
                 fn (string $path): array => $this->classExtractor->extract(realpath($path)),
@@ -115,7 +114,7 @@ final class Builder
             ),
             );
 
-            foreach ($this->includedClasses as $class) {
+            foreach ($includedClasses as $class) {
                 $this->buildDefinition($class, failIfUninstantiable: false);
             }
         }
@@ -191,8 +190,8 @@ final class Builder
             $classBoundVars = $boundClassInfo?->getBoundVariables() ?? [];
             $globalBoundVars = $this->resolvingConfig->getBoundedVariables();
 
-            $hasBoundVariable = $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? false;
             $boundVariableValue = $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;
+            $hasBoundVariable = (bool) $boundVariableValue;
 
             if ($hasBoundVariable && str_starts_with((string) $boundVariableValue, '!tagged')) {
                 /** @psalm-suppress PossiblyNullArgument */
@@ -200,20 +199,22 @@ final class Builder
 
                 $resolvedValue = new TaggedReference($tag);
             } else {
-                if (!$hasBoundVariable && !$argumentType->allowsNull()) {
-                    throw new UnresolvableArgumentException(
+                /** @psalm-suppress PossiblyNullArgument */
+                $resolvedValue = match (true) {
+                    $hasBoundVariable                                 => TypeCaster::cast(
+                        $this->expressionParser->parse($boundVariableValue),
+                        $argumentType->getName(),
+                    ),
+                    $argumentType->allowsNull() && !$hasBoundVariable => null,
+                    default                                           => throw new UnresolvableArgumentException(
                         sprintf(
                             'Cannot instantiate entry "%s" with argument "%s::%s".',
                             $id,
                             $argumentName,
                             $argumentType->getName(),
                         ),
-                    );
-                }
-
-                $resolvedValue = $argumentType->allowsNull() && !$hasBoundVariable
-                    ? null
-                    : TypeCaster::cast($this->expressionParser->parse($boundVariableValue), $argumentType->getName());
+                    ),
+                };
             }
 
             return $resolvedValue;
@@ -300,9 +301,7 @@ final class Builder
 
         $definition = (new ClassDefinition())->setId($id);
 
-        $boundClassInfo = $this->resolvingConfig->getBoundedClasses()[$id] ?? null;
-
-        if ($boundClassInfo) {
+        if ($boundClassInfo = $this->resolvingConfig->getBoundedClass($id)) {
             $definition->setIsSingleton($boundClassInfo->isSingleton());
         }
 
@@ -358,7 +357,7 @@ final class Builder
         $classTags = $reflection->getAttributes(Tag::class);
         $classAliases = $reflection->getAttributes(Alias::class);
 
-        $boundClassInfo = $this->resolvingConfig->getBoundedClasses()[$reflection->getName()] ?? null;
+        $boundClassInfo = $this->resolvingConfig->getBoundedClass($reflection->getName());
 
         $definition
             ->addTags($boundClassInfo?->getTags() ?? [])
@@ -384,15 +383,17 @@ final class Builder
             $definition->addTags(AttributeExtractor::extractParameters($interfaceTags, 'name'));
         }
 
-        $decoratesAttribute = $reflection->getAttributes(Decorates::class);
-        $boundClassInfo = $this->resolvingConfig->getBoundedClasses()[$definition->getId()] ?? null;
-        $decoratesConfig = $boundClassInfo?->getDecorates();
-        if ($decoratesAttribute || $decoratesConfig) {
-            $decoratesAttribute = $decoratesAttribute ?current($decoratesAttribute)->newInstance() : null;
+        if ($decorates = $boundClassInfo?->getDecorates()) {
+            $definition->setDecorates($decorates);
+        } else if ($decoratesAttribute = $reflection->getAttributes(Decorates::class)) {
+            $decoratesAttribute = current($decoratesAttribute)->newInstance();
+
             $definition->setDecorates(
-                $decoratesAttribute
-                    ? new Decorator($decoratesAttribute->id, $decoratesAttribute->priority, str_replace('$', '', $decoratesAttribute->signature))
-                    : $decoratesConfig,
+                new Decorator(
+                    $decoratesAttribute->id,
+                    $decoratesAttribute->priority,
+                    str_replace('$', '', $decoratesAttribute->signature),
+                ),
             );
         }
     }
@@ -411,6 +412,7 @@ final class Builder
 
     /**
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     private function updateDecoratorReferences(): void
     {
@@ -470,14 +472,13 @@ final class Builder
 
                 $currentDecorator->setArguments($currentDecoratorArguments);
 
-                if ($previousDecorator) {
-                    $decorates = $currentDecorator->getDecorates();
+                if ($previousDecorator && $decorates = $currentDecorator->getDecorates()) {
                     $currentDecorator->setDecorates(
                         new Decorator(
                             $previousDecorator->getId(),
                             $decorates->getPriority(),
-                            $decorates->getSignature(),
-                        )
+                            str_replace('$', '', $decorates->getSignature()),
+                        ),
                     );
                 }
 

@@ -12,7 +12,7 @@ use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
  */
 final class ExpressionParser
 {
-    private const ENV_VARIABLE_PATTERN = '#env\((.*?)\)#';
+    private const string ENV_VARIABLE_PATTERN = '#env\((.*?)\)#';
 
     private array $variablesResolving = [];
 
