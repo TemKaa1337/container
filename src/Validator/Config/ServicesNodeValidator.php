@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Validator\Config;
 
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
-use Temkaa\SimpleContainer\Model\Container\Config;
+use Temkaa\SimpleContainer\Model\Config;
 
 /**
  * @internal

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Factory\Definition;
 
-use Temkaa\SimpleContainer\Model\DefinitionInterface;
-use Temkaa\SimpleContainer\Model\InterfaceDefinition;
+use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
+use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 
 /**
  * @internal

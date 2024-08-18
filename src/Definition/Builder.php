@@ -23,17 +23,17 @@ use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
-use Temkaa\SimpleContainer\Model\ClassDefinition;
+use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
-use Temkaa\SimpleContainer\Model\Container\Config;
+use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\TaggedReference;
+use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
+use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
-use Temkaa\SimpleContainer\Model\DefinitionInterface;
-use Temkaa\SimpleContainer\Model\InterfaceDefinition;
-use Temkaa\SimpleContainer\Util\AttributeExtractor;
-use Temkaa\SimpleContainer\Util\ClassExtractor;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
+use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
+use Temkaa\SimpleContainer\Util\Extractor\ClassExtractor;
 use Temkaa\SimpleContainer\Util\TypeCaster;
 use Temkaa\SimpleContainer\Validator\ArgumentValidator;
 
@@ -184,7 +184,7 @@ final class Builder
 
             $boundClassInfo = $this->resolvingConfig->getBoundedClasses()[$id] ?? null;
 
-            $classBoundVars = $boundClassInfo?->getBoundVariables() ?? [];
+            $classBoundVars = $boundClassInfo?->getBoundedVariables() ?? [];
             $globalBoundVars = $this->resolvingConfig->getBoundedVariables();
 
             $boundVariableValue = $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;

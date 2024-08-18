@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Validator;
 
 use Psr\Container\ContainerExceptionInterface;
-use ReflectionIntersectionType;
 use ReflectionNamedType;
 use ReflectionParameter;
-use ReflectionType;
 use ReflectionUnionType;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
@@ -23,10 +21,7 @@ final readonly class ArgumentValidator
      */
     public function validate(ReflectionParameter $argument, string $id): void
     {
-        // needed in order to suppress psalm undefined method messages
-        /** @var ReflectionType&ReflectionNamedType $argumentType */
         $argumentType = $argument->getType();
-
         if (!$argumentType) {
             throw new UninstantiableEntryException(
                 sprintf(
@@ -37,7 +32,7 @@ final readonly class ArgumentValidator
             );
         }
 
-        if ($argumentType instanceof ReflectionUnionType || $argumentType instanceof ReflectionIntersectionType) {
+        if (!$argumentType instanceof ReflectionNamedType) {
             $formattedArgumentType = $argumentType instanceof ReflectionUnionType ? 'union' : 'intersection';
 
             throw new UnresolvableArgumentException(
@@ -47,17 +42,6 @@ final readonly class ArgumentValidator
                     $formattedArgumentType,
                     $argumentType,
                     $id,
-                ),
-            );
-        }
-
-        if (!$argumentType instanceof ReflectionNamedType) {
-            throw new UnresolvableArgumentException(
-                sprintf(
-                    'Cannot instantiate entry "%s" with argument "%s::%s".',
-                    $id,
-                    $argument->getName(),
-                    $argumentType->getName(),
                 ),
             );
         }

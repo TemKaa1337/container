@@ -6,7 +6,7 @@ namespace Tests\Integration;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Container\Builder;
+use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
@@ -155,7 +155,7 @@ final class ContainerPerformanceTest extends AbstractContainerTestCase
         );
 
         $startTime = microtime(true);
-        (new Builder())->add($configFile)->compile();
+        (new ContainerBuilder())->add($configFile)->build();
         $endTime = microtime(true);
 
         self::assertLessThan(self::COMPILE_TIME_THRESHOLD_IN_SECONDS, $endTime - $startTime);

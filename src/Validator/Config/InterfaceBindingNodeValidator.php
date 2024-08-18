@@ -7,7 +7,7 @@ namespace Temkaa\SimpleContainer\Validator\Config;
 use ReflectionClass;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
-use Temkaa\SimpleContainer\Model\Container\Config;
+use Temkaa\SimpleContainer\Model\Config;
 
 /**
  * @internal

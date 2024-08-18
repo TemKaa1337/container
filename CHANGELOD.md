@@ -1,3 +1,7 @@
+### v0.0.8
+##### Features:
+- Refactored services namespaces. 
+
 ### v0.0.7
 ##### Features:
 - Dependencies cleanup.

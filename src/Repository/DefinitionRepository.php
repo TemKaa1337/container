@@ -6,9 +6,9 @@ namespace Temkaa\SimpleContainer\Repository;
 
 use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
-use Temkaa\SimpleContainer\Model\ClassDefinition;
-use Temkaa\SimpleContainer\Model\DefinitionInterface;
-use Temkaa\SimpleContainer\Model\InterfaceDefinition;
+use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
+use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
+use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 
 /**
  * @internal

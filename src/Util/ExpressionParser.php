@@ -18,11 +18,7 @@ final class ExpressionParser
 
     public function parse(string $expression): string
     {
-        if (!$envVarsBindings = $this->getExpressions($expression)) {
-            return $expression;
-        }
-
-        foreach ($envVarsBindings as $binding) {
+        foreach ($this->getExpressions($expression) as $binding) {
             if (!Env::has($binding)) {
                 throw new EnvVariableNotFoundException(
                     sprintf('Variable "%s" is not found in env variables.', $binding),

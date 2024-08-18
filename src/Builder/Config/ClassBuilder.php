@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Builder\Config;
 
+use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
-use Temkaa\SimpleContainer\Model\Container\ClassConfig;
 
 /**
  * @psalm-api

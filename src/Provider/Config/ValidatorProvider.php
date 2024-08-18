@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Provider\Config;
 
 use Temkaa\SimpleContainer\Validator\Config\ClassBindingNodeValidator;
-use Temkaa\SimpleContainer\Validator\Config\GlobalVariableBindValidator;
 use Temkaa\SimpleContainer\Validator\Config\InterfaceBindingNodeValidator;
 use Temkaa\SimpleContainer\Validator\Config\ServicesNodeValidator;
 use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
+use Temkaa\SimpleContainer\Validator\Config\VariableBindValidator;
 
 /**
  * @internal
@@ -22,7 +22,7 @@ final class ValidatorProvider
     {
         return [
             new ServicesNodeValidator(),
-            new GlobalVariableBindValidator(),
+            new VariableBindValidator(),
             new ClassBindingNodeValidator(),
             new InterfaceBindingNodeValidator(),
         ];

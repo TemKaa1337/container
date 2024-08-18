@@ -11,24 +11,22 @@ composer require temkaa/simple-container
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Container;
-use Temkaa\SimpleContainer\Container\Builder;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
+use Temkaa\SimpleContainer\Builder\ContainerBuilder;use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 
 // you need to provide SplFileInfo of config file to builder
 $config = ConfigBuilder::make()->build();
-$container = (new Builder())->add($config)->compile();
+$container = (new ContainerBuilder())->add($config)->build();
 
 // or if you need multiple config files (for example for vendor package, why not?):
 $config1 = ConfigBuilder::make()->build();
 $config2 = ConfigBuilder::make()->build();
 $config3 = ConfigBuilder::make()->build();
 
-$container = (new Builder())
+$container = (new ContainerBuilder())
   ->add($config1)
   ->add($config2)
   ->add($config3)
-  ->compile();
+  ->build();
 
 /** @var ClassName $object */
 $object = $container->get(ClassName::class);
@@ -131,8 +129,7 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temkaa\SimpleContainer\Attribute\Decorates;
-use Temkaa\SimpleContainer\Container\Builder;
+use Temkaa\SimpleContainer\Attribute\Decorates;use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 
 interface SomeInterface
 {
@@ -173,7 +170,7 @@ final class Collector
     }
 }
 
-$container = (new Builder())->add($configFile)->compile();
+$container = (new ContainerBuilder())->add($configFile)->build();
 
 /* $object1 = new Collector(new Decorator1(new Decorator2(new ClassImplementing()))); */
 $object1 = $container->get(Collector::class);
