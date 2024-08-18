@@ -391,7 +391,7 @@ final class Builder
             $decoratesAttribute = $decoratesAttribute ?current($decoratesAttribute)->newInstance() : null;
             $definition->setDecorates(
                 $decoratesAttribute
-                    ? new Decorator($decoratesAttribute->id, $decoratesAttribute->priority, $decoratesAttribute->signature)
+                    ? new Decorator($decoratesAttribute->id, $decoratesAttribute->priority, str_replace('$', '', $decoratesAttribute->signature))
                     : $decoratesConfig,
             );
         }
