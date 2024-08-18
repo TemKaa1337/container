@@ -416,13 +416,13 @@ final class Builder
         /** @var array<class-string, ClassDefinition[]> $decorators */
         $decorators = [];
 
-        /** @var ClassDefinition[] $definitions */
         $definitions = array_filter(
             $this->definitions,
             static fn (DefinitionInterface $definition): bool => $definition instanceof ClassDefinition,
         );
 
         foreach ($definitions as $definition) {
+            /** @noinspection PhpPossiblePolymorphicInvocationInspection */
             if ($decorates = $definition->getDecorates()) {
                 $decorators[$decorates->getId()] ??= [];
                 $decorators[$decorates->getId()][] = $definition;
@@ -433,21 +433,23 @@ final class Builder
             usort(
                 $definitions,
                 static function (ClassDefinition $prev, ClassDefinition $current): int {
+                    /** @psalm-suppress PossiblyNullReference */
                     $prevPriority = $prev->getDecorates()->getPriority();
+                    /** @psalm-suppress PossiblyNullReference */
                     $currentPriority = $current->getDecorates()->getPriority();
 
                     if ($prevPriority === $currentPriority) {
                         return 0;
                     }
 
-                    return ($prevPriority > $currentPriority) ? -1 : 1;
+                    return $prevPriority > $currentPriority ? -1 : 1;
                 },
             );
 
             $rootDecoratedDefinition = $this->definitions[$id];
             $decoratorsCount = count($definitions);
             for ($i = 0; $i < $decoratorsCount; $i++) {
-                $previousDecorator = $definitions[$i - 1] ?? null;
+                $previousDecorator = $i === 0 ? null : $definitions[$i - 1];
                 $currentDecorator = $definitions[$i];
                 $nextDecorator = $definitions[$i + 1] ?? null;
 
