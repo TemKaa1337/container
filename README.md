@@ -172,15 +172,3 @@ $object2 = $container->get(SomeInterface::class);
 - if you have type hinted some class in class arguments of class, which is in `include` section 
 and which argument is neither in `include` and `exclude` sections, it will also be autowired.
 
-##### Here are some improvements which will be implemented later:
-- refactoring
-- add decorator option to bind automatically decorated service if no other arguments exist (with different signature)
-- add ability to not bing interfaces if only one interface implementation exists
-- improve exception names and messages
-- allow binding variables with php/const notation (constant from classes or enums)
-- add option for binding objects through config and by attribute
-- add env variable processors (allow casting env variable to enums, strings, floats etc.)
-- add Required attribute (to inject dependencies in methods)
-- reflection caching
-- container compiling into cache
-

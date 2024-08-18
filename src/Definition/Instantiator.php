@@ -59,8 +59,6 @@ final readonly class Instantiator
 
         $reflection = new ReflectionClass($definition->getId());
 
-        return $reflection->getConstructor()
-            ? $reflection->newInstanceArgs($arguments)
-            : $reflection->newInstanceWithoutConstructor();
+        return $reflection->newInstanceArgs($arguments);
     }
 }

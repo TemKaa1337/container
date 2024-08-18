@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model;
 
-use Temkaa\SimpleContainer\Model\Definition\Decorator;
+use Temkaa\SimpleContainer\Model\Config\Decorator;
 
 /**
  * @internal

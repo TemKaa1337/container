@@ -28,13 +28,15 @@ use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\ClassDefinition;
-use Temkaa\SimpleContainer\Model\Container\Config;
+use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Container\ConfigNew;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\Deferred\TaggedReference;
 use Temkaa\SimpleContainer\Model\Definition\Reference;
 use Temkaa\SimpleContainer\Model\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\InterfaceDefinition;
 use Temkaa\SimpleContainer\Util\AttributeExtractor;
+use Temkaa\SimpleContainer\Util\ClassExtractor;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 use Temkaa\SimpleContainer\Util\TypeCaster;
 use Temkaa\SimpleContainer\Validator\ArgumentValidator;
@@ -47,8 +49,10 @@ use Temkaa\SimpleContainer\Validator\ArgumentValidator;
  */
 final class Builder
 {
+    private ClassExtractor $classExtractor;
+
     /**
-     * @var Config[] $configs
+     * @var ConfigNew[] $configs
      */
     private readonly array $configs;
 
@@ -64,14 +68,18 @@ final class Builder
      */
     private array $definitionsBuilding = [];
 
+    private array $excludedClasses;
+
     private ExpressionParser $expressionParser;
+
+    private array $includedClasses;
 
     private InterfaceFactory $interfaceFactory;
 
-    private Config $resolvingConfig;
+    private ConfigNew $resolvingConfig;
 
     /**
-     * @param Config[] $configs
+     * @param ConfigNew[] $configs
      */
     public function __construct(array $configs)
     {
@@ -79,6 +87,7 @@ final class Builder
         $this->decoratorFactory = new DecoratorFactory();
         $this->expressionParser = new ExpressionParser();
         $this->interfaceFactory = new InterfaceFactory();
+        $this->classExtractor = new ClassExtractor();
     }
 
     /**
@@ -92,7 +101,21 @@ final class Builder
         foreach ($this->configs as $config) {
             $this->resolvingConfig = $config;
 
-            foreach ($config->getIncludedClasses() as $class) {
+            $this->includedClasses = array_merge(
+                ...array_map(
+                fn (string $path): array => $this->classExtractor->extract(realpath($path)),
+                $config->getIncludedPaths(),
+            ),
+            );
+
+            $this->excludedClasses = array_merge(
+                ...array_map(
+                fn (string $path): array => $this->classExtractor->extract(realpath($path)),
+                $config->getExcludedPaths(),
+            ),
+            );
+
+            foreach ($this->includedClasses as $class) {
                 $this->buildDefinition($class, failIfUninstantiable: false);
             }
         }
@@ -163,8 +186,10 @@ final class Builder
         if ($argumentType->isBuiltin()) {
             $argumentName = $argument->getName();
 
-            $classBoundVars = $this->resolvingConfig->getClassBoundVariables($id);
-            $globalBoundVars = $this->resolvingConfig->getGlobalBoundVariables();
+            $boundClassInfo = $this->resolvingConfig->getBoundedClasses()[$id] ?? null;
+
+            $classBoundVars = $boundClassInfo?->getBoundVariables() ?? [];
+            $globalBoundVars = $this->resolvingConfig->getBoundedVariables();
 
             $hasBoundVariable = $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? false;
             $boundVariableValue = $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;
@@ -188,7 +213,7 @@ final class Builder
 
                 $resolvedValue = $argumentType->allowsNull() && !$hasBoundVariable
                     ? null
-                    : TypeCaster::cast($boundVariableValue, $argumentType->getName());
+                    : TypeCaster::cast($this->expressionParser->parse($boundVariableValue), $argumentType->getName());
             }
 
             return $resolvedValue;
@@ -200,7 +225,7 @@ final class Builder
         $dependencyReflection = new ReflectionClass($entryId);
         if ($dependencyReflection->isInterface()) {
             $interfaceName = $dependencyReflection->getName();
-            if (!$this->resolvingConfig->hasImplementation($interfaceName)) {
+            if (!$this->resolvingConfig->hasBoundInterface($interfaceName)) {
                 throw new EntryNotFoundException(
                     sprintf(
                         'Could not find interface implementation for "%s".',
@@ -209,7 +234,7 @@ final class Builder
                 );
             }
 
-            $interfaceImplementation = $this->resolvingConfig->getInterfaceImplementation($interfaceName);
+            $interfaceImplementation = $this->resolvingConfig->getBoundInterfaceImplementation($interfaceName);
 
             $this->definitions[$interfaceName] = $this->interfaceFactory->create(
                 $interfaceName,
@@ -267,7 +292,7 @@ final class Builder
             throw new UninstantiableEntryException(sprintf('Cannot instantiate entry with id "%s".', $id));
         }
 
-        if (in_array($id, $this->resolvingConfig->getExcludedClasses(), strict: true)) {
+        if (in_array($id, $this->excludedClasses, strict: true)) {
             throw new NonAutowirableClassException(
                 sprintf('Cannot autowire class "%s" as it is in "exclude" config parameter.', $id),
             );
@@ -275,8 +300,10 @@ final class Builder
 
         $definition = (new ClassDefinition())->setId($id);
 
-        if ($this->resolvingConfig->hasClassSingleton($id)) {
-            $definition->setIsSingleton($this->resolvingConfig->getClassSingleton($id));
+        $boundClassInfo = $this->resolvingConfig->getBoundedClasses()[$id] ?? null;
+
+        if ($boundClassInfo) {
+            $definition->setIsSingleton($boundClassInfo->isSingleton());
         }
 
         if ($autowireTags = $reflection->getAttributes(Autowire::class)) {
@@ -331,8 +358,10 @@ final class Builder
         $classTags = $reflection->getAttributes(Tag::class);
         $classAliases = $reflection->getAttributes(Alias::class);
 
+        $boundClassInfo = $this->resolvingConfig->getBoundedClasses()[$reflection->getName()] ?? null;
+
         $definition
-            ->addTags($this->resolvingConfig->getClassTags($reflection->getName()))
+            ->addTags($boundClassInfo?->getTags() ?? [])
             ->addTags(AttributeExtractor::extractParameters($classTags, 'name'))
             ->addAliases(AttributeExtractor::extractParameters($classAliases, 'name'));
 
@@ -342,8 +371,8 @@ final class Builder
             $interfaceName = $interface->getName();
 
             if (
-                $this->resolvingConfig->hasImplementation($interfaceName)
-                && $this->resolvingConfig->getInterfaceImplementation($interfaceName) === $reflection->getName()
+                $this->resolvingConfig->hasBoundInterface($interfaceName)
+                && $this->resolvingConfig->getBoundInterfaceImplementation($interfaceName) === $reflection->getName()
             ) {
                 $this->definitions[$interfaceName] = $this->interfaceFactory->create(
                     $interfaceName,
@@ -356,11 +385,13 @@ final class Builder
         }
 
         $decoratesAttribute = $reflection->getAttributes(Decorates::class);
-        $decoratesConfig = $this->resolvingConfig->getDecorator($definition->getId());
+        $boundClassInfo = $this->resolvingConfig->getBoundedClasses()[$definition->getId()] ?? null;
+        $decoratesConfig = $boundClassInfo?->getDecorates();
         if ($decoratesAttribute || $decoratesConfig) {
+            $decoratesAttribute = $decoratesAttribute ?current($decoratesAttribute)->newInstance() : null;
             $definition->setDecorates(
                 $decoratesAttribute
-                    ? $this->decoratorFactory->createFromReflection(current($decoratesAttribute))
+                    ? new Decorator($decoratesAttribute->id, $decoratesAttribute->priority, $decoratesAttribute->signature)
                     : $decoratesConfig,
             );
         }
@@ -439,10 +470,14 @@ final class Builder
 
                 $currentDecorator->setArguments($currentDecoratorArguments);
 
-                if ($previousDecorator) {
-                    $currentDecorator
-                        ->getDecorates()
-                        ?->setId($previousDecorator->getId());
+                if ($previousDecorator && $decorates = $currentDecorator->getDecorates()) {
+                    $currentDecorator->setDecorates(
+                        new Decorator(
+                            $previousDecorator->getId(),
+                            $decorates->getPriority(),
+                            $decorates->getSignature(),
+                        )
+                    );
                 }
 
                 if ($nextDecorator) {

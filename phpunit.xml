@@ -13,8 +13,8 @@
         failOnIncomplete="true"
 >
     <testsuites>
-        <testsuite name="units">
-            <directory>tests/Unit</directory>
+        <testsuite name="integrations">
+            <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
 </phpunit>
