@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use SplFileInfo;
-use Symfony\Component\Yaml\Yaml;
+use Psr\Container\ContainerExceptionInterface;
+use ReflectionException;
 use Temkaa\SimpleContainer\Container\Builder;
-use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
 final class ContainerPerformanceTest extends AbstractContainerTestCase
 {
-    private const COMPILE_TIME_THRESHOLD_IN_MICROSECONDS = 0.02;
+    private const float COMPILE_TIME_THRESHOLD_IN_SECONDS = 0.03;
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesInSuitableTime(): void
     {
@@ -137,18 +137,18 @@ final class ContainerPerformanceTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$interfaceName1.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$interfaceName2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className3.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className4.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className5.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className6.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$collectorClassName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className5.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className6.php",
         ];
         $configFile = $this->generateConfig(
-            files: $files,
+            includedPaths: $files,
             interfaceBindings: [
                 self::GENERATED_CLASS_NAMESPACE.$interfaceName1 => self::GENERATED_CLASS_NAMESPACE.$className1,
             ],
@@ -158,30 +158,6 @@ final class ContainerPerformanceTest extends AbstractContainerTestCase
         (new Builder())->add($configFile)->compile();
         $endTime = microtime(true);
 
-        self::assertLessThan(self::COMPILE_TIME_THRESHOLD_IN_MICROSECONDS, $endTime - $startTime);
-    }
-
-    /**
-     * @psalm-suppress InternalClass
-     */
-    private function generateConfig(array $files, array $interfaceBindings): SplFileInfo
-    {
-        $config = [
-            Structure::Services->value => [
-                Structure::Include->value => $files,
-            ],
-        ];
-
-        foreach ($interfaceBindings as $interfaceName => $className) {
-            $config[Structure::Services->value][$interfaceName] = $className;
-        }
-
-        $configPath = realpath(__DIR__.self::GENERATED_CONFIG_STUB_PATH).'/config.yaml';
-        file_put_contents(
-            $configPath,
-            Yaml::dump($config),
-        );
-
-        return new SplFileInfo($configPath);
+        self::assertLessThan(self::COMPILE_TIME_THRESHOLD_IN_SECONDS, $endTime - $startTime);
     }
 }

@@ -4,81 +4,51 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Validator\Config;
 
-use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
-use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
-use Temkaa\SimpleContainer\Exception\Config\InvalidConfigNodeTypeException;
+use Temkaa\SimpleContainer\Model\Container\Config;
 
 /**
  * @internal
  */
 final class InterfaceBindingNodeValidator implements ValidatorInterface
 {
-    /**
-     * @psalm-suppress ArgumentTypeCoercion
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     *
-     * @throws ContainerExceptionInterface
-     */
-    public function validate(array $config): void
+    public function validate(Config $config): void
     {
-        /** @var class-string $nodeName */
-        /** @var class-string $nodeValue */
-        foreach ($config[Structure::Services->value] ?? [] as $nodeName => $nodeValue) {
-            if (!is_string($nodeName)) {
-                throw new InvalidConfigNodeTypeException(
-                    'Node "services.{className|interfaceName}" must be of "array<string, array|string>" type.',
-                );
+        foreach ($config->getBoundedInterfaces() as $interface => $class) {
+            if (!interface_exists($interface)) {
+                throw new ClassNotFoundException($interface);
             }
 
-            if (Structure::tryFrom($nodeName)) {
-                continue;
+            if (!class_exists($class)) {
+                throw new ClassNotFoundException($class);
             }
 
-            if (!class_exists($nodeName) && !interface_exists($nodeName)) {
-                throw new ClassNotFoundException($nodeName);
-            }
-
-            if (class_exists($nodeName)) {
-                continue;
-            }
-
-            if (!interface_exists($nodeName)) {
-                throw new ClassNotFoundException($nodeName);
-            }
-
-            if (!class_exists($nodeValue)) {
-                throw new ClassNotFoundException($nodeValue);
-            }
-
-            $reflection = new ReflectionClass($nodeName);
+            $reflection = new ReflectionClass($interface);
             if (!$reflection->isInterface()) {
                 throw new CannotBindInterfaceException(
-                    sprintf('Cannot bind interface "%s" as it not an interface.', $nodeName),
+                    sprintf('Cannot bind interface "%s" as it not an interface.', $interface),
                 );
             }
 
-            $reflection = new ReflectionClass($nodeValue);
+            $reflection = new ReflectionClass($class);
             if ($reflection->isInterface()) {
                 throw new CannotBindInterfaceException(
                     sprintf(
-                        'Cannot bind interface "%s" to class "%s" as it it as interface.',
-                        $nodeName,
-                        $nodeValue,
+                        'Cannot bind class "%s" to interface "%s" as it is as interface.',
+                        $class,
+                        $interface,
                     ),
                 );
             }
 
-            if (!$reflection->implementsInterface($nodeName)) {
+            if (!$reflection->implementsInterface($interface)) {
                 throw new CannotBindInterfaceException(
                     sprintf(
-                        'Cannot bind interface "%s" to class "%s" as it doesn\'t implement it.',
-                        $nodeName,
-                        $nodeValue,
+                        'Cannot bind class "%s" to interface "%s" as it doesn\'t implement it.',
+                        $class,
+                        $interface,
                     ),
                 );
             }

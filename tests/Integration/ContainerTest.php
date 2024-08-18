@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use ReflectionClass;
-use SplFileInfo;
-use Symfony\Component\Yaml\Yaml;
+use ReflectionException;
 use Temkaa\SimpleContainer\Container\Builder;
-use Temkaa\SimpleContainer\Enum\Config\Structure;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException as ConfigEntryNotFoundExceptionAlias;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableCircularException;
@@ -20,33 +20,26 @@ use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Model\ClassDefinition;
+use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
-use Throwable;
 
 /**
- * TODO (decorator):
- * 9. add decorator by abstract class
- */
-
-/**
- * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod
- *
- * @noinspection   PhpArgumentWithoutNamedIdentifierInspection
- *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  * @SuppressWarnings(PHPMD.ExcessivePublicCount)
- * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.TooManyMethods)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ *
+ * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod
  */
 final class ContainerTest extends AbstractContainerTestCase
 {
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileClassWithBuiltInTypedArgument(): void
     {
@@ -61,8 +54,8 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
+        $config = $this->generateConfig(includedPaths: $files);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UnresolvableArgumentException::class);
@@ -75,11 +68,12 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileClassWithCircularDependencies(): void
     {
@@ -112,8 +106,8 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$circularClassName1.php"];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$circularClassName1.php"];
+        $config = $this->generateConfig(includedPaths: $files);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(CircularReferenceException::class);
@@ -125,11 +119,12 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileClassWithNonTypedArgument(): void
     {
@@ -144,8 +139,8 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
+        $config = $this->generateConfig(includedPaths: $files);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UninstantiableEntryException::class);
@@ -157,11 +152,12 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileClassWithTypeHintedEnum(): void
     {
@@ -189,19 +185,21 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php"];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$collectorClassName.php"];
+        $config = $this->generateConfig(includedPaths: $files);
 
         $this->expectException(UninstantiableEntryException::class);
         $this->expectExceptionMessage(
             sprintf('Cannot instantiate entry with id "%s".', self::GENERATED_CLASS_NAMESPACE.$enumClassName),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileClassWithoutDependencies(): void
     {
@@ -215,10 +213,10 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -231,7 +229,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileWithCastedBoundVariablesFromAttributes(): void
     {
@@ -263,11 +263,11 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -285,7 +285,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileWithCastedBoundVariablesFromConfig(): void
     {
@@ -309,11 +311,12 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => [
-                    Structure::Bind->value => [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: [
                         '$varOne'   => 'env(ENV_CASTABLE_STRING_VAR)',
                         'varTwo'    => 'env(ENV_CASTABLE_STRING_VAR)',
                         '$varThree' => 'env(ENV_CASTABLE_STRING_VAR)',
@@ -323,11 +326,11 @@ final class ContainerTest extends AbstractContainerTestCase
                         '$varSeven' => 'env(ENV_INT_VAL)',
                         'varEight'  => 'env(ENV_STRING_VAL)',
                     ],
-                ],
+                ),
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -345,7 +348,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileWithCircularEnvVariableDependencies(): void
     {
@@ -363,8 +367,8 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
         $this->expectException(EnvVariableCircularException::class);
@@ -373,11 +377,13 @@ final class ContainerTest extends AbstractContainerTestCase
             .'it has circular references "CIRCULAR_ENV_VARIABLE_1 -> CIRCULAR_ENV_VARIABLE_2".',
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompileWithEnvVariableReferencingAnotherVariable(): void
     {
@@ -395,33 +401,32 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertEquals('string_additional_string', $class->envReference);
     }
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection
-     */
     public function testCompileWithNonExistentClass(): void
     {
-        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.'NonExistentClass.php';
-        $configFile = $this->generateConfig(services: [Structure::Include->value => [$classPath]]);
+        $classPath = __DIR__.self::GENERATED_CLASS_STUB_PATH.'NonExistentClass.php';
+        $config = $this->generateConfig(includedPaths: [$classPath]);
 
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "'.$classPath.'" does not exist.');
 
-        (new Builder())->add($configFile);
+        (new Builder())->add($config);
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithCastingStringsFromAttribute(): void
     {
@@ -453,11 +458,11 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -475,7 +480,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithCastingStringsFromConfig(): void
     {
@@ -499,11 +506,12 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => [
-                    Structure::Bind->value => [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: [
                         '$varOne'   => '10.1',
                         'varTwo'    => '10.1',
                         '$varThree' => '10.1',
@@ -513,11 +521,11 @@ final class ContainerTest extends AbstractContainerTestCase
                         '$varSeven' => '3',
                         'varEight'  => 'string',
                     ],
-                ],
+                ),
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -535,7 +543,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithClassAliases(): void
     {
@@ -553,11 +563,11 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get($classFullNamespace);
 
@@ -569,9 +579,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithDecoratorByInterfaceWhereDecoratorContainsMultipleConstructorArguments(): void
     {
@@ -659,22 +669,22 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$interfaceName1.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$interfaceName2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className3.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$collectorClassName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
         ];
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $files],
+        $config = $this->generateConfig(
+            includedPaths: $files,
             interfaceBindings: [
                 self::GENERATED_CLASS_NAMESPACE.$interfaceName1 => self::GENERATED_CLASS_NAMESPACE.$className1,
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName1);
         $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
@@ -698,7 +708,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithDecoratorFromAttribute(): void
     {
@@ -733,12 +745,12 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
         ];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -750,7 +762,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithDecoratorFromConfig(): void
     {
@@ -777,22 +791,23 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
         ];
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $files],
+        $config = $this->generateConfig(
+            includedPaths: $files,
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className2 => [
-                    Structure::Decorates->value => [
-                        Structure::Id->value        => self::GENERATED_CLASS_NAMESPACE.$className1,
-                        Structure::Signature->value => '$dependency',
-                    ],
-                ],
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className2,
+                    decorates: new Decorator(
+                        self::GENERATED_CLASS_NAMESPACE.$className1,
+                        signature: '$dependency',
+                    ),
+                ),
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -804,7 +819,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithDecoratorTypeHintedAsObject(): void
     {
@@ -834,12 +851,12 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
         ];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -851,7 +868,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithDecoratorWithoutDecoratedServiceInjected(): void
     {
@@ -879,12 +898,12 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
         ];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -894,7 +913,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithExplicitDependencySetting(): void
     {
@@ -941,15 +962,15 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className1.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className2.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
         ];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
         self::assertInstanceOf(
@@ -980,7 +1001,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithGlobalBoundVariable(): void
     {
@@ -997,16 +1020,16 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $classes = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php'];
+        $classes = [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'];
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $classes],
+        $config = $this->generateConfig(
+            includedPaths: $classes,
             globalBoundVariables: [
                 '$variable' => 'variableValue',
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -1015,7 +1038,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithGlobalBoundVariableOverwrittenByClassBind(): void
     {
@@ -1032,21 +1057,22 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $classes = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php'];
+        $classes = [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'];
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $classes],
+        $config = $this->generateConfig(
+            includedPaths: $classes,
             globalBoundVariables: [
                 '$variable' => 'globalVariableValue',
             ],
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => [
-                    Structure::Bind->value => ['$variable' => 'localVariableValue'],
-                ],
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: ['$variable' => 'localVariableValue'],
+                ),
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -1055,7 +1081,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithInterfaceBindingByClass(): void
     {
@@ -1077,18 +1105,18 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $classPaths = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
         ];
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $classPaths],
+        $config = $this->generateConfig(
+            includedPaths: $classPaths,
             interfaceBindings: [
                 self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$className,
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
 
@@ -1099,7 +1127,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithInterfaceTagInheritance(): void
     {
@@ -1143,15 +1172,15 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $classes = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName3.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName1.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName2.'.php',
         ];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $classes]);
+        $config = $this->generateConfig(includedPaths: $classes);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $reflection = new ReflectionClass($container);
 
@@ -1176,7 +1205,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithMultipleDecoratorsByClass(): void
     {
@@ -1253,14 +1284,14 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className4.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className3.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
         ];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
 
@@ -1274,9 +1305,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithMultipleDecoratorsByInterface(): void
     {
@@ -1393,21 +1424,21 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$interfaceName.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className4.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$collectorClassName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
         ];
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $files],
+        $config = $this->generateConfig(
+            includedPaths: $files,
             interfaceBindings: [
                 self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$className1,
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
         $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
@@ -1481,9 +1512,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithMultipleDecoratorsByInterfaceDeclaredAsNonSingletons(): void
     {
@@ -1636,21 +1667,21 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$interfaceName.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className4.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className3.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$collectorClassName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
         ];
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $files],
+        $config = $this->generateConfig(
+            includedPaths: $files,
             interfaceBindings: [
                 self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$className1,
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
         $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
@@ -1724,9 +1755,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithMultipleDecoratorsByInterfaceWhichIsNotBoundedToClass(): void
     {
@@ -1843,15 +1873,15 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$collectorClassName.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$interfaceName.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className4.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className3.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$collectorClassName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
         ];
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $files],
+        $config = $this->generateConfig(
+            includedPaths: $files,
         );
 
         $this->expectException(ConfigEntryNotFoundExceptionAlias::class);
@@ -1862,11 +1892,13 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromAttribute(): void
     {
@@ -1887,11 +1919,11 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -1901,7 +1933,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromConfig(): void
     {
@@ -1916,18 +1950,19 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $files],
+        $config = $this->generateConfig(
+            includedPaths: $files,
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => [
-                    Structure::Bind->value => ['$arg' => 'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)'],
-                ],
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: ['$arg' => 'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)'],
+                ),
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $fullClassNameSpace = self::GENERATED_CLASS_NAMESPACE.$className;
         $class = $container->get($fullClassNameSpace);
@@ -1938,7 +1973,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithNonSingletonDependenciesAsTaggedIterator(): void
     {
@@ -1982,15 +2019,15 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $classes = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementingName1.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementingName2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$classImplementingName1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$classImplementingName2.'.php',
         ];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $classes]);
+        $config = $this->generateConfig(includedPaths: $classes);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $collectorClass = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
         $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1);
@@ -2010,7 +2047,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithNonSingletonDependency(): void
     {
@@ -2050,17 +2089,15 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [
-                Structure::Include->value => [
-                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className1.'.php',
-                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className2.'.php',
-                    self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
-                ],
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $class2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -2077,7 +2114,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithNonSingletonFromAttribute(): void
     {
@@ -2091,11 +2130,11 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         self::assertNotSame(
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
@@ -2104,7 +2143,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithNonSingletonFromConfig(): void
     {
@@ -2117,18 +2158,17 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [
-                Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php'],
-            ],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => [
-                    Structure::Singleton->value => false,
-                ],
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    singleton: false,
+                ),
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         self::assertNotSame(
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
@@ -2137,7 +2177,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithTaggedInterfaceImplementation(): void
     {
@@ -2178,15 +2220,15 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $classes = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$interfaceName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementingName1.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$classImplementingName2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$classImplementingName1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$classImplementingName2.'.php',
         ];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $classes]);
+        $config = $this->generateConfig(includedPaths: $classes);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
         $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1);
@@ -2195,33 +2237,26 @@ final class ContainerTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$collectorClassName, $collector);
         self::assertCount(2, $collector->dependency);
 
-        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
+        /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
         self::assertInstanceOf($class1::class, $collector->dependency[0]);
-
-        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
+        /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
         self::assertInstanceOf($class2::class, $collector->dependency[1]);
-
-        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
+        /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1, $collector->dependency[0]);
-
-        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
+        /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classImplementingName2, $collector->dependency[1]);
 
-        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
-        self::assertSame(
-            $collector->dependency[0],
-            $class1,
-        );
+        /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
+        self::assertSame($collector->dependency[0], $class1);
 
-        /** @psalm-suppress PossiblyInvalidArrayAccess,UndefinedInterfaceMethod */
-        self::assertSame(
-            $collector->dependency[1],
-            $class2,
-        );
+        /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
+        self::assertSame($collector->dependency[1], $class2);
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithTaggedIteratorFromAttribute(): void
     {
@@ -2249,13 +2284,13 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $classes = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$taggedClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$taggedClassName.'.php',
         ];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $classes]);
+        $config = $this->generateConfig(includedPaths: $classes);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
 
@@ -2274,7 +2309,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithTaggedIteratorFromConfig(): void
     {
@@ -2299,26 +2336,28 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $classes = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$taggedClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$taggedClassName.'.php',
         ];
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $classes],
+        $config = $this->generateConfig(
+            includedPaths: $classes,
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$collectorClassName => [
-                    Structure::Bind->value => [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$collectorClassName,
+                    variableBindings: [
                         'dependency1' => '!tagged empty_2',
                         'dependency2' => '!tagged empty_2',
                     ],
-                ],
-                self::GENERATED_CLASS_NAMESPACE.$taggedClassName    => [
-                    Structure::Tags->value => ['empty_2'],
-                ],
+                ),
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$taggedClassName,
+                    tags: ['empty_2'],
+                ),
             ],
         );
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
 
@@ -2337,10 +2376,10 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
-     * @dataProvider getDataForCompilesWithUninstantiableEntryTest
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
+    #[DataProvider('getDataForCompilesWithUninstantiableEntryTest')]
     public function testCompilesWithUninstantiableEntry(
         string $className,
         string $classNamePrefix,
@@ -2363,16 +2402,18 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php';
-        $configFile = $this->generateConfig(services: [Structure::Include->value => [$classPath]]);
+        $classPath = __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php';
+        $config = $this->generateConfig(includedPaths: [$classPath]);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         self::assertFalse($container->has($className));
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompilesWithoutSettingAllDependenciesClassWithDependencies(): void
     {
@@ -2418,11 +2459,11 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php'];
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorName.'.php'];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
         self::assertInstanceOf(
@@ -2466,7 +2507,9 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
      */
     public function testCompliesWithNullableVariable(): void
     {
@@ -2481,11 +2524,11 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($configFile)->compile();
+        $container = (new Builder())->add($config)->compile();
 
         $classFullNamespace = self::GENERATED_CLASS_NAMESPACE.$className;
 
@@ -2495,7 +2538,8 @@ final class ContainerTest extends AbstractContainerTestCase
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testDoesNotCompileDueToCircularExceptionByTaggedBinding(): void
     {
@@ -2514,9 +2558,9 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(CircularReferenceException::class);
@@ -2528,11 +2572,12 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testDoesNotCompileDueToDuplicatedAliases(): void
     {
@@ -2558,11 +2603,11 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $files = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className1.php",
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
         ];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
         $this->expectException(DuplicatedEntryAliasException::class);
         $this->expectExceptionMessage(
@@ -2573,14 +2618,14 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
-     * @dataProvider getDataForDoesNotCompileDueToInternalClassDependencyTest
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
+    #[DataProvider('getDataForDoesNotCompileDueToInternalClassDependencyTest')]
     public function testDoesNotCompileDueToInternalClassDependency(
         string $className,
         string $constructorArgument,
@@ -2596,17 +2641,18 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
+        $config = $this->generateConfig(includedPaths: $files);
 
         $this->expectException(UninstantiableEntryException::class);
         $this->expectExceptionMessage(sprintf('Cannot resolve internal entry "%s".', $argumentClassName));
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testDoesNotCompileDueToNonExistentBoundVariable(): void
     {
@@ -2621,9 +2667,9 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => $files]);
+        $config = $this->generateConfig(includedPaths: $files);
 
         $this->expectException(UnresolvableArgumentException::class);
         $this->expectExceptionMessage(
@@ -2635,14 +2681,14 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
-     * @dataProvider getDataForDoesNotCompileDueToNotDeterminedArgumentTypeTest
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
+    #[DataProvider('getDataForDoesNotCompileDueToNotDeterminedArgumentTypeTest')]
     public function testDoesNotCompileDueToNotDeterminedArgumentType(
         string $className,
         string $constructorArgument,
@@ -2658,24 +2704,22 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className.'.php']],
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UnresolvableArgumentException::class);
         $this->expectExceptionMessage($exceptionMessage);
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpDocMissingThrowsInspection,PhpUnhandledExceptionInspection
-     *
-     * @dataProvider getDataForDoesNotCompileDueToVariableBindingErrorsTest
-     *
-     * @param class-string<Throwable> $exception
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
+    #[DataProvider('getDataForDoesNotCompileDueToVariableBindingErrorsTest')]
     public function testDoesNotCompileDueToVariableBindingErrors(
         string $className,
         array $constructorArguments,
@@ -2692,24 +2736,26 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $files = [self::GENERATED_CLASS_CONFIG_RELATIVE_PATH."$className.php"];
-        $configFile = $this->generateConfig(
-            services: [Structure::Include->value => $files],
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
+        $config = $this->generateConfig(
+            includedPaths: $files,
             classBindings: [
-                self::GENERATED_CLASS_NAMESPACE.$className => [
-                    Structure::Bind->value => ['$arg' => 'env(ENV_STRING_VAR)'],
-                ],
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: ['$arg' => 'env(ENV_STRING_VAR)'],
+                ),
             ],
         );
 
         $this->expectException($exception);
         $this->expectExceptionMessage($exceptionMessage);
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testDoesNotCompileWithExcludedDependency(): void
     {
@@ -2756,20 +2802,18 @@ final class ContainerTest extends AbstractContainerTestCase
             ->generate();
 
         $includeFiles = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorName.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className1.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className2.'.php',
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
         ];
         $excludeFiles = [
-            self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$className3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
         ];
 
-        $configFile = $this->generateConfig(
-            services: [
-                Structure::Include->value => $includeFiles,
-                Structure::Exclude->value => $excludeFiles,
-            ],
+        $config = $this->generateConfig(
+            includedPaths: $includeFiles,
+            excludedPaths: $excludeFiles,
         );
 
         $this->expectException(NonAutowirableClassException::class);
@@ -2780,16 +2824,16 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function testDoesNotCompileWithNonAutowirableAttributeClass(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
-        $collectorClassPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php';
         $invalidClassName = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(
@@ -2814,7 +2858,11 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $configFile = $this->generateConfig(services: [Structure::Include->value => [$collectorClassPath]]);
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
+            ],
+        );
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(NonAutowirableClassException::class);
@@ -2825,14 +2873,14 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
-     *
-     * @dataProvider getDataForDoesNotCompileWithUninstantiableEntryTest
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
+    #[DataProvider('getDataForDoesNotCompileWithUninstantiableEntryTest')]
     public function testDoesNotCompileWithUninstantiableEntry(
         string $collectorClassName,
         string $invalidClassName,
@@ -2859,8 +2907,8 @@ final class ContainerTest extends AbstractContainerTestCase
             )
             ->generate();
 
-        $classPath = self::GENERATED_CLASS_CONFIG_RELATIVE_PATH.$collectorClassName.'.php';
-        $configFile = $this->generateConfig(services: [Structure::Include->value => [$classPath]]);
+        $classPath = __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php';
+        $config = $this->generateConfig(includedPaths: [$classPath]);
 
         $this->expectException(ContainerExceptionInterface::class);
         $this->expectException(UninstantiableEntryException::class);
@@ -2868,11 +2916,13 @@ final class ContainerTest extends AbstractContainerTestCase
             sprintf('Cannot instantiate entry with id "%s".', self::GENERATED_CLASS_NAMESPACE.$invalidClassName),
         );
 
-        (new Builder())->add($configFile)->compile();
+        (new Builder())->add($config)->compile();
     }
 
     /**
-     * @noinspection PhpUnhandledExceptionInspection
+     * @throws ReflectionException
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function testWithoutCompiling(): void
     {
@@ -2882,42 +2932,5 @@ final class ContainerTest extends AbstractContainerTestCase
         $this->expectExceptionMessage(sprintf('Could not find entry "%s".', 'asd'));
 
         $container->get('asd');
-    }
-
-    private function generateConfig(
-        array $services = [],
-        array $globalBoundVariables = [],
-        array $interfaceBindings = [],
-        array $classBindings = [],
-    ): SplFileInfo {
-        $config = [Structure::Services->value => []];
-
-        if ($services) {
-            $config[Structure::Services->value] = $services;
-        }
-
-        if ($globalBoundVariables) {
-            $config[Structure::Services->value][Structure::Bind->value] = $globalBoundVariables;
-        }
-
-        if ($interfaceBindings) {
-            foreach ($interfaceBindings as $interfaceName => $className) {
-                $config[Structure::Services->value][$interfaceName] = $className;
-            }
-        }
-
-        if ($classBindings) {
-            foreach ($classBindings as $className => $classInfo) {
-                $config[Structure::Services->value][$className] = $classInfo;
-            }
-        }
-
-        $configPath = realpath(__DIR__.self::GENERATED_CONFIG_STUB_PATH).'/config.yaml';
-        file_put_contents(
-            $configPath,
-            Yaml::dump($config),
-        );
-
-        return new SplFileInfo($configPath);
     }
 }

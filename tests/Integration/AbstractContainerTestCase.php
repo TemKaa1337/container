@@ -13,8 +13,8 @@ use Tests\Helper\Service\ClassGenerator;
 
 abstract class AbstractContainerTestCase extends AbstractUnitTestCase
 {
-    protected const GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';
-    protected const GENERATED_CONFIG_STUB_PATH = '/../Fixture/Stub/Config/';
+    protected const string GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';
+    protected const string GENERATED_CONFIG_STUB_PATH = '/../Fixture/Stub/Config/';
 
     public static function getDataForCompilesWithUninstantiableEntryTest(): iterable
     {

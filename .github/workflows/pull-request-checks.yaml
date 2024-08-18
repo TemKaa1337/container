@@ -13,7 +13,7 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: 8.2
+                  php-version: 8.3
 
             - name: Validate composer.json and composer.lock
               run: composer validate
@@ -28,4 +28,7 @@ jobs:
               run: ./vendor/bin/psalm -c psalm.xml
 
             - name: Run test suite
-              run: ./vendor/bin/phpunit tests/
+              run: ./vendor/bin/phpunit --testsuite integrations
+
+            - name: Run Mutation tests
+              run: ./vendor/bin/infection --threads=2
