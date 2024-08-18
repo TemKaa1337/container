@@ -10,9 +10,6 @@ use ReflectionException;
 use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionType;
-use Temkaa\SimpleCollections\Collection;
-use Temkaa\SimpleCollections\Enum\SortOrder;
-use Temkaa\SimpleCollections\Model\Sort\ByField;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
@@ -433,17 +430,28 @@ final class Builder
         }
 
         foreach ($decorators as $id => $definitions) {
-            /** @var ClassDefinition[] $decoratorDefinitions */
-            $decoratorDefinitions = (new Collection($definitions))
-                ->sort(new ByField(field: 'decorates.priority', order: SortOrder::Desc))
-                ->toArray();
+            usort(
+                $definitions,
+                static function (ClassDefinition $prev, ClassDefinition $current): int {
+                    /** @psalm-suppress PossiblyNullReference */
+                    $prevPriority = $prev->getDecorates()->getPriority();
+                    /** @psalm-suppress PossiblyNullReference */
+                    $currentPriority = $current->getDecorates()->getPriority();
+
+                    if ($prevPriority === $currentPriority) {
+                        return 0;
+                    }
+
+                    return $prevPriority > $currentPriority ? -1 : 1;
+                },
+            );
 
             $rootDecoratedDefinition = $this->definitions[$id];
-            $decoratorsCount = count($decoratorDefinitions);
+            $decoratorsCount = count($definitions);
             for ($i = 0; $i < $decoratorsCount; $i++) {
-                $previousDecorator = $decoratorDefinitions[$i - 1] ?? null;
-                $currentDecorator = $decoratorDefinitions[$i];
-                $nextDecorator = $decoratorDefinitions[$i + 1] ?? null;
+                $previousDecorator = $i === 0 ? null : $definitions[$i - 1];
+                $currentDecorator = $definitions[$i];
+                $nextDecorator = $definitions[$i + 1] ?? null;
 
                 if ($i === 0) {
                     $rootDecoratedDefinition->setDecoratedBy($currentDecorator->getId());

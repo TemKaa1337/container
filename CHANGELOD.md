@@ -1,8 +1,16 @@
-### v0.0.5
+### v0.0.7
+##### Features:
+- Dependencies cleanup.
+
+### v0.0.6
 ##### Features:
 - Changed config from yaml file to php object;
 - Changed php version to `^8.3`;
 - Added infection.
+
+### v0.0.5
+##### Features:
+- Add decorator option.
 
 ### v0.0.4
 ##### Features:
