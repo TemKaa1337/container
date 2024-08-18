@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Model\Container;
-
-use Temkaa\SimpleContainer\Model\Config\Decorator;
+namespace Temkaa\SimpleContainer\Model\Config;
 
 final readonly class ClassConfig
 {
@@ -27,7 +25,7 @@ final readonly class ClassConfig
     /**
      * @return array<string, string>
      */
-    public function getBoundVariables(): array
+    public function getBoundedVariables(): array
     {
         return $this->boundVariables;
     }

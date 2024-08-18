@@ -12,7 +12,7 @@ use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
  */
 final class TypeCaster
 {
-    private const SUPPORTED_TYPES = ['bool', 'float', 'int', 'string', 'mixed'];
+    private const array SUPPORTED_TYPES = ['bool', 'float', 'int', 'string', 'mixed'];
 
     /**
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)

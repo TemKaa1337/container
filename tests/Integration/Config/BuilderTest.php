@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Config;
 
-use Temkaa\SimpleContainer\Container\Builder;
+use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
@@ -24,7 +24,7 @@ final class BuilderTest extends AbstractUnitTestCase
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "path" does not exist.');
 
-        (new Builder())->add($config);
+        (new ContainerBuilder())->add($config);
     }
 
     public function testConfigDoesNotLoadDueToMissingDecorator(): void
@@ -62,7 +62,7 @@ final class BuilderTest extends AbstractUnitTestCase
         $this->expectException(ClassNotFoundException::class);
         $this->expectExceptionMessage('Class "non_existing_class" is not found.');
 
-        (new Builder())->add($config);
+        (new ContainerBuilder())->add($config);
     }
 
     public function testConfigDoesNotLoadDueToMissingInterface(): void
@@ -72,7 +72,7 @@ final class BuilderTest extends AbstractUnitTestCase
         $this->expectException(ClassNotFoundException::class);
         $this->expectExceptionMessage('Class "non_existent_interface" is not found.');
 
-        (new Builder())->add($config);
+        (new ContainerBuilder())->add($config);
     }
 
     public function testConfigDoesNotLoadDueToMissingInterfaceImplementation(): void
@@ -98,7 +98,7 @@ final class BuilderTest extends AbstractUnitTestCase
         $this->expectException(ClassNotFoundException::class);
         $this->expectExceptionMessage('Class "class" is not found.');
 
-        (new Builder())->add($config);
+        (new ContainerBuilder())->add($config);
     }
 
     public function testConfigHasEnvBoundVariables(): void
@@ -122,12 +122,12 @@ final class BuilderTest extends AbstractUnitTestCase
             ],
         );
 
-        $builder = (new Builder())->add($config);
+        $builder = (new ContainerBuilder())->add($config);
         self::assertNotNull($builder);
 
         self::assertEquals(
             ['string' => 'env(APP_BOUND_VAR)'],
-            $config->getBoundedClasses()[$classFullNamespace]->getBoundVariables(),
+            $config->getBoundedClasses()[$classFullNamespace]->getBoundedVariables(),
         );
     }
 
@@ -154,6 +154,6 @@ final class BuilderTest extends AbstractUnitTestCase
         $this->expectException(EnvVariableNotFoundException::class);
         $this->expectExceptionMessage('Variable "APP_DEBUG" is not found in env variables.');
 
-        (new Builder())->add($config);
+        (new ContainerBuilder())->add($config);
     }
 }

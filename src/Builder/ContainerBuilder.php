@@ -2,19 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Container;
+namespace Temkaa\SimpleContainer\Builder;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Model\Container\Config;
+use Temkaa\SimpleContainer\Container\Compiler;
+use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Provider\Config\ValidatorProvider;
 use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
 
 /**
  * @psalm-api
  */
-final class Builder
+final class ContainerBuilder
 {
     /**
      * @var Config[]
@@ -46,7 +47,7 @@ final class Builder
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    public function compile(): ContainerInterface
+    public function build(): ContainerInterface
     {
         return (new Compiler($this->configs))->compile();
     }

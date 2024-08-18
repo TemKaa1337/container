@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator;
+namespace Temkaa\SimpleContainer\Validator\Definition;
 
 use Temkaa\SimpleContainer\Exception\DuplicatedEntryAliasException;
-use Temkaa\SimpleContainer\Model\ClassDefinition;
-use Temkaa\SimpleContainer\Model\DefinitionInterface;
+use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
+use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 
 /**
  * @internal
  */
-final readonly class DuplicatedDefinitionAliasValidator
+final readonly class DuplicatedAliasValidator
 {
     /**
      * @param DefinitionInterface[] $definitions

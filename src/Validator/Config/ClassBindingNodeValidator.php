@@ -9,9 +9,8 @@ use ReflectionException;
 use ReflectionParameter;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
-use Temkaa\SimpleContainer\Model\Container\ClassConfig;
-use Temkaa\SimpleContainer\Model\Container\Config;
-use Temkaa\SimpleContainer\Util\ExpressionParser;
+use Temkaa\SimpleContainer\Model\Config;
+use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 
 /**
  * @internal
@@ -28,17 +27,7 @@ final class ClassBindingNodeValidator implements ValidatorInterface
                 throw new ClassNotFoundException($classConfig->getClass());
             }
 
-            $this->validateBoundVariables($classConfig->getBoundVariables());
             $this->validateDecorator($classConfig);
-        }
-    }
-
-    private function validateBoundVariables(array $boundVariables): void
-    {
-        // TODO: change from parsing to validation
-        $expressionParser = new ExpressionParser();
-        foreach ($boundVariables as $variableValue) {
-            $expressionParser->parse($variableValue);
         }
     }
 

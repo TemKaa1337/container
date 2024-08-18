@@ -9,7 +9,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
-use Temkaa\SimpleContainer\Container\Builder;
+use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException as ConfigEntryNotFoundExceptionAlias;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableCircularException;
@@ -19,8 +19,8 @@ use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
-use Temkaa\SimpleContainer\Model\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
@@ -68,7 +68,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -119,7 +119,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -152,7 +152,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -193,7 +193,7 @@ final class ContainerTest extends AbstractContainerTestCase
             sprintf('Cannot instantiate entry with id "%s".', self::GENERATED_CLASS_NAMESPACE.$enumClassName),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -216,7 +216,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -267,7 +267,7 @@ final class ContainerTest extends AbstractContainerTestCase
             includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -330,7 +330,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -377,7 +377,7 @@ final class ContainerTest extends AbstractContainerTestCase
             .'it has circular references "CIRCULAR_ENV_VARIABLE_1 -> CIRCULAR_ENV_VARIABLE_2".',
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -405,7 +405,7 @@ final class ContainerTest extends AbstractContainerTestCase
             includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -420,7 +420,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "'.$classPath.'" does not exist.');
 
-        (new Builder())->add($config);
+        (new ContainerBuilder())->add($config);
     }
 
     /**
@@ -462,7 +462,7 @@ final class ContainerTest extends AbstractContainerTestCase
             includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -525,7 +525,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -567,7 +567,7 @@ final class ContainerTest extends AbstractContainerTestCase
             includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get($classFullNamespace);
 
@@ -684,7 +684,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName1);
         $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
@@ -750,7 +750,7 @@ final class ContainerTest extends AbstractContainerTestCase
         ];
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -807,7 +807,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -856,7 +856,7 @@ final class ContainerTest extends AbstractContainerTestCase
         ];
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -903,7 +903,7 @@ final class ContainerTest extends AbstractContainerTestCase
         ];
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -970,7 +970,7 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
         self::assertInstanceOf(
@@ -1029,7 +1029,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -1072,7 +1072,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -1116,7 +1116,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
 
@@ -1180,7 +1180,7 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(includedPaths: $classes);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $reflection = new ReflectionClass($container);
 
@@ -1291,7 +1291,7 @@ final class ContainerTest extends AbstractContainerTestCase
         ];
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
 
@@ -1438,7 +1438,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
         $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
@@ -1681,7 +1681,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
         $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
@@ -1892,7 +1892,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -1923,7 +1923,7 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
@@ -1962,7 +1962,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $fullClassNameSpace = self::GENERATED_CLASS_NAMESPACE.$className;
         $class = $container->get($fullClassNameSpace);
@@ -2027,7 +2027,7 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(includedPaths: $classes);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $collectorClass = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
         $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1);
@@ -2097,7 +2097,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         $class2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
@@ -2134,7 +2134,7 @@ final class ContainerTest extends AbstractContainerTestCase
             includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         self::assertNotSame(
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
@@ -2168,7 +2168,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         self::assertNotSame(
             $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
@@ -2228,7 +2228,7 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(includedPaths: $classes);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
         $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$classImplementingName1);
@@ -2290,7 +2290,7 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(includedPaths: $classes);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
 
@@ -2357,7 +2357,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ],
         );
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
 
@@ -2405,7 +2405,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $classPath = __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php';
         $config = $this->generateConfig(includedPaths: [$classPath]);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         self::assertFalse($container->has($className));
     }
@@ -2463,7 +2463,7 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
         self::assertInstanceOf(
@@ -2528,7 +2528,7 @@ final class ContainerTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(includedPaths: $files);
 
-        $container = (new Builder())->add($config)->compile();
+        $container = (new ContainerBuilder())->add($config)->build();
 
         $classFullNamespace = self::GENERATED_CLASS_NAMESPACE.$className;
 
@@ -2572,7 +2572,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2618,7 +2618,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2647,7 +2647,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $this->expectException(UninstantiableEntryException::class);
         $this->expectExceptionMessage(sprintf('Cannot resolve internal entry "%s".', $argumentClassName));
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2681,7 +2681,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2712,7 +2712,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $this->expectException(UnresolvableArgumentException::class);
         $this->expectExceptionMessage($exceptionMessage);
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2750,7 +2750,7 @@ final class ContainerTest extends AbstractContainerTestCase
         $this->expectException($exception);
         $this->expectExceptionMessage($exceptionMessage);
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2824,7 +2824,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2873,7 +2873,7 @@ final class ContainerTest extends AbstractContainerTestCase
             ),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2916,7 +2916,7 @@ final class ContainerTest extends AbstractContainerTestCase
             sprintf('Cannot instantiate entry with id "%s".', self::GENERATED_CLASS_NAMESPACE.$invalidClassName),
         );
 
-        (new Builder())->add($config)->compile();
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -2926,7 +2926,7 @@ final class ContainerTest extends AbstractContainerTestCase
      */
     public function testWithoutCompiling(): void
     {
-        $container = (new Builder())->compile();
+        $container = (new ContainerBuilder())->build();
 
         $this->expectException(EntryNotFoundException::class);
         $this->expectExceptionMessage(sprintf('Could not find entry "%s".', 'asd'));
