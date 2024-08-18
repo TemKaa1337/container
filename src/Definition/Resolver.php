@@ -119,8 +119,6 @@ final class Resolver
             return;
         }
 
-        var_dump($this->definitions);
-        var_dump($this->definitionsResolving);
         if ($this->isDefinitionResolving($definition->getId())) {
             throw new CircularReferenceException($definition->getId(), array_keys($this->definitionsResolving));
         }

@@ -470,7 +470,8 @@ final class Builder
 
                 $currentDecorator->setArguments($currentDecoratorArguments);
 
-                if ($previousDecorator && $decorates = $currentDecorator->getDecorates()) {
+                if ($previousDecorator) {
+                    $decorates = $currentDecorator->getDecorates();
                     $currentDecorator->setDecorates(
                         new Decorator(
                             $previousDecorator->getId(),
