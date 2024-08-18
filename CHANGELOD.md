@@ -1,3 +1,7 @@
+### v0.0.9
+##### Features:
+- Add docs and examples.
+
 ### v0.0.8
 ##### Features:
 - Refactored services namespaces. 

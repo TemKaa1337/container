@@ -174,6 +174,13 @@ final class Builder
         if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
             $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
 
+            // TODO: write test on this
+            if (str_starts_with($expression, '!tagged')) {
+                $tag = trim(str_replace('!tagged', '', $expression));
+
+                return new TaggedReference($tag);
+            }
+
             $parsedValue = $this->expressionParser->parse($expression);
 
             return TypeCaster::cast($parsedValue, $argumentType->getName());
