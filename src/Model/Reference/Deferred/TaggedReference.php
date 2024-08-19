@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Model\Definition\Deferred;
+namespace Temkaa\SimpleContainer\Model\Reference\Deferred;
 
-use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
+use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 
 /**
  * @psalm-api

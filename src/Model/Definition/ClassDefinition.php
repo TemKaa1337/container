@@ -68,7 +68,6 @@ final class ClassDefinition implements DefinitionInterface
      */
     public function addImplements(array $interfaces): self
     {
-        /** @var class-string[] $interfaces */
         $interfaces = [...$this->getImplements(), ...$interfaces];
 
         $this->setImplements(array_values(array_unique($interfaces)));
@@ -167,7 +166,7 @@ final class ClassDefinition implements DefinitionInterface
     }
 
     /**
-     * @return string[]
+     * @return class-string[]
      */
     public function getImplements(): array
     {

@@ -1,3 +1,7 @@
+### v0.0.13
+##### Features:
+- Added class auto discover for binding interfaces and decorators without explicit interface bounds.
+
 ### v0.0.12
 ##### Features:
 - Added option for auto resolving decorated service if there is only one decorated service in constructor with different
