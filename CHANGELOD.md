@@ -1,6 +1,15 @@
+### v0.0.11
+##### Features:
+- Added option to add class aliases from config;
+- Renamed examples so name is showing up the example purpose.
+ 
+### v0.0.10
+##### Features:
+- Added composer keywords.
+
 ### v0.0.9
 ##### Features:
-- Add docs and examples.
+- Added docs and examples.
 
 ### v0.0.8
 ##### Features:
