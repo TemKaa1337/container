@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Integration;
+namespace Tests\Integration\Container;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
@@ -10,7 +10,7 @@ use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
-final class ContainerPerformanceTest extends AbstractContainerTestCase
+final class PerformanceTest extends AbstractContainerTestCase
 {
     private const float COMPILE_TIME_THRESHOLD_IN_SECONDS = 0.03;
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Integration;
+namespace Tests\Integration\Container;
 
 use Closure;
 use Generator;
@@ -10,11 +10,11 @@ use ReflectionAttribute;
 use ReflectionClass;
 use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
 use Tests\Helper\Service\ClassGenerator;
+use Tests\Integration\AbstractTestCase;
 
-abstract class AbstractContainerTestCase extends AbstractUnitTestCase
+abstract class AbstractContainerTestCase extends AbstractTestCase
 {
-    protected const string GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';
-    protected const string GENERATED_CONFIG_STUB_PATH = '/../Fixture/Stub/Config/';
+    protected const string GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
 
     public static function getDataForCompilesWithUninstantiableEntryTest(): iterable
     {

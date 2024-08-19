@@ -12,7 +12,7 @@ use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 
-abstract class AbstractUnitTestCase extends TestCase
+abstract class AbstractTestCase extends TestCase
 {
     protected const string ATTRIBUTE_ALIAS_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Alias(name: \'%s\')]';
     protected const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
@@ -21,7 +21,6 @@ abstract class AbstractUnitTestCase extends TestCase
     protected const string ATTRIBUTE_TAGGED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Tagged(tag: \'%s\')]';
     protected const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Tag(name: \'%s\')]';
     protected const string GENERATED_CLASS_ABSOLUTE_NAMESPACE = '\Tests\Fixture\Stub\Class\\';
-    protected const string GENERATED_CLASS_CONFIG_RELATIVE_PATH = '/../Class/';
     protected const string GENERATED_CLASS_NAMESPACE = 'Tests\Fixture\Stub\Class\\';
     protected const string GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';
     protected const string GITKEEP_FILENAME = '.gitkeep';

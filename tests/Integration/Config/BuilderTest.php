@@ -11,9 +11,9 @@ use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
-use Tests\Integration\AbstractUnitTestCase;
+use Tests\Integration\AbstractTestCase;
 
-final class BuilderTest extends AbstractUnitTestCase
+final class BuilderTest extends AbstractTestCase
 {
     protected const string GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
 
