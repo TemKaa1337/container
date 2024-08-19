@@ -8,6 +8,7 @@ final readonly class ClassConfig
 {
     /**
      * @param class-string          $class
+     * @param string[]              $aliases
      * @param array<string, string> $boundVariables
      * @param Decorator|null        $decorates
      * @param bool                  $singleton
@@ -15,11 +16,17 @@ final readonly class ClassConfig
      */
     public function __construct(
         private string $class,
+        private array $aliases,
         private array $boundVariables,
         private ?Decorator $decorates,
         private bool $singleton,
         private array $tags,
     ) {
+    }
+
+    public function getAliases(): array
+    {
+        return $this->aliases;
     }
 
     /**

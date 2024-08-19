@@ -30,6 +30,9 @@ $config = ConfigBuilder::make()
             ->bindVariable('variableName2', 'env(ENV_VARIABLE)')
             ->bindVariable('variableName3', 'env(ENV_VARIABLE_1)_env(ENV_VARIABLE_2)')
             ->bindVariable('$variableName4', '!tagged tag_name')
+            // list of class aliases
+            ->alias('clasS_alias_1')
+            ->alias('clasS_alias_2')
             // decorated class
             // in this case `SomeClass` is decorating `DecoratedClass` and object of `DecoratedClass` is passed 
             // in SomeClass's `$inner` parameter

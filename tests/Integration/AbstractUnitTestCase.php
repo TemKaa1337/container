@@ -73,6 +73,7 @@ abstract class AbstractUnitTestCase extends TestCase
     protected function generateClassConfig(
         string $className,
         array $variableBindings = [],
+        array $aliases = [],
         ?Decorator $decorates = null,
         bool $singleton = true,
         array $tags = [],
@@ -81,6 +82,10 @@ abstract class AbstractUnitTestCase extends TestCase
 
         foreach ($variableBindings as $variableName => $variableValue) {
             $builder->bindVariable($variableName, $variableValue);
+        }
+
+        foreach ($aliases as $alias) {
+            $builder->alias($alias);
         }
 
         if ($decorates) {

@@ -366,7 +366,16 @@ final class Builder
         $definition
             ->addTags($boundClassInfo?->getTags() ?? [])
             ->addTags(AttributeExtractor::extractParameters($classTags, 'name'))
-            ->addAliases(AttributeExtractor::extractParameters($classAliases, 'name'));
+            ->addAliases(
+                array_values(
+                    array_unique(
+                        array_merge(
+                            AttributeExtractor::extractParameters($classAliases, 'name'),
+                            $this->resolvingConfig->getBoundedClass($definition->getId())?->getAliases() ?? [],
+                        ),
+                    ),
+                ),
+            );
 
         $interfaces = $reflection->getInterfaces();
         $definition->addImplements(array_keys($interfaces));

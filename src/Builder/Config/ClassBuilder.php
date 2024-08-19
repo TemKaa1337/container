@@ -12,6 +12,8 @@ use Temkaa\SimpleContainer\Model\Config\Decorator;
  */
 final class ClassBuilder
 {
+    private array $aliases = [];
+
     /**
      * @var array<string, string>
      */
@@ -42,6 +44,13 @@ final class ClassBuilder
     ) {
     }
 
+    public function alias(string $alias): self
+    {
+        $this->aliases[] = $alias;
+
+        return $this;
+    }
+
     public function bindVariable(string $variableName, string $expression): self
     {
         $this->boundedVariables[str_replace('$', '', $variableName)] = $expression;
@@ -51,7 +60,14 @@ final class ClassBuilder
 
     public function build(): ClassConfig
     {
-        return new ClassConfig($this->class, $this->boundedVariables, $this->decorates, $this->singleton, $this->tags);
+        return new ClassConfig(
+            $this->class,
+            array_values(array_unique($this->aliases)),
+            $this->boundedVariables,
+            $this->decorates,
+            $this->singleton,
+            $this->tags,
+        );
     }
 
     /**
