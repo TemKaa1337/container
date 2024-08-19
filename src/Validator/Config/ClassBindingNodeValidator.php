@@ -52,7 +52,10 @@ final class ClassBindingNodeValidator implements ValidatorInterface
             $constructorArguments,
         );
 
-        if (!in_array(str_replace('$', '', $decorator->getSignature()), $argumentNames, strict: true)) {
+        if (
+            count($constructorArguments) !== 1
+            && !in_array(str_replace('$', '', $decorator->getSignature()), $argumentNames, strict: true)
+        ) {
             throw new UnresolvableArgumentException(
                 sprintf(
                     'Could not resolve decorated class in class "%s" as it does not have argument named "%s".',

@@ -9,7 +9,6 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionParameter;
-use ReflectionType;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
@@ -126,32 +125,48 @@ final class Builder
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @param class-string $id
+     * @param ReflectionParameter[] $arguments
+     * @param ReflectionParameter   $argument
+     * @param ClassDefinition       $definition
+     * @param class-string          $id
      *
+     * @return mixed
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    private function buildArgument(ReflectionParameter $argument, ClassDefinition $definition, string $id): mixed
-    {
+    private function buildArgument(
+        array $arguments,
+        ReflectionParameter $argument,
+        ClassDefinition $definition,
+        string $id,
+    ): mixed {
         (new ArgumentValidator())->validate($argument, $id);
 
-        // needed in order to suppress psalm undefined method messages
-        /** @var ReflectionType&ReflectionNamedType $argumentType */
+        /** @var ReflectionNamedType $argumentType */
         $argumentType = $argument->getType();
 
-        if (!$argumentType) {
-            throw new UnresolvableArgumentException(
-                sprintf(
-                    'Cannot resolve argument "%s" in "%s" because of missing type.',
-                    $argument->getName(),
-                    $id,
-                ),
-            );
-        }
-
         $decorates = $definition->getDecorates();
-        if ($decorates && $decorates->getSignature() === $argument->getName()) {
-            return new DecoratorReference($decorates->getId(), $decorates->getPriority(), $decorates->getSignature());
+        if ($decorates) {
+            if (count($arguments) === 1 || $decorates->getSignature() === $argument->getName()) {
+                return new DecoratorReference(
+                    $decorates->getId(), $decorates->getPriority(), $decorates->getSignature(),
+                );
+            }
+
+            $argumentNames = array_map(
+                static fn (ReflectionParameter $argument): string => $argument->getName(),
+                $arguments,
+            );
+
+            if (!in_array($decorates->getSignature(), $argumentNames, strict: true)) {
+                throw new UnresolvableArgumentException(
+                    sprintf(
+                        'Could not resolve decorated class in class "%s" as it does not have argument named "%s".',
+                        $definition->getId(),
+                        $decorates->getSignature(),
+                    ),
+                );
+            }
         }
 
         if ($argumentAttributes = $argument->getAttributes(Tagged::class)) {
@@ -173,13 +188,6 @@ final class Builder
 
         if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
             $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
-
-            // TODO: write test on this
-            if (str_starts_with($expression, '!tagged')) {
-                $tag = trim(str_replace('!tagged', '', $expression));
-
-                return new TaggedReference($tag);
-            }
 
             $parsedValue = $this->expressionParser->parse($expression);
 
@@ -224,7 +232,6 @@ final class Builder
             return $resolvedValue;
         }
 
-        /** @var class-string $entryId */
         $entryId = $argumentType->getName();
 
         $dependencyReflection = new ReflectionClass($entryId);
@@ -337,7 +344,7 @@ final class Builder
 
         $arguments = $constructor->getParameters();
         foreach ($arguments as $argument) {
-            $definition->addArgument($this->buildArgument($argument, $definition, $id));
+            $definition->addArgument($this->buildArgument($arguments, $argument, $definition, $id));
         }
 
         $this->definitions[$id] = $definition;

@@ -6,7 +6,7 @@ namespace Example\AttributeDecorator;
 
 use Temkaa\SimpleContainer\Attribute\Decorates;
 
-#[Decorates(id: Interface1::class, priority: 1, signature: 'class')]
+#[Decorates(id: Interface1::class, priority: 1)]
 final readonly class Class3 implements Interface1
 {
     public function __construct(
