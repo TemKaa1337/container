@@ -7,11 +7,11 @@ namespace Temkaa\SimpleContainer\Definition;
 use ReflectionClass;
 use ReflectionException;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
-use Temkaa\SimpleContainer\Model\Definition\Reference;
-use Temkaa\SimpleContainer\Model\Definition\ReferenceInterface;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
+use Temkaa\SimpleContainer\Model\Reference\Reference;
+use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 
 /**

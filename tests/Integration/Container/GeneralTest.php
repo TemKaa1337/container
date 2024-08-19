@@ -11,6 +11,7 @@ use ReflectionClass;
 use ReflectionException;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
+use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException as ConfigEntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
@@ -275,6 +276,105 @@ final class GeneralTest extends AbstractContainerTestCase
             ],
             $classDefinition->getTags(),
         );
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithInterfaceTypeHintedInClassWithoutExplicitBinding(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $arg',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $classPaths = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+        ];
+
+        $config = $this->generateConfig(includedPaths: $classPaths);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interfaceName, $class);
+        self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
+        self::assertSame($class, $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
+
+        $classWithDependency = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $classWithDependency);
+        self::assertSame($class, $classWithDependency->arg);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithInterfaceWithoutExplicitBinding(): void
+    {
+        $className = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $classPaths = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+        ];
+
+        $config = $this->generateConfig(includedPaths: $classPaths);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interfaceName, $class);
+        self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
+        self::assertSame($class, $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
     }
 
     /**
@@ -600,6 +700,90 @@ final class GeneralTest extends AbstractContainerTestCase
 
     /**
      * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileDueToMissingInterfaceImplementation(): void
+    {
+        $className = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $classPaths = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+        ];
+
+        $config = $this->generateConfig(includedPaths: $classPaths);
+
+        $this->expectException(ConfigEntryNotFoundException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Could not find interface implementation for "%s".',
+                self::GENERATED_CLASS_NAMESPACE.$interfaceName,
+            ),
+        );
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    public function testDoesNotCompileDueToMultipleInterfaceImplementationsAndWithoutExplicitBinding(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $classPaths = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+        ];
+
+        $config = $this->generateConfig(includedPaths: $classPaths);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+        self::assertFalse($container->has(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
+        self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$className1));
+        self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$className2));
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
     #[DataProvider('getDataForDoesNotCompileDueToNotDeterminedArgumentTypeTest')]
@@ -782,6 +966,70 @@ final class GeneralTest extends AbstractContainerTestCase
             sprintf(
                 'Cannot autowire class "%s" as it is in "exclude" config parameter.',
                 self::GENERATED_CLASS_NAMESPACE.$className3,
+            ),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileWithInterfaceDependencyWithoutExplicitBinding(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $dependency,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $classPaths = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+        ];
+
+        $config = $this->generateConfig(includedPaths: $classPaths);
+
+        $this->expectException(ConfigEntryNotFoundException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Could not find interface implementation for "%s".',
+                self::GENERATED_CLASS_NAMESPACE.$interfaceName,
             ),
         );
 

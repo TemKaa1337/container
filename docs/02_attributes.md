@@ -1,4 +1,4 @@
-##### This package provides the following attributes:
+# This package provides the following attributes:
 
 ### \#[Parameter]
 Using this parameter you can bind values to your class properties.

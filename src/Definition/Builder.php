@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Definition;
 
+use LogicException;
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
@@ -25,11 +26,12 @@ use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Model\Definition\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Model\Definition\Deferred\TaggedReference;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
-use Temkaa\SimpleContainer\Model\Definition\Reference;
+use Temkaa\SimpleContainer\Model\Definition\UnboundInterfaceDefinition;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedReference;
+use Temkaa\SimpleContainer\Model\Reference\Reference;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
 use Temkaa\SimpleContainer\Util\Extractor\ClassExtractor;
@@ -73,6 +75,11 @@ final class Builder
     private Config $resolvingConfig;
 
     /**
+     * @var array<class-string, UnboundInterfaceDefinition>
+     */
+    private array $unboundInterfaces = [];
+
+    /**
      * @param Config[] $configs
      */
     public function __construct(array $configs)
@@ -84,6 +91,10 @@ final class Builder
     }
 
     /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
      * @return DefinitionInterface[]
      *
      * @throws ContainerExceptionInterface
@@ -115,6 +126,101 @@ final class Builder
             }
         }
 
+        $interfaceImplementations = [];
+        foreach ($this->definitions as $definition) {
+            if (!$definition instanceof ClassDefinition) {
+                continue;
+            }
+
+            if (!$interfaces = $definition->getImplements()) {
+                continue;
+            }
+
+            foreach ($interfaces as $interface) {
+                $interfaceImplementations[$interface] ??= [];
+                $interfaceImplementations[$interface][] = $definition->getId();
+            }
+        }
+
+        if ($interfaceImplementations) {
+            foreach ($interfaceImplementations as $interface => $definitionIds) {
+                if (count($definitionIds) === 1) {
+                    $this->definitions[$interface] = $this->interfaceFactory->create(
+                        $interface,
+                        implementedById: current($definitionIds),
+                    );
+
+                    continue;
+                }
+
+                $interfaceDecorators = array_values(
+                    array_filter(
+                        $definitionIds,
+                        function (string $definitionId) use ($interface): bool {
+                            /** @var ClassDefinition $definition */
+                            $definition = $this->definitions[$definitionId];
+
+                            return $definition->getDecorates()?->getId() === $interface;
+                        },
+                    ),
+                );
+
+                if (!$interfaceDecorators) {
+                    continue;
+                }
+
+                $interfaceImplementations = array_values(
+                    array_filter(
+                        $definitionIds,
+                        function (string $definitionId): bool {
+                            /** @var ClassDefinition $definition */
+                            $definition = $this->definitions[$definitionId];
+
+                            return $definition->getDecorates() === null;
+                        },
+                    ),
+                );
+
+                if (count($interfaceImplementations) === 1) {
+                    $this->definitions[$interface] = $this->interfaceFactory->create(
+                        $interface,
+                        implementedById: current($interfaceImplementations),
+                    );
+                }
+            }
+        }
+
+        foreach ($this->unboundInterfaces as $definitionId => $unboundInterface) {
+            if (!isset($this->definitions[$unboundInterface->getId()])) {
+                throw new EntryNotFoundException(
+                    sprintf(
+                        'Could not find interface implementation for "%s".',
+                        $unboundInterface->getId(),
+                    ),
+                );
+            }
+
+            /** @var ClassDefinition $definition */
+            $definition = $this->definitions[$definitionId];
+
+            $resolvedArguments = [];
+            foreach ($definition->getArguments() as $argument) {
+                if ($argument !== $unboundInterface) {
+                    $resolvedArguments[] = $argument;
+
+                    continue;
+                }
+
+                $resolvedArguments[] = new Reference($unboundInterface->getId());
+            }
+
+            if ($resolvedArguments === $definition->getArguments()) {
+                throw new LogicException('Something went wrong.');
+            }
+
+            $definition->setArguments($resolvedArguments);
+        }
+
         $this->updateDecoratorReferences();
 
         return $this->definitions;
@@ -142,11 +248,7 @@ final class Builder
     ): mixed {
         (new ArgumentValidator())->validate($argument, $id);
 
-        /** @var ReflectionNamedType $argumentType */
-        $argumentType = $argument->getType();
-
-        $decorates = $definition->getDecorates();
-        if ($decorates) {
+        if ($decorates = $definition->getDecorates()) {
             if (count($arguments) === 1 || $decorates->getSignature() === $argument->getName()) {
                 return new DecoratorReference(
                     $decorates->getId(), $decorates->getPriority(), $decorates->getSignature(),
@@ -169,6 +271,9 @@ final class Builder
             }
         }
 
+        /** @var ReflectionNamedType $argumentType */
+        $argumentType = $argument->getType();
+
         if ($argumentAttributes = $argument->getAttributes(Tagged::class)) {
             $boundTagName = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'tag')[0];
 
@@ -189,9 +294,10 @@ final class Builder
         if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
             $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
 
-            $parsedValue = $this->expressionParser->parse($expression);
-
-            return TypeCaster::cast($parsedValue, $argumentType->getName());
+            return TypeCaster::cast(
+                $this->expressionParser->parse($expression),
+                $argumentType->getName(),
+            );
         }
 
         if ($argumentType->isBuiltin()) {
@@ -238,12 +344,13 @@ final class Builder
         if ($dependencyReflection->isInterface()) {
             $interfaceName = $dependencyReflection->getName();
             if (!$this->resolvingConfig->hasBoundInterface($interfaceName)) {
-                throw new EntryNotFoundException(
-                    sprintf(
-                        'Could not find interface implementation for "%s".',
-                        $interfaceName,
-                    ),
-                );
+                // throw new EntryNotFoundException(
+                //     sprintf(
+                //         'Could not find interface implementation for "%s".',
+                //         $interfaceName,
+                //     ),
+                // );
+                return $this->unboundInterfaces[$definition->getId()] = new UnboundInterfaceDefinition($interfaceName);
             }
 
             $interfaceImplementation = $this->resolvingConfig->getBoundInterfaceImplementation($interfaceName);
@@ -344,7 +451,9 @@ final class Builder
 
         $arguments = $constructor->getParameters();
         foreach ($arguments as $argument) {
-            $definition->addArgument($this->buildArgument($arguments, $argument, $definition, $id));
+            $definition->addArgument(
+                $this->buildArgument($arguments, $argument, $definition, $id),
+            );
         }
 
         $this->definitions[$id] = $definition;
