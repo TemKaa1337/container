@@ -6,10 +6,10 @@ namespace Example\AttributeTaggedIterator;
 
 use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 
-final readonly class Collector
+final readonly class InterfaceCollector
 {
     public function __construct(
-        #[Tagged('tag')]
+        #[Tagged('interface_tag')]
         public array $objects,
     ) {
     }

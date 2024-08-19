@@ -7,6 +7,7 @@ namespace Example;
 require __DIR__.'/../vendor/autoload.php';
 
 use Example\AttributeTaggedIterator\Collector;
+use Example\AttributeTaggedIterator\InterfaceCollector;
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 
@@ -30,3 +31,18 @@ $container = ContainerBuilder::make()->add($config)->build();
  * }
  */
 $class = $container->get(Collector::class);
+
+/**
+ * object(Example\AttributeTaggedIterator\InterfaceCollector)#29 (1) {
+ *     ["objects"]=>
+ *     array(2) {
+ *         [0]=>
+ *         object(Example\AttributeTaggedIterator\Class3)#22 (0) {
+ *         }
+ *         [1]=>
+ *         object(Example\AttributeTaggedIterator\Class4)#27 (0) {
+ *         }
+ *     }
+ * }
+ */
+$class = $container->get(InterfaceCollector::class);

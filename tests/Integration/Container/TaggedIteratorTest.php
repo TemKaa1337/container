@@ -99,7 +99,6 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
      */
     public function testCompilesWithTaggedInterfaceImplementation(): void
     {
-        // TODO: add tag inheritance to doc
         $collectorClassName = ClassGenerator::getClassName();
         $interfaceName = ClassGenerator::getClassName();
         $classImplementingName1 = ClassGenerator::getClassName();
@@ -300,6 +299,7 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
     {
         // TODO: add to docs env var circular exceptions
         // TODO: class resolving circular exceptions
+        // TODO: write test on tagging an interface from config
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(

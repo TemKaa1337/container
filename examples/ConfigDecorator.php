@@ -25,7 +25,7 @@ $config = ConfigBuilder::make()
     )
     ->bindClass(
         ClassBuilder::make(Class3::class)
-            ->decorates(id: Interface1::class, priority: 1, signature: 'class')
+            ->decorates(id: Interface1::class, priority: 1)
             ->build(),
     )
     ->build();

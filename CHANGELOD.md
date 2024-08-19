@@ -1,3 +1,8 @@
+### v0.0.12
+##### Features:
+- Added option for auto resolving decorated service if there is only one decorated service in constructor with different
+name defined in attribute/config.
+
 ### v0.0.11
 ##### Features:
 - Added option to add class aliases from config;
