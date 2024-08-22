@@ -120,7 +120,7 @@ final readonly class Resolver
         Flag::toggle($definition->getId(), group: 'definition');
 
         $resolvedArguments = array_map(
-            fn (mixed $argument) => $this->resolveArgument($argument),
+            fn (mixed $argument): mixed => $this->resolveArgument($argument),
             $definition->getArguments(),
         );
 

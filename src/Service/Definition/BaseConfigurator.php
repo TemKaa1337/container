@@ -30,6 +30,8 @@ use Temkaa\SimpleContainer\Validator\Argument\DecoratorValidator;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  *
+ * @psalm-suppress PropertyNotSetInConstructor
+ *
  * @internal
  */
 final class BaseConfigurator implements ConfiguratorInterface
@@ -210,6 +212,7 @@ final class BaseConfigurator implements ConfiguratorInterface
 
         $boundClassInfo = $this->resolvingConfig->getBoundedClass($reflection->getName());
 
+        /** @var string[] $aliases */
         $aliases = array_values(
             array_unique(
                 array_merge(

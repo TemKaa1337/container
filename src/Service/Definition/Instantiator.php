@@ -46,6 +46,7 @@ final readonly class Instantiator
         $arguments = [];
         foreach ($definition->getArguments() as $argument) {
             if (!$argument instanceof ReferenceInterface) {
+                /** @psalm-suppress MixedAssignment */
                 $arguments[] = $argument;
 
                 continue;

@@ -45,6 +45,9 @@ final class ExpressionParser
         return $expression;
     }
 
+    /**
+     * @return string[]
+     */
     private function getExpressions(string $variable): array
     {
         $matches = [];

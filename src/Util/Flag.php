@@ -9,7 +9,26 @@ namespace Temkaa\SimpleContainer\Util;
  */
 final class Flag
 {
+    /**
+     * @var array<string, array<string, true>>
+     */
     private static array $flags = [];
+
+    /**
+     * @psalm-api
+     */
+    public static function clear(): void
+    {
+        self::$flags = [];
+    }
+
+    /**
+     * @return string[]
+     */
+    public static function getToggled(string $group): array
+    {
+        return array_keys(self::$flags[$group]);
+    }
 
     public static function isToggled(string $name, string $group): bool
     {
@@ -24,18 +43,5 @@ final class Flag
     public static function untoggle(string $name, string $group): void
     {
         unset(self::$flags[$group][$name]);
-    }
-
-    public static function getToggled(string $group): array
-    {
-        return array_keys(self::$flags[$group]);
-    }
-
-    /**
-     * @psalm-api
-     */
-    public static function clear(): void
-    {
-        self::$flags = [];
     }
 }

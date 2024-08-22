@@ -24,6 +24,7 @@ final class PathValidator implements ValidatorInterface
     private function validatePaths(array $paths): void
     {
         foreach ($paths as $path) {
+            /** @psalm-suppress RiskyTruthyFalsyComparison */
             if (!realpath($path)) {
                 throw new InvalidPathException(sprintf('The specified path "%s" does not exist.', $path));
             }

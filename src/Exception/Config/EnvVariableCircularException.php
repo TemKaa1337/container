@@ -8,6 +8,10 @@ use LogicException;
 
 final class EnvVariableCircularException extends LogicException
 {
+    /**
+     * @param string   $variableName
+     * @param string[] $references
+     */
     public function __construct(string $variableName, array $references)
     {
         $message = sprintf(

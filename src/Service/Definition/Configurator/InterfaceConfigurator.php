@@ -105,6 +105,7 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                 continue;
             }
 
+            /** @psalm-suppress MixedAssignment */
             foreach ($definition->getArguments() as $argument) {
                 if (!$argument instanceof InterfaceReference) {
                     continue;

@@ -40,6 +40,7 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                 }
 
                 $arguments = $currentDecorator->getArguments();
+                /** @psalm-suppress MixedAssignment */
                 foreach ($arguments as $index => $argument) {
                     if (!$argument instanceof DecoratorReference) {
                         continue;
