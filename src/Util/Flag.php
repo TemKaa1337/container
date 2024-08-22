@@ -31,6 +31,9 @@ final class Flag
         return array_keys(self::$flags[$group]);
     }
 
+    /**
+     * @psalm-api
+     */
     public static function clear(): void
     {
         self::$flags = [];

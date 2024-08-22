@@ -19,6 +19,9 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
     ) {
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
     public function configure(): Bag
     {
         $definitions = $this->configurator->configure();
@@ -111,7 +114,9 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
         usort(
             $definitions,
             static function (ClassDefinition $prev, ClassDefinition $current): int {
+                /** @psalm-suppress PossiblyNullReference */
                 $prevPriority = $prev->getDecorates()->getPriority();
+                /** @psalm-suppress PossiblyNullReference */
                 $currentPriority = $current->getDecorates()->getPriority();
 
                 if ($prevPriority === $currentPriority) {

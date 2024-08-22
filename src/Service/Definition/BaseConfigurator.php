@@ -7,44 +7,35 @@ namespace Temkaa\SimpleContainer\Service\Definition;
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
-use ReflectionNamedType;
-use ReflectionParameter;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Autowire;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Attribute\Decorates;
 use Temkaa\SimpleContainer\Attribute\Tag;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
-use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\InterfaceReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedReference;
-use Temkaa\SimpleContainer\Model\Reference\Reference;
-use Temkaa\SimpleContainer\Util\ExpressionParser;
 use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
 use Temkaa\SimpleContainer\Util\Extractor\ClassExtractor;
 use Temkaa\SimpleContainer\Util\Flag;
-use Temkaa\SimpleContainer\Util\TypeCaster;
 use Temkaa\SimpleContainer\Validator\Argument\DecoratorValidator;
-use Temkaa\SimpleContainer\Validator\ArgumentValidator;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  *
  * @internal
  */
 final class BaseConfigurator implements ConfiguratorInterface
 {
+    private ArgumentConfigurator $argumentConfigurator;
+
     private ClassExtractor $classExtractor;
 
     /**
@@ -59,8 +50,6 @@ final class BaseConfigurator implements ConfiguratorInterface
      */
     private array $excludedClasses;
 
-    private ExpressionParser $expressionParser;
-
     private Config $resolvingConfig;
 
     /**
@@ -68,17 +57,13 @@ final class BaseConfigurator implements ConfiguratorInterface
      */
     public function __construct(array $configs)
     {
-        $this->configs = $configs;
-        $this->expressionParser = new ExpressionParser();
+        $this->argumentConfigurator = new ArgumentConfigurator($this);
         $this->classExtractor = new ClassExtractor();
+        $this->configs = $configs;
         $this->definitions = new Bag();
     }
 
     /**
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
@@ -96,135 +81,11 @@ final class BaseConfigurator implements ConfiguratorInterface
             );
 
             foreach ($includedClasses as $class) {
-                $this->buildDefinition($class, failIfUninstantiable: false);
+                $this->configureDefinition($class, failIfUninstantiable: false);
             }
         }
 
         return $this->definitions;
-    }
-
-    /**
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     *
-     * @param ReflectionParameter $argument
-     * @param ClassDefinition     $definition
-     * @param class-string        $id
-     *
-     * @return mixed
-     * @throws ContainerExceptionInterface
-     * @throws ReflectionException
-     */
-    private function buildArgument(
-        ReflectionParameter $argument,
-        ClassDefinition $definition,
-        string $id,
-    ): mixed {
-        (new ArgumentValidator())->validate($argument, $id);
-
-        $decorates = $definition->getDecorates();
-        if ($decorates && $decorates->getSignature() === $argument->getName()) {
-            return new DecoratorReference(
-                $decorates->getId(), $decorates->getPriority(), $decorates->getSignature(),
-            );
-        }
-
-        /** @var ReflectionNamedType $argumentType */
-        $argumentType = $argument->getType();
-
-        if ($argumentAttributes = $argument->getAttributes(Tagged::class)) {
-            $boundTagName = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'tag')[0];
-
-            if (!$argumentType->isBuiltin() || !in_array($argumentType->getName(), ['iterable', 'array'])) {
-                throw new UnresolvableArgumentException(
-                    sprintf(
-                        'Cannot instantiate entry "%s" with tagged argument "%s::%s" as it\'s type is neither "array" or "iterable".',
-                        $id,
-                        $argument->getName(),
-                        $argumentType->getName(),
-                    ),
-                );
-            }
-
-            return new TaggedReference(tag: $boundTagName);
-        }
-
-        if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
-            $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
-
-            return TypeCaster::cast(
-                $this->expressionParser->parse($expression),
-                $argumentType->getName(),
-            );
-        }
-
-        if ($argumentType->isBuiltin()) {
-            $argumentName = $argument->getName();
-
-            $boundClassInfo = $this->resolvingConfig->getBoundedClass($id);
-
-            $classBoundVars = $boundClassInfo?->getBoundedVariables() ?? [];
-            $globalBoundVars = $this->resolvingConfig->getBoundedVariables();
-
-            $boundVariableValue = $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;
-            $hasBoundVariable = (bool) $boundVariableValue;
-
-            if ($hasBoundVariable && str_starts_with((string) $boundVariableValue, '!tagged')) {
-                /** @psalm-suppress PossiblyNullArgument */
-                $tag = trim(str_replace('!tagged', '', $boundVariableValue));
-
-                $resolvedValue = new TaggedReference($tag);
-            } else {
-                /** @psalm-suppress PossiblyNullArgument */
-                $resolvedValue = match (true) {
-                    $hasBoundVariable                                 => TypeCaster::cast(
-                        $this->expressionParser->parse($boundVariableValue),
-                        $argumentType->getName(),
-                    ),
-                    $argumentType->allowsNull() && !$hasBoundVariable => null,
-                    default                                           => throw new UnresolvableArgumentException(
-                        sprintf(
-                            'Cannot instantiate entry "%s" with argument "%s::%s".',
-                            $id,
-                            $argumentName,
-                            $argumentType->getName(),
-                        ),
-                    ),
-                };
-            }
-
-            return $resolvedValue;
-        }
-
-        $entryId = $argumentType->getName();
-
-        $dependencyReflection = new ReflectionClass($entryId);
-        if ($dependencyReflection->isInterface()) {
-            $interfaceName = $dependencyReflection->getName();
-            if (!$this->resolvingConfig->hasBoundInterface($interfaceName)) {
-                return new InterfaceReference($interfaceName);
-            }
-
-            $interfaceImplementation = $this->resolvingConfig->getBoundInterfaceImplementation($interfaceName);
-
-            $this->definitions->add(
-                InterfaceFactory::create(
-                    $interfaceName,
-                    $interfaceImplementation,
-                ),
-            );
-
-            $this->buildDefinition($interfaceImplementation);
-
-            return new Reference($interfaceName);
-        }
-
-        if (!$this->definitions->has($entryId)) {
-            $this->buildDefinition($entryId);
-        }
-
-        return new Reference($entryId);
     }
 
     /**
@@ -236,7 +97,7 @@ final class BaseConfigurator implements ConfiguratorInterface
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    private function buildDefinition(string $id, bool $failIfUninstantiable = true): void
+    public function configureDefinition(string $id, bool $failIfUninstantiable = true): void
     {
         if ($this->definitions->has($id)) {
             return;
@@ -326,7 +187,13 @@ final class BaseConfigurator implements ConfiguratorInterface
         } else {
             foreach ($arguments as $argument) {
                 $definition->addArgument(
-                    $this->buildArgument($argument, $definition, $id),
+                    $this->argumentConfigurator->configureArgument(
+                        $this->resolvingConfig,
+                        $this->definitions,
+                        $argument,
+                        $definition,
+                        $id,
+                    ),
                 );
             }
         }

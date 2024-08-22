@@ -19,6 +19,8 @@ use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 use Temkaa\SimpleContainer\Util\Flag;
 
 /**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
  * @internal
  */
 final readonly class Resolver

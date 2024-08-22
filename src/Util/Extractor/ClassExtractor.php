@@ -24,26 +24,7 @@ final class ClassExtractor
         $classes = [];
 
         foreach ($paths as $path) {
-            if (is_file($path)) {
-                if (pathinfo($path, PATHINFO_EXTENSION) === self::PHP_FILE_EXTENSION) {
-                    $classes[] = $this->extractFromFile($path);
-                }
-
-                continue;
-            }
-
-            foreach (new DirectoryIterator($path) as $file) {
-                if ($file->isDot()) {
-                    continue;
-                }
-
-                $filePath = $file->getRealPath();
-                if ($file->isFile() && $file->getExtension() === self::PHP_FILE_EXTENSION) {
-                    $classes[] = $this->extractFromFile($filePath);
-                } else if ($file->isDir()) {
-                    $classes[] = $this->extract($filePath);
-                }
-            }
+            $classes[] = $this->extractFromPath($path);
         }
 
         return array_merge(...$classes);
@@ -121,5 +102,32 @@ final class ClassExtractor
         }
 
         return $classes;
+    }
+
+    private function extractFromPath(string $path): array
+    {
+        if (is_file($path)) {
+            if (pathinfo($path, PATHINFO_EXTENSION) === self::PHP_FILE_EXTENSION) {
+                return $this->extractFromFile($path);
+            }
+
+            return [];
+        }
+
+        $classes = [];
+        foreach (new DirectoryIterator($path) as $file) {
+            if ($file->isDot()) {
+                continue;
+            }
+
+            $filePath = $file->getRealPath();
+            if ($file->isFile() && $file->getExtension() === self::PHP_FILE_EXTENSION) {
+                $classes[] = $this->extractFromFile($filePath);
+            } else if ($file->isDir()) {
+                $classes[] = $this->extract($filePath);
+            }
+        }
+
+        return array_merge(...$classes);
     }
 }
