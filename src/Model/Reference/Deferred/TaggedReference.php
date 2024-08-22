@@ -7,8 +7,6 @@ namespace Temkaa\SimpleContainer\Model\Reference\Deferred;
 use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 
 /**
- * @psalm-api
- *
  * @internal
  */
 final readonly class TaggedReference implements ReferenceInterface

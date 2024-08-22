@@ -37,15 +37,12 @@ final readonly class DefinitionRepository
 
     public function find(string $id): DefinitionInterface
     {
-        if ($entry = $this->definitions[$id] ?? null) {
-            return $this->resolveDecorators($entry);
+        $entry = $this->definitions[$id] ?? $this->findOneByAlias($id);
+        if (!$entry) {
+            throw new EntryNotFoundException(sprintf('Could not find entry "%s".', $id));
         }
 
-        if ($entry = $this->findOneByAlias($id)) {
-            return $this->resolveDecorators($entry);
-        }
-
-        throw new EntryNotFoundException(sprintf('Could not find entry "%s".', $id));
+        return $this->resolveDecorators($entry);
     }
 
     /**
@@ -70,11 +67,7 @@ final readonly class DefinitionRepository
 
     public function has(string $id): bool
     {
-        if (isset($this->definitions[$id])) {
-            return true;
-        }
-
-        return (bool) $this->findOneByAlias($id);
+        return isset($this->definitions[$id]) || $this->findOneByAlias($id);
     }
 
     private function findOneByAlias(string $alias): ?DefinitionInterface
@@ -93,7 +86,7 @@ final readonly class DefinitionRepository
         return null;
     }
 
-    private function resolveDecoratorDefinition(DefinitionInterface $definition): DefinitionInterface
+    private function getRootDecoratorDefinition(DefinitionInterface $definition): DefinitionInterface
     {
         while ($definition->getDecoratedBy()) {
             /** @psalm-suppress PossiblyNullArrayOffset */
@@ -110,7 +103,7 @@ final readonly class DefinitionRepository
                 return $this->definitions[$definition->getImplementedById()];
             }
 
-            return $this->resolveDecoratorDefinition($definition);
+            return $this->getRootDecoratorDefinition($definition);
         }
 
         /** @var ClassDefinition $definition */
@@ -122,6 +115,6 @@ final readonly class DefinitionRepository
             return $definition;
         }
 
-        return $this->resolveDecoratorDefinition($definition);
+        return $this->getRootDecoratorDefinition($definition);
     }
 }

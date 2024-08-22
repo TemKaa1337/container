@@ -100,6 +100,7 @@ final class ArgumentConfigurator
      * @param class-string        $id
      *
      * @return array{0: mixed, 1: boolean}
+     *
      * @throws ContainerExceptionInterface
      */
     private function configureBuiltinArgument(Config $config, ReflectionParameter $argument, string $id): array
@@ -155,6 +156,7 @@ final class ArgumentConfigurator
      * @param class-string $entryId
      *
      * @return ReferenceInterface|null
+     *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
