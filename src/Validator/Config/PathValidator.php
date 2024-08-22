@@ -10,18 +10,18 @@ use Temkaa\SimpleContainer\Model\Config;
 /**
  * @internal
  */
-final class ServicesNodeValidator implements ValidatorInterface
+final class PathValidator implements ValidatorInterface
 {
     public function validate(Config $config): void
     {
-        $this->validateNode($config->getIncludedPaths());
-        $this->validateNode($config->getExcludedPaths());
+        $this->validatePaths($config->getIncludedPaths());
+        $this->validatePaths($config->getExcludedPaths());
     }
 
     /**
      * @param string[] $paths
      */
-    private function validateNode(array $paths): void
+    private function validatePaths(array $paths): void
     {
         foreach ($paths as $path) {
             if (!realpath($path)) {

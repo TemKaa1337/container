@@ -15,7 +15,7 @@ use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 /**
  * @internal
  */
-final class ClassBindingNodeValidator implements ValidatorInterface
+final class ClassBindingValidator implements ValidatorInterface
 {
     /**
      * @throws ReflectionException

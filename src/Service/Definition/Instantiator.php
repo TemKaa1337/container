@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Definition;
+namespace Temkaa\SimpleContainer\Service\Definition;
 
 use ReflectionClass;
 use ReflectionException;
@@ -10,6 +10,7 @@ use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
 use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
@@ -50,9 +51,10 @@ final readonly class Instantiator
                 continue;
             }
 
+            /** @var DecoratorReference|Reference|TaggedReference $argument */
             $resolvedArgument = $argument instanceof Reference || $argument instanceof DecoratorReference
                 ? $this->instantiate($this->definitionRepository->find($argument->getId()))
-                : array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getId()));
+                : array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getTag()));
 
             $arguments[] = $resolvedArgument;
         }

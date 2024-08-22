@@ -16,7 +16,7 @@ final class InterfaceFactory
      * @param class-string $id
      * @param class-string $implementedById
      */
-    public function create(string $id, string $implementedById): DefinitionInterface
+    public static function create(string $id, string $implementedById): DefinitionInterface
     {
         return (new InterfaceDefinition())
             ->setId($id)

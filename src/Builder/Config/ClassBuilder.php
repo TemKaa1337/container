@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Builder\Config;
 
+use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 
@@ -78,7 +79,7 @@ final class ClassBuilder
         int $priority = Decorator::DEFAULT_PRIORITY,
         string $signature = Decorator::DEFAULT_SIGNATURE,
     ): self {
-        $this->decorates = new Decorator($id, $priority, str_replace('$', '', $signature));
+        $this->decorates = DecoratorFactory::create($id, $priority, $signature);
 
         return $this;
     }

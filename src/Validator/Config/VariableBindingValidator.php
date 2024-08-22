@@ -10,7 +10,7 @@ use Temkaa\SimpleContainer\Util\ExpressionParser;
 /**
  * @internal
  */
-final class VariableBindValidator implements ValidatorInterface
+final class VariableBindingValidator implements ValidatorInterface
 {
     public function validate(Config $config): void
     {

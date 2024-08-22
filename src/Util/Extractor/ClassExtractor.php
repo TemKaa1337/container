@@ -11,30 +11,38 @@ use DirectoryIterator;
  */
 final class ClassExtractor
 {
+    private const string PHP_FILE_EXTENSION = 'php';
+
     /**
+     * @param string[]|string $paths
+     *
      * @return class-string[]
      */
-    public function extract(string $path): array
+    public function extract(array|string $paths): array
     {
+        $paths = is_string($paths) ? [$paths] : $paths;
         $classes = [];
-        if (is_file($path)) {
-            if (pathinfo($path, PATHINFO_EXTENSION) === 'php') {
-                return $this->extractFromFile($path);
-            }
 
-            return [];
-        }
+        foreach ($paths as $path) {
+            if (is_file($path)) {
+                if (pathinfo($path, PATHINFO_EXTENSION) === self::PHP_FILE_EXTENSION) {
+                    $classes[] = $this->extractFromFile($path);
+                }
 
-        foreach (new DirectoryIterator($path) as $file) {
-            if ($file->isDot()) {
                 continue;
             }
 
-            $filePath = $file->getRealPath();
-            if ($file->isFile() && $file->getExtension() === 'php') {
-                $classes[] = $this->extractFromFile($filePath);
-            } else if ($file->isDir()) {
-                $classes[] = $this->extract($filePath);
+            foreach (new DirectoryIterator($path) as $file) {
+                if ($file->isDot()) {
+                    continue;
+                }
+
+                $filePath = $file->getRealPath();
+                if ($file->isFile() && $file->getExtension() === self::PHP_FILE_EXTENSION) {
+                    $classes[] = $this->extractFromFile($filePath);
+                } else if ($file->isDir()) {
+                    $classes[] = $this->extract($filePath);
+                }
             }
         }
 
@@ -43,6 +51,7 @@ final class ClassExtractor
 
     /**
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
      * @psalm-suppress LessSpecificReturnStatement
      * @psalm-suppress MoreSpecificReturnType
      *

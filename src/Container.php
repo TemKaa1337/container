@@ -7,8 +7,8 @@ namespace Temkaa\SimpleContainer;
 use Psr\Container\ContainerInterface;
 use ReflectionException;
 use Temkaa\SimpleContainer\Attribute\Autowire;
-use Temkaa\SimpleContainer\Definition\Instantiator;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
+use Temkaa\SimpleContainer\Service\Definition\Instantiator;
 
 #[Autowire(load: false)]
 final readonly class Container implements ContainerInterface

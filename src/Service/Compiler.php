@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Container;
+namespace Temkaa\SimpleContainer\Service;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use ReflectionException;
 use Temkaa\SimpleContainer\Container;
-use Temkaa\SimpleContainer\Definition\Builder;
-use Temkaa\SimpleContainer\Definition\Resolver;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
+use Temkaa\SimpleContainer\Service\Definition\BaseConfigurator;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\DecoratorConfigurator;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\InterfaceConfigurator;
+use Temkaa\SimpleContainer\Service\Definition\Resolver;
 use Temkaa\SimpleContainer\Validator\Definition\DuplicatedAliasValidator;
 
 /**
@@ -33,16 +35,14 @@ final readonly class Compiler
      */
     public function compile(): ContainerInterface
     {
-        $definitionBuilder = new Builder($this->configs);
-        $definitions = $definitionBuilder->build();
+        $configurator = new DecoratorConfigurator(new InterfaceConfigurator(new BaseConfigurator($this->configs)));
+        $definitions = $configurator->configure()->all();
+
+        (new DuplicatedAliasValidator())->validate($definitions);
 
         $definitionResolver = new Resolver($definitions);
         $resolvedDefinitions = $definitionResolver->resolve();
 
-        (new DuplicatedAliasValidator())->validate($resolvedDefinitions);
-
-        $definitionRepository = new DefinitionRepository($resolvedDefinitions);
-
-        return new Container($definitionRepository);
+        return new Container(new DefinitionRepository($resolvedDefinitions));
     }
 }
