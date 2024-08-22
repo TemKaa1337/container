@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Provider\Config;
 
-use Temkaa\SimpleContainer\Validator\Config\ClassBindingNodeValidator;
-use Temkaa\SimpleContainer\Validator\Config\InterfaceBindingNodeValidator;
-use Temkaa\SimpleContainer\Validator\Config\ServicesNodeValidator;
+use Temkaa\SimpleContainer\Validator\Config\ClassBindingValidator;
+use Temkaa\SimpleContainer\Validator\Config\InterfaceBindingValidator;
+use Temkaa\SimpleContainer\Validator\Config\PathValidator;
 use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
-use Temkaa\SimpleContainer\Validator\Config\VariableBindValidator;
+use Temkaa\SimpleContainer\Validator\Config\VariableBindingValidator;
 
 /**
  * @internal
@@ -21,10 +21,10 @@ final class ValidatorProvider
     public function provide(): array
     {
         return [
-            new ServicesNodeValidator(),
-            new VariableBindValidator(),
-            new ClassBindingNodeValidator(),
-            new InterfaceBindingNodeValidator(),
+            new PathValidator(),
+            new VariableBindingValidator(),
+            new ClassBindingValidator(),
+            new InterfaceBindingValidator(),
         ];
     }
 }

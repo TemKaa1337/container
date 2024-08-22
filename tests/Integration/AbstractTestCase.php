@@ -11,6 +11,7 @@ use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Util\Flag;
 
 abstract class AbstractTestCase extends TestCase
 {
@@ -131,5 +132,12 @@ abstract class AbstractTestCase extends TestCase
         }
 
         return $builder->build();
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Flag::clear();
     }
 }

@@ -17,7 +17,7 @@ final class AttributeExtractor
      * @param ReflectionAttribute<T>[] $attributes
      * @param int                      $index
      *
-     * @return object
+     * @return T
      */
     public static function extract(array $attributes, int $index): object
     {

@@ -12,7 +12,7 @@ use Temkaa\SimpleContainer\Model\Config;
 /**
  * @internal
  */
-final class InterfaceBindingNodeValidator implements ValidatorInterface
+final class InterfaceBindingValidator implements ValidatorInterface
 {
     public function validate(Config $config): void
     {

@@ -297,9 +297,8 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
      */
     public function testDoesNotCompileDueToCircularExceptionByTaggedBinding(): void
     {
-        // TODO: add to docs env var circular exceptions
-        // TODO: class resolving circular exceptions
         // TODO: write test on tagging an interface from config
+        // TODO: replace all public properties with privates + getters
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(

@@ -7,9 +7,9 @@ namespace Temkaa\SimpleContainer\Builder;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Container\Compiler;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Provider\Config\ValidatorProvider;
+use Temkaa\SimpleContainer\Service\Compiler;
 use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
 
 /**

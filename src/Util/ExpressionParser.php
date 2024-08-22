@@ -14,8 +14,6 @@ final class ExpressionParser
 {
     private const string ENV_VARIABLE_PATTERN = '#env\((.*?)\)#';
 
-    private array $variablesResolving = [];
-
     public function parse(string $expression): string
     {
         foreach ($this->getExpressions($expression) as $binding) {
@@ -31,17 +29,17 @@ final class ExpressionParser
                 $expression,
             );
 
-            if ($this->isResolving($binding)) {
-                throw new EnvVariableCircularException($expression, array_keys($this->variablesResolving));
+            if (Flag::isToggled($binding, group: 'env')) {
+                throw new EnvVariableCircularException($expression, Flag::getToggled(group: 'env'));
             }
 
-            $this->setResolving($binding, isResolving: true);
+            Flag::toggle($binding, group: 'env');
 
             if ($this->getExpressions($expression)) {
                 $expression = self::parse($expression);
             }
 
-            $this->setResolving($binding, isResolving: false);
+            Flag::untoggle($binding, group: 'env');
         }
 
         return $expression;
@@ -53,19 +51,5 @@ final class ExpressionParser
         preg_match_all(self::ENV_VARIABLE_PATTERN, $variable, matches: $matches);
 
         return $matches[1] ?? [];
-    }
-
-    private function isResolving(string $variableName): bool
-    {
-        return $this->variablesResolving[$variableName] ?? false;
-    }
-
-    private function setResolving(string $variableName, bool $isResolving): void
-    {
-        if ($isResolving) {
-            $this->variablesResolving[$variableName] = true;
-        } else {
-            unset($this->variablesResolving[$variableName]);
-        }
     }
 }
