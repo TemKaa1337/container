@@ -33,9 +33,12 @@ final class AttributeExtractor
      * @template T of object
      *
      * @param ReflectionAttribute<T>[] $attributes
+     *
+     * @return string[]
      */
     public static function extractParameters(array $attributes, string $parameter): array
     {
+        /** @psalm-suppress MixedReturnStatement, MixedInferredReturnType */
         return array_map(
             static fn (ReflectionAttribute $attribute): string => $attribute->newInstance()->{$parameter},
             $attributes,

@@ -1,3 +1,7 @@
+### v0.0.15
+##### Features:
+- Set psalm level to 1.
+
 ### v0.0.14
 ##### Features:
 - Refactoring.

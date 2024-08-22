@@ -16,11 +16,12 @@ final class ClassExtractor
     /**
      * @param string[]|string $paths
      *
-     * @return class-string[]
+     * @return list<class-string>
      */
     public function extract(array|string $paths): array
     {
         $paths = is_string($paths) ? [$paths] : $paths;
+        /** @var list<list<class-string>> $classes */
         $classes = [];
 
         foreach ($paths as $path) {
@@ -36,7 +37,7 @@ final class ClassExtractor
      * @psalm-suppress LessSpecificReturnStatement
      * @psalm-suppress MoreSpecificReturnType
      *
-     * @return class-string[]
+     * @return list<class-string>
      */
     private function extractFromFile(string $path): array
     {
@@ -104,6 +105,9 @@ final class ClassExtractor
         return $classes;
     }
 
+    /**
+     * @return list<class-string>
+     */
     private function extractFromPath(string $path): array
     {
         if (is_file($path)) {
@@ -114,6 +118,7 @@ final class ClassExtractor
             return [];
         }
 
+        /** @var list<list<class-string>> $classes */
         $classes = [];
         foreach (new DirectoryIterator($path) as $file) {
             if ($file->isDot()) {

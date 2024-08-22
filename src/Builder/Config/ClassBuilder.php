@@ -13,6 +13,9 @@ use Temkaa\SimpleContainer\Model\Config\Decorator;
  */
 final class ClassBuilder
 {
+    /**
+     * @var string[]
+     */
     private array $aliases = [];
 
     /**

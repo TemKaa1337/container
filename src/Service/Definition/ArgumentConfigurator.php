@@ -73,6 +73,7 @@ final class ArgumentConfigurator
             return $configuredArgument;
         }
 
+        /** @var mixed $configuredArgument */
         [$configuredArgument, $resolved] = $this->configureBuiltinArgument($config, $argument, $id);
         if ($resolved) {
             return $configuredArgument;
@@ -140,6 +141,7 @@ final class ArgumentConfigurator
             );
         }
 
+        /** @psalm-suppress PossiblyNullArgument, MixedAssignment */
         $resolvedValue = $hasBoundVariable
             ? TypeCaster::cast(
                 $this->expressionParser->parse($boundVariableValue),
@@ -222,9 +224,8 @@ final class ArgumentConfigurator
         }
 
         $boundVariableValue = $this->getBoundVariableValue($config, $argument->getName(), $id);
-        $hasBoundVariable = (bool) $boundVariableValue;
-
-        if ($hasBoundVariable && str_starts_with($boundVariableValue, '!tagged')) {
+        /** @psalm-suppress PossiblyNullArgument, RiskyTruthyFalsyComparison */
+        if ($boundVariableValue && str_starts_with($boundVariableValue, '!tagged')) {
             $tag = trim(str_replace('!tagged', '', $boundVariableValue));
 
             return new TaggedReference($tag);
@@ -238,9 +239,9 @@ final class ArgumentConfigurator
      * @param string       $argumentName
      * @param class-string $id
      *
-     * @return mixed
+     * @return string|null
      */
-    private function getBoundVariableValue(Config $config, string $argumentName, string $id): mixed
+    private function getBoundVariableValue(Config $config, string $argumentName, string $id): ?string
     {
         $boundClassInfo = $config->getBoundedClasses()[$id] ?? null;
         $classBoundVars = $boundClassInfo?->getBoundedVariables() ?? [];

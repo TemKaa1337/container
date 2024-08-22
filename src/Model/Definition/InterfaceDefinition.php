@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Model\Definition;
 
 /**
+ * @psalm-suppress MissingConstructor
+ *
  * @internal
  */
 final class InterfaceDefinition implements DefinitionInterface
