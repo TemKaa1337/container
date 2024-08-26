@@ -31,7 +31,7 @@ jobs:
               run: ./vendor/bin/phpunit --testsuite integrations
 
             - name: Run Mutation tests
-              run: ./vendor/bin/infection --threads=4
+              run: ./vendor/bin/infection -c=infection.json5 --threads=4
 
             - name: Run Benchmarks
               run: vendor/bin/phpbench run --config=phpbench.json
