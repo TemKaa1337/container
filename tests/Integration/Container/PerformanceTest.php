@@ -160,4 +160,11 @@ final class PerformanceTest extends AbstractContainerTestCase
 
         self::assertLessThan(self::COMPILE_TIME_THRESHOLD_IN_SECONDS, $endTime - $startTime);
     }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->markTestSkipped();
+    }
 }

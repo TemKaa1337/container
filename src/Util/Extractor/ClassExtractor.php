@@ -125,12 +125,7 @@ final class ClassExtractor
                 continue;
             }
 
-            $filePath = $file->getRealPath();
-            if ($file->isFile() && $file->getExtension() === self::PHP_FILE_EXTENSION) {
-                $classes[] = $this->extractFromFile($filePath);
-            } else if ($file->isDir()) {
-                $classes[] = $this->extract($filePath);
-            }
+            $classes[] = $this->extractFromPath($file->getRealPath());
         }
 
         return array_merge(...$classes);

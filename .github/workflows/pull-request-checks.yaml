@@ -31,4 +31,4 @@ jobs:
               run: ./vendor/bin/phpunit --testsuite integrations
 
             - name: Run Mutation tests
-              run: ./vendor/bin/infection --threads=2
+              run: ./vendor/bin/infection --threads=4

@@ -6,7 +6,7 @@ namespace Tests\Helper\Service;
 
 final class ClassGenerator
 {
-    private const CLASS_STUB_WITHOUT_CONSTRUCTOR = <<<CLASS
+    private const string CLASS_STUB_WITHOUT_CONSTRUCTOR = <<<CLASS
     <?php
     
     declare(strict_types=1);
@@ -18,7 +18,7 @@ final class ClassGenerator
     {
     }
     CLASS;
-    private const CLASS_STUB_WITH_CONSTRUCTOR = <<<CLASS
+    private const string CLASS_STUB_WITH_CONSTRUCTOR = <<<CLASS
     <?php
     
     declare(strict_types=1);

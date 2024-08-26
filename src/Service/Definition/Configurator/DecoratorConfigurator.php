@@ -29,15 +29,15 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
             $decorators = $this->sortByPriority($decorators);
 
             $rootDecoratedDefinition = $definitions->get($id);
+            if ($decorators) {
+                $rootDecoratedDefinition->setDecoratedBy(current($decorators)->getId());
+            }
+
             $decoratorsCount = count($decorators);
             for ($i = 0; $i < $decoratorsCount; $i++) {
                 $previousDecorator = $decorators[$i - 1] ?? null;
                 $currentDecorator = $decorators[$i];
                 $nextDecorator = $decorators[$i + 1] ?? null;
-
-                if ($i === 0) {
-                    $rootDecoratedDefinition->setDecoratedBy($currentDecorator->getId());
-                }
 
                 $arguments = $currentDecorator->getArguments();
                 /** @psalm-suppress MixedAssignment */

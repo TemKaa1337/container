@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Service\Definition\Configurator;
 
-use LogicException;
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
@@ -92,7 +91,7 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
 
     /**
      * @return array{
-     *     0: array<class-string, class-string>,
+     *     0: array<class-string, class-string[]>,
      *     1: array<class-string, class-string[]>
      * }
      */
@@ -111,7 +110,8 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                     continue;
                 }
 
-                $unboundInterfaces[$definition->getId()] = $argument->getId();
+                $unboundInterfaces[$definition->getId()] ??= [];
+                $unboundInterfaces[$definition->getId()][] = $argument->getId();
             }
 
             if (!$interfaces = $definition->getImplements()) {
@@ -128,32 +128,35 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
     }
 
     /**
-     * @param Bag                               $definitions
-     * @param array<class-string, class-string> $unboundInterfaces
+     * @param Bag                                 $definitions
+     * @param array<class-string, class-string[]> $unboundInterfaces
      *
      * @return void
      */
     private function updateInterfaceReferences(Bag $definitions, array $unboundInterfaces): void
     {
-        foreach ($unboundInterfaces as $definitionId => $unboundInterfaceId) {
-            if (!$definitions->has($unboundInterfaceId)) {
-                throw new EntryNotFoundException(
-                    sprintf( 'Could not find interface implementation for "%s".', $unboundInterfaceId),
-                );
-            }
+        foreach ($unboundInterfaces as $definitionId => $unboundInterfaceIds) {
 
             /** @var ClassDefinition $definition */
             $definition = $definitions->get($definitionId);
+            $resolvedArguments = $definition->getArguments();
 
-            $resolvedArguments = array_map(
-                static fn (mixed $argument): mixed => $argument instanceof InterfaceReference
-                    ? new Reference($unboundInterfaceId)
-                    : $argument,
-                $definition->getArguments(),
-            );
+            foreach ($unboundInterfaceIds as $unboundInterfaceId) {
+                if (!$definitions->has($unboundInterfaceId)) {
+                    throw new EntryNotFoundException(
+                        sprintf('Could not find interface implementation for "%s".', $unboundInterfaceId),
+                    );
+                }
 
-            if ($resolvedArguments === $definition->getArguments()) {
-                throw new LogicException('Unhandled container exception. Please contact the developer.');
+                /** @psalm-suppress MixedAssignment */
+                foreach ($resolvedArguments as $index => $resolvedArgument) {
+                    if (
+                        $resolvedArgument instanceof InterfaceReference
+                        && $resolvedArgument->getId() === $unboundInterfaceId
+                    ) {
+                        $resolvedArguments[$index] = new Reference($unboundInterfaceId);
+                    }
+                }
             }
 
             $definition->setArguments($resolvedArguments);

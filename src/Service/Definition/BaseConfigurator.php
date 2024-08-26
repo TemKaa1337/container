@@ -12,7 +12,6 @@ use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Decorates;
 use Temkaa\SimpleContainer\Attribute\Tag;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
-use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
@@ -111,12 +110,7 @@ final class BaseConfigurator implements ConfiguratorInterface
 
         Flag::toggle($id, group: 'definition');
 
-        try {
-            $reflection = new ReflectionClass($id);
-        } catch (ReflectionException) {
-            throw new ClassNotFoundException($id);
-        }
-
+        $reflection = new ReflectionClass($id);
         if ($reflection->isInternal()) {
             throw new UninstantiableEntryException(sprintf('Cannot resolve internal entry "%s".', $id));
         }

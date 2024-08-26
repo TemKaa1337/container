@@ -53,9 +53,9 @@ final readonly class Instantiator
             }
 
             /** @var DecoratorReference|Reference|TaggedReference $argument */
-            $resolvedArgument = $argument instanceof Reference || $argument instanceof DecoratorReference
-                ? $this->instantiate($this->definitionRepository->find($argument->getId()))
-                : array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getTag()));
+            $resolvedArgument = $argument instanceof TaggedReference
+                ? array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getTag()))
+                : $this->instantiate($this->definitionRepository->find($argument->getId()));
 
             $arguments[] = $resolvedArgument;
         }

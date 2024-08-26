@@ -11,6 +11,7 @@ use ReflectionClass;
 use ReflectionException;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
+use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException as ConfigEntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
@@ -30,7 +31,7 @@ use Tests\Helper\Service\ClassGenerator;
  * @SuppressWarnings(PHPMD.TooManyMethods)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod
+ * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment
  */
 final class GeneralTest extends AbstractContainerTestCase
 {
@@ -159,6 +160,47 @@ final class GeneralTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
+    public function testCompilesWithIncludedClassesFromFolder(): void
+    {
+        self::clearClassFixtures();
+
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3),
+            )
+            ->generate();
+
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH];
+
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className1));
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className2));
+        self::assertIsObject($container->get(self::GENERATED_CLASS_NAMESPACE.$className3));
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithInterfaceBindingByClass(): void
     {
         $className = ClassGenerator::getClassName();
@@ -198,6 +240,70 @@ final class GeneralTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interfaceName, $class);
         self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
         self::assertSame($class, $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithInterfaceBindingByClassInjectedInAnotherClass(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $arg,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $classPaths = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interfaceName.'.php',
+        ];
+
+        $config = $this->generateConfig(
+            includedPaths: $classPaths,
+            interfaceBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$className1,
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interfaceName, $class);
+        self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
+        self::assertSame($class, $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName));
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interfaceName, $class->arg);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class->arg);
     }
 
     /**
@@ -694,6 +800,36 @@ final class GeneralTest extends AbstractContainerTestCase
 
         $this->expectException(UninstantiableEntryException::class);
         $this->expectExceptionMessage(sprintf('Cannot resolve internal entry "%s".', $argumentClassName));
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    public function testDoesNotCompileDueToMissingArgumentClass(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'private readonly %s $arg,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.'NonExistentClass',
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php'];
+
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $this->expectException(ClassNotFoundException::class);
+        $this->expectExceptionMessage(
+            sprintf('Class "%s" is not found.', self::GENERATED_CLASS_NAMESPACE.'NonExistentClass'),
+        );
 
         (new ContainerBuilder())->add($config)->build();
     }

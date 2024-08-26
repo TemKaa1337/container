@@ -12,8 +12,6 @@ use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
  */
 final class TypeCaster
 {
-    private const array SUPPORTED_TYPES = ['bool', 'float', 'int', 'string', 'mixed'];
-
     /**
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
@@ -21,18 +19,8 @@ final class TypeCaster
      */
     public static function cast(mixed $value, string $castTo): mixed
     {
-        if (!in_array($castTo, self::SUPPORTED_TYPES, strict: true)) {
-            throw new UnsupportedCastTypeException(
-                sprintf('Cannot cast value of type "%s" to "%s".', gettype($value), $castTo),
-            );
-        }
-
         switch ($castTo) {
             case 'bool':
-                if (is_bool($value)) {
-                    return $value;
-                }
-
                 if (in_array($value, ['true', 'false'], strict: true)) {
                     return $value === 'true';
                 }
@@ -51,10 +39,10 @@ final class TypeCaster
                 return (string) $value;
             case 'mixed':
                 return $value;
+            default:
+                throw new UnsupportedCastTypeException(
+                    sprintf('Cannot cast value of type "%s" to "%s".', gettype($value), $castTo),
+                );
         }
-
-        throw new UnsupportedCastTypeException(
-            sprintf('Cannot cast value of type "%s" to "%s".', gettype($value), $castTo),
-        );
     }
 }

@@ -56,6 +56,11 @@ abstract class AbstractTestCase extends TestCase
     {
         parent::tearDownAfterClass();
 
+        self::clearClassFixtures();
+    }
+
+    protected static function clearClassFixtures(): void
+    {
         $path = realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH);
 
         foreach (new DirectoryIterator($path) as $file) {

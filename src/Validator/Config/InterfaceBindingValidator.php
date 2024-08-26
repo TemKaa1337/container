@@ -18,31 +18,14 @@ final class InterfaceBindingValidator implements ValidatorInterface
     {
         foreach ($config->getBoundedInterfaces() as $interface => $class) {
             if (!interface_exists($interface)) {
-                throw new ClassNotFoundException($interface);
+                throw new ClassNotFoundException($interface, isInterface: true);
             }
 
             if (!class_exists($class)) {
                 throw new ClassNotFoundException($class);
             }
 
-            $reflection = new ReflectionClass($interface);
-            if (!$reflection->isInterface()) {
-                throw new CannotBindInterfaceException(
-                    sprintf('Cannot bind interface "%s" as it not an interface.', $interface),
-                );
-            }
-
             $reflection = new ReflectionClass($class);
-            if ($reflection->isInterface()) {
-                throw new CannotBindInterfaceException(
-                    sprintf(
-                        'Cannot bind class "%s" to interface "%s" as it is as interface.',
-                        $class,
-                        $interface,
-                    ),
-                );
-            }
-
             if (!$reflection->implementsInterface($interface)) {
                 throw new CannotBindInterfaceException(
                     sprintf(

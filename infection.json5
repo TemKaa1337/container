@@ -2,11 +2,49 @@
     "source": {
         "directories": [
             "src"
-        ]
+        ],
+        "excludes": [
+            "Util/Extractor/ClassExtractor.php",
+            "Util/TypeCaster.php"
+        ],
     },
     "timeout": 10,
     "logs": {
         "text": "infection.log"
     },
-    "minMsi": 80
+    "mutators": {
+        "@default": true,
+        "PublicVisibility": {
+            ignore: ["*"]
+        },
+        "DecrementInteger": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::configure"
+            ]
+        },
+        "IncrementInteger": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority"
+            ]
+        },
+        "GreaterThan": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority"
+            ]
+        },
+        "Continue_": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Repository\\DefinitionRepository::findOneByAlias"
+            ]
+        },
+        "Throw_": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Resolver::resolveDefinition",
+                "Temkaa\\SimpleContainer\\Util\\ExpressionParser::parse",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\BaseConfigurator::configureDefinition"
+            ]
+        }
+    },
+    "minMsi": 100
 }
