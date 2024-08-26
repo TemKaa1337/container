@@ -132,9 +132,7 @@ final class ArgumentConfigurator
         $argumentName = $argument->getName();
 
         $boundVariableValue = $this->getBoundVariableValue($config, $argumentName, $id);
-        $hasBoundVariable = (bool) $boundVariableValue;
-
-        if (!$hasBoundVariable && !$argumentType->allowsNull()) {
+        if (!$boundVariableValue && !$argumentType->allowsNull()) {
             throw new UnresolvableArgumentException(
                 sprintf(
                     'Cannot instantiate entry "%s" with argument "%s::%s".',
@@ -146,7 +144,7 @@ final class ArgumentConfigurator
         }
 
         /** @psalm-suppress PossiblyNullArgument, MixedAssignment */
-        $resolvedValue = $hasBoundVariable
+        $resolvedValue = $boundVariableValue
             ? TypeCaster::cast(
                 $this->expressionParser->parse($boundVariableValue),
                 $argumentType->getName(),

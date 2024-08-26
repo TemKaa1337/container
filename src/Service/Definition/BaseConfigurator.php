@@ -219,10 +219,10 @@ final class BaseConfigurator implements ConfiguratorInterface
         $definition
             ->addTags($boundClassInfo?->getTags() ?? [])
             ->addTags(AttributeExtractor::extractParameters($classTags, parameter: 'name'))
-            ->addAliases($aliases);
+            ->setAliases($aliases);
 
         $interfaces = $reflection->getInterfaces();
-        $definition->addImplements(array_keys($interfaces));
+        $definition->setImplements(array_keys($interfaces));
         foreach ($interfaces as $interface) {
             $interfaceName = $interface->getName();
 

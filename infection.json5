@@ -14,6 +14,29 @@
     },
     "mutators": {
         "@default": true,
+        "TrueValue": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Util\\Flag"
+            ]
+        },
+        "UnwrapArrayUnique": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setAliases",
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements"
+            ]
+        },
+        "UnwrapArrayValues": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::addInterfaceDefinitions",
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setAliases",
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements"
+            ]
+        },
+        "CastString": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Util\\Env::get"
+            ]
+        },
         "PublicVisibility": {
             ignore: ["*"]
         },
@@ -43,11 +66,6 @@
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Resolver::resolveDefinition",
                 "Temkaa\\SimpleContainer\\Util\\ExpressionParser::parse",
                 "Temkaa\\SimpleContainer\\Service\\Definition\\BaseConfigurator::configureDefinition"
-            ]
-        },
-        "UnwrapArrayValues": {
-            ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::addInterfaceDefinitions"
             ]
         }
     },

@@ -31,7 +31,8 @@ use Tests\Helper\Service\ClassGenerator;
  * @SuppressWarnings(PHPMD.TooManyMethods)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment, MixedArrayAccess, MixedPropertyFetch
+ * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment, MixedArrayAccess,
+ *                 MixedPropertyFetch
  */
 final class GeneralTest extends AbstractContainerTestCase
 {
@@ -65,6 +66,33 @@ final class GeneralTest extends AbstractContainerTestCase
         );
         self::assertIsObject($object);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $object);
+    }
+
+    public function testCompilesWithDefaultAutowireTagValues(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([self::ATTRIBUTE_AUTOWIRE_DEFAULT_SIGNATURE]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$className1));
+        self::assertSame(
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+        );
     }
 
     /**
@@ -1195,7 +1223,6 @@ final class GeneralTest extends AbstractContainerTestCase
                     ->setName($collectorClassName)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-
                         sprintf(
                             'public readonly %s $arg',
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$invalidClassName,

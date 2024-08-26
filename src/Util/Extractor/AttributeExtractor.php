@@ -52,11 +52,9 @@ final class AttributeExtractor
      */
     public static function hasParameterByValue(array $attributes, string $parameter, mixed $value): bool
     {
-        $filtered = array_filter(
+        return (bool) array_filter(
             $attributes,
             static fn (ReflectionAttribute $attribute): bool => $attribute->newInstance()->{$parameter} === $value,
         );
-
-        return (bool) array_values($filtered);
     }
 }

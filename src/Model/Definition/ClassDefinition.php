@@ -46,33 +46,9 @@ final class ClassDefinition implements DefinitionInterface
      */
     private array $tags = [];
 
-    /**
-     * @param string[] $aliases
-     */
-    public function addAliases(array $aliases): self
-    {
-        $aliases = [...$this->getAliases(), ...$aliases];
-
-        $this->setAliases(array_values(array_unique($aliases)));
-
-        return $this;
-    }
-
     public function addArgument(mixed $value): self
     {
         $this->arguments[] = $value;
-
-        return $this;
-    }
-
-    /**
-     * @param class-string[] $interfaces
-     */
-    public function addImplements(array $interfaces): self
-    {
-        $interfaces = [...$this->getImplements(), ...$interfaces];
-
-        $this->setImplements(array_values(array_unique($interfaces)));
 
         return $this;
     }
@@ -102,7 +78,7 @@ final class ClassDefinition implements DefinitionInterface
      */
     public function setAliases(array $aliases): self
     {
-        $this->aliases = $aliases;
+        $this->aliases = array_values(array_unique($aliases));
 
         return $this;
     }
@@ -180,7 +156,7 @@ final class ClassDefinition implements DefinitionInterface
      */
     public function setImplements(array $interfaces): self
     {
-        $this->implements = $interfaces;
+        $this->implements = array_values(array_unique($interfaces));
 
         return $this;
     }

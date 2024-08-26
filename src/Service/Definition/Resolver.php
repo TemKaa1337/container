@@ -113,11 +113,11 @@ final readonly class Resolver
             return;
         }
 
-        if (Flag::isToggled($definition->getId(), group: 'definition')) {
-            throw new CircularReferenceException($definition->getId(), Flag::getToggled(group: 'definition'));
+        if (Flag::isToggled($definition->getId(), group: 'resolver')) {
+            throw new CircularReferenceException($definition->getId(), Flag::getToggled(group: 'resolver'));
         }
 
-        Flag::toggle($definition->getId(), group: 'definition');
+        Flag::toggle($definition->getId(), group: 'resolver');
 
         $resolvedArguments = array_map(
             fn (mixed $argument): mixed => $this->resolveArgument($argument),
@@ -128,7 +128,7 @@ final readonly class Resolver
 
         $definition->setInstance($reflection->newInstanceArgs($resolvedArguments));
 
-        Flag::untoggle($definition->getId(), group: 'definition');
+        Flag::untoggle($definition->getId(), group: 'resolver');
     }
 
     /**

@@ -31,6 +31,26 @@ final class BuilderTest extends AbstractTestCase
      */
     protected const string GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
 
+    public function testCompileWithClassInIncludeAndExcludeSection(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
+            excludedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+        self::assertFalse($container->has(self::GENERATED_CLASS_NAMESPACE.$className));
+    }
+
     public function testConfigDoesNotInitDueToInvalidServicePath(): void
     {
         $config = $this->generateConfig(includedPaths: ['path']);
