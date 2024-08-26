@@ -44,6 +44,11 @@
                 "Temkaa\\SimpleContainer\\Util\\ExpressionParser::parse",
                 "Temkaa\\SimpleContainer\\Service\\Definition\\BaseConfigurator::configureDefinition"
             ]
+        },
+        "UnwrapArrayValues": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::addInterfaceDefinitions"
+            ]
         }
     },
     "minMsi": 100

@@ -57,6 +57,7 @@ final class ClassGenerator
     public function generate(): void
     {
         foreach ($this->builders as $builder) {
+            /** @psalm-suppress MixedArgumentTypeCoercion */
             $args = [
                 implode(PHP_EOL, $builder->getAttributes()),
                 $builder->getPrefix(),
@@ -68,6 +69,7 @@ final class ClassGenerator
             ];
 
             if ($builder->hasConstructor()) {
+                /** @psalm-suppress MixedArgumentTypeCoercion */
                 $args = [
                     ...$args,
                     $builder->getConstructorVisibility(),

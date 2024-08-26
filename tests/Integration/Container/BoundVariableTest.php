@@ -18,7 +18,7 @@ use Tests\Integration\Container\AbstractContainerTestCase;
 /**
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @psalm-suppress ArgumentTypeCoercion
+ * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment
  */
 final class BoundVariableTest extends AbstractContainerTestCase
 {

@@ -31,7 +31,7 @@ use Tests\Helper\Service\ClassGenerator;
  * @SuppressWarnings(PHPMD.TooManyMethods)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment
+ * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment, MixedArrayAccess, MixedPropertyFetch
  */
 final class GeneralTest extends AbstractContainerTestCase
 {
@@ -804,6 +804,10 @@ final class GeneralTest extends AbstractContainerTestCase
         (new ContainerBuilder())->add($config)->build();
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     public function testDoesNotCompileDueToMissingArgumentClass(): void
     {
         $className1 = ClassGenerator::getClassName();
@@ -878,6 +882,10 @@ final class GeneralTest extends AbstractContainerTestCase
         (new ContainerBuilder())->add($config)->build();
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     public function testDoesNotCompileDueToMultipleInterfaceImplementationsAndWithoutExplicitBinding(): void
     {
         $className1 = ClassGenerator::getClassName();

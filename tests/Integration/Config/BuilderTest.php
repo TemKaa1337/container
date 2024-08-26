@@ -21,11 +21,14 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\AbstractTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion, PossiblyInvalidArrayOffset, InternalClass, InternalMethod
+ * @psalm-suppress ArgumentTypeCoercion, PossiblyInvalidArrayOffset, InternalClass, InternalMethod, MixedArrayAccess
+ * @psalm-suppress MixedAssignment, MixedArgument
  */
 final class BuilderTest extends AbstractTestCase
 {
-    /** @psalm-suppress InvalidClassConstantType */
+    /**
+     * @psalm-suppress InvalidClassConstantType
+     */
     protected const string GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
 
     public function testConfigDoesNotInitDueToInvalidServicePath(): void
@@ -123,6 +126,7 @@ final class BuilderTest extends AbstractTestCase
             ->generate();
 
         $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php"];
+        /** @psalm-suppress UndefinedClass */
         $config = $this->generateConfig(
             includedPaths: $files,
             classBindings: [

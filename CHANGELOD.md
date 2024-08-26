@@ -1,6 +1,7 @@
 ### v0.0.16
 ##### Features:
-- Set infection MSI to 100%.
+- Set infection MSI to 100%;
+- Added container compilation time performance.
 
 ### v0.0.15
 ##### Features:

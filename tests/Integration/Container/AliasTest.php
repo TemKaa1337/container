@@ -15,7 +15,7 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion
+ * @psalm-suppress ArgumentTypeCoercion, MixedAssignment
  */
 final class AliasTest extends AbstractContainerTestCase
 {
@@ -134,7 +134,6 @@ final class AliasTest extends AbstractContainerTestCase
         $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get($classWithAliasFullNamespace);
-
         self::assertInstanceOf($classWithAliasFullNamespace, $class);
         self::assertTrue($container->has('empty_2'));
         self::assertTrue($container->has('empty2'));

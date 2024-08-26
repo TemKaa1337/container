@@ -14,6 +14,9 @@ use Tests\Integration\AbstractTestCase;
 
 abstract class AbstractContainerTestCase extends AbstractTestCase
 {
+    /**
+     * @psalm-suppress InvalidClassConstantType
+     */
     protected const string GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
 
     public static function getDataForCompilesWithUninstantiableEntryTest(): iterable

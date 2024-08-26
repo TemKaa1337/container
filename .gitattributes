@@ -11,3 +11,4 @@ Makefile export-ignore
 infection.json5 export-ignore
 docs export-ignore
 examples export-ignore
+phpbench.json export-ignore

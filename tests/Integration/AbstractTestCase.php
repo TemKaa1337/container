@@ -13,6 +13,9 @@ use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Temkaa\SimpleContainer\Util\Flag;
 
+/**
+ * @psalm-suppress MixedAssignment, MixedArgumentTypeCoercion, MixedArgument, InternalClass, InternalMethod
+ */
 abstract class AbstractTestCase extends TestCase
 {
     protected const string ATTRIBUTE_ALIAS_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Alias(name: \'%s\')]';

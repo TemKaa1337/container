@@ -20,7 +20,7 @@ use Tests\Integration\Container\AbstractContainerTestCase;
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod
+ * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment, MixedPropertyFetch, MixedArgument
  */
 final class DecoratorTest extends AbstractContainerTestCase
 {
