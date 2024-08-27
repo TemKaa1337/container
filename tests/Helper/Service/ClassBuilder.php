@@ -23,6 +23,11 @@ final class ClassBuilder
 
     private array $interfaceImplementations = [];
 
+    /**
+     * @var string[]
+     */
+    private array $methods = [];
+
     private string $name;
 
     private string $prefix = 'final class';
@@ -95,6 +100,21 @@ final class ClassBuilder
     public function setInterfaceImplementations(array $interfaceImplementations): self
     {
         $this->interfaceImplementations = $interfaceImplementations;
+
+        return $this;
+    }
+
+    public function getMethods(): array
+    {
+        return $this->methods;
+    }
+
+    /**
+     * @param string[] $methods
+     */
+    public function setMethods(array $methods): self
+    {
+        $this->methods = $methods;
 
         return $this;
     }

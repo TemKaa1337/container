@@ -9,14 +9,18 @@ use Psr\Container\ContainerInterface;
 use ReflectionException;
 use Temkaa\SimpleContainer\Container;
 use Temkaa\SimpleContainer\Model\Config;
+use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
-use Temkaa\SimpleContainer\Service\Definition\BaseConfigurator;
+use Temkaa\SimpleContainer\Service\Definition\Configurator;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\BaseConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Configurator\DecoratorConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Configurator\InterfaceConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Resolver;
 use Temkaa\SimpleContainer\Validator\Definition\DuplicatedAliasValidator;
 
 /**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
  * @internal
  */
 final readonly class Compiler
@@ -35,14 +39,23 @@ final readonly class Compiler
      */
     public function compile(): ContainerInterface
     {
-        $configurator = new DecoratorConfigurator(new InterfaceConfigurator(new BaseConfigurator($this->configs)));
+        $definitions = new Bag();
+        $container = new Container(new DefinitionRepository($definitions));
+
+        $configurator = new DecoratorConfigurator(
+            new InterfaceConfigurator(
+                new Configurator(
+                    new BaseConfigurator($container, $definitions),
+                    $this->configs,
+                ),
+            ),
+        );
         $definitions = $configurator->configure();
 
         (new DuplicatedAliasValidator())->validate($definitions);
 
-        $definitionResolver = new Resolver($definitions);
-        $resolvedDefinitions = $definitionResolver->resolve();
+        (new Resolver($definitions))->resolve();
 
-        return new Container(new DefinitionRepository($resolvedDefinitions));
+        return $container;
     }
 }

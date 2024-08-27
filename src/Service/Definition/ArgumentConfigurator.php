@@ -32,11 +32,11 @@ use Temkaa\SimpleContainer\Validator\ArgumentValidator;
  */
 final class ArgumentConfigurator
 {
-    private BaseConfigurator $definitionConfigurator;
+    private Configurator $definitionConfigurator;
 
     private ExpressionParser $expressionParser;
 
-    public function __construct(BaseConfigurator $definitionConfigurator)
+    public function __construct(Configurator $definitionConfigurator)
     {
         $this->definitionConfigurator = $definitionConfigurator;
         $this->expressionParser = new ExpressionParser();

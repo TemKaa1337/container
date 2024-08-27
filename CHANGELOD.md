@@ -1,3 +1,7 @@
+### v0.0.17
+##### Features:
+- Added option to inject `Temkaa\SimpleContainer\Container` and `Psr\Container\ContainerInterface` into class constructors.
+
 ### v0.0.16
 ##### Features:
 - Set infection MSI to 100%;
