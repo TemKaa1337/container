@@ -27,6 +27,7 @@ final class ContainerBuilder
      */
     private array $validators;
 
+    /** @codeCoverageIgnore */
     public static function make(): self
     {
         return new self();

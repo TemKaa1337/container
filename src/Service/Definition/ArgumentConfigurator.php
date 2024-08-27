@@ -11,6 +11,7 @@ use ReflectionNamedType;
 use ReflectionParameter;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
 use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Config;
@@ -73,8 +74,11 @@ final class ArgumentConfigurator
             return $configuredArgument;
         }
 
-        /** @var mixed $configuredArgument */
-        [$configuredArgument, $resolved] = $this->configureBuiltinArgument($config, $argument, $id);
+        [
+            'value'    => $configuredArgument,
+            'resolved' => $resolved,
+        ] = $this->configureBuiltinArgument($config, $argument, $id);
+
         if ($resolved) {
             return $configuredArgument;
         }
@@ -100,7 +104,7 @@ final class ArgumentConfigurator
      * @param ReflectionParameter $argument
      * @param class-string        $id
      *
-     * @return array{0: mixed, 1: boolean}
+     * @return array{value: mixed, resolved: boolean}
      *
      * @throws ContainerExceptionInterface
      */
@@ -113,24 +117,23 @@ final class ArgumentConfigurator
             $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
 
             return [
-                TypeCaster::cast(
+                'value'    => TypeCaster::cast(
                     $this->expressionParser->parse($expression),
                     $argumentType->getName(),
                 ),
-                true,
+                'resolved' => true,
             ];
         }
 
         if (!$argumentType->isBuiltin()) {
-            return [null, false];
+            return ['value' => null, 'resolved' => false];
         }
 
         $argumentName = $argument->getName();
 
         $boundVariableValue = $this->getBoundVariableValue($config, $argumentName, $id);
-        $hasBoundVariable = (bool) $boundVariableValue;
-
-        if (!$hasBoundVariable && !$argumentType->allowsNull()) {
+        /** @psalm-suppress RiskyTruthyFalsyComparison */
+        if (!$boundVariableValue && !$argumentType->allowsNull()) {
             throw new UnresolvableArgumentException(
                 sprintf(
                     'Cannot instantiate entry "%s" with argument "%s::%s".',
@@ -141,15 +144,15 @@ final class ArgumentConfigurator
             );
         }
 
-        /** @psalm-suppress PossiblyNullArgument, MixedAssignment */
-        $resolvedValue = $hasBoundVariable
+        /** @psalm-suppress MixedAssignment, RiskyTruthyFalsyComparison */
+        $resolvedValue = $boundVariableValue
             ? TypeCaster::cast(
                 $this->expressionParser->parse($boundVariableValue),
                 $argumentType->getName(),
             )
             : null;
 
-        return [$resolvedValue, true];
+        return ['value' => $resolvedValue, 'resolved' => true];
     }
 
     /**
@@ -164,7 +167,12 @@ final class ArgumentConfigurator
      */
     private function configureInterfaceArgument(Config $config, Bag $definitions, string $entryId): ?ReferenceInterface
     {
-        $dependencyReflection = new ReflectionClass($entryId);
+        try {
+            $dependencyReflection = new ReflectionClass($entryId);
+        } catch (ReflectionException) {
+            throw new ClassNotFoundException($entryId);
+        }
+
         if (!$dependencyReflection->isInterface()) {
             return null;
         }
@@ -205,7 +213,7 @@ final class ArgumentConfigurator
         if ($argumentAttributes = $argument->getAttributes(Tagged::class)) {
             $boundTagName = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'tag')[0];
 
-            if (!$argumentType->isBuiltin() || !in_array($argumentType->getName(), ['iterable', 'array'])) {
+            if (!in_array($argumentType->getName(), ['iterable', 'array'])) {
                 throw new UnresolvableArgumentException(
                     sprintf(
                         'Cannot instantiate entry "%s" with tagged argument "%s::%s" as it\'s type is neither "array" or "iterable".',

@@ -18,7 +18,7 @@ use Tests\Integration\Container\AbstractContainerTestCase;
 /**
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @psalm-suppress ArgumentTypeCoercion
+ * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment
  */
 final class BoundVariableTest extends AbstractContainerTestCase
 {
@@ -53,6 +53,10 @@ final class BoundVariableTest extends AbstractContainerTestCase
                         'public readonly mixed $varSeven,',
                         sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_STRING_VAL)'),
                         'public readonly mixed $varEight,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_BOOL_VAL)'),
+                        'public readonly bool $varNine,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VAR_4)'),
+                        'public readonly bool $varTen,',
                     ]),
             )
             ->generate();
@@ -76,6 +80,77 @@ final class BoundVariableTest extends AbstractContainerTestCase
         self::assertEquals('false', $class->varSix);
         self::assertEquals('3', $class->varSeven);
         self::assertEquals('string', $class->varEight);
+        self::assertFalse($class->varNine);
+        self::assertTrue($class->varTen);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompileWithCastedBoundVariablesFromConfig(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly int $varOne,',
+                        'public readonly string $varTwo,',
+                        'public readonly float $varThree,',
+                        'public readonly bool $varFour,',
+                        'public readonly mixed $varFive,',
+                        'public readonly mixed $varSix,',
+                        'public readonly mixed $varSeven,',
+                        'public readonly mixed $varEight,',
+                        'public readonly bool $varNine,',
+                        'public readonly bool $varTen,',
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: [
+                        '$varOne'   => 'env(ENV_CASTABLE_STRING_VAR)',
+                        '$varTwo'   => 'env(ENV_CASTABLE_STRING_VAR)',
+                        '$varThree' => 'env(ENV_CASTABLE_STRING_VAR)',
+                        '$varFour'  => 'env(ENV_CASTABLE_STRING_VAR)',
+                        '$varFive'  => 'env(ENV_FLOAT_VAR)',
+                        '$varSix'   => 'env(ENV_BOOL_VAL)',
+                        '$varSeven' => 'env(ENV_INT_VAL)',
+                        '$varEight' => 'env(ENV_STRING_VAL)',
+                        '$varNine'  => 'env(ENV_BOOL_VAL)',
+                        '$varTen'   => 'env(ENV_VAR_4)',
+                    ],
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
+
+        self::assertIsObject($class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class);
+
+        self::assertEquals(10, $class->varOne);
+        self::assertEquals('10.1', $class->varTwo);
+        self::assertEquals(10.1, $class->varThree);
+        self::assertTrue($class->varFour);
+        self::assertEquals('10.1', $class->varFive);
+        self::assertEquals('false', $class->varSix);
+        self::assertEquals('3', $class->varSeven);
+        self::assertEquals('string', $class->varEight);
+        self::assertFalse($class->varNine);
+        self::assertTrue($class->varTen);
     }
 
     /**
@@ -108,6 +183,54 @@ final class BoundVariableTest extends AbstractContainerTestCase
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertEquals('string_additional_string', $class->envReference);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesNonSingletonWithBoundVariables(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
+                            'true',
+                            'false',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VARIABLE_REFERENCE)'),
+                        'public readonly string $envReference1,',
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VAR_3)'),
+                        'public readonly string $envReference2,',
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
+        $class2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class2);
+        self::assertNotSame($class1, $class2);
+        self::assertEquals('string_additional_string', $class1->envReference1);
+        self::assertEquals('string_additional_string', $class2->envReference1);
+        self::assertEquals('test-three', $class1->envReference2);
+        self::assertEquals('test-three', $class2->envReference2);
     }
 
     /**
@@ -451,6 +574,111 @@ final class BoundVariableTest extends AbstractContainerTestCase
 
     /**
      * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithMultipleInterfaceReferences(): void
+    {
+        $interface1 = ClassGenerator::getClassName();
+        $interface2 = ClassGenerator::getClassName();
+        $interface3 = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface1.php")
+                    ->setName($interface1)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface2.php")
+                    ->setName($interface2)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface3.php")
+                    ->setName($interface3)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface1]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface2]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'test'),
+                        'public readonly string $dep0,',
+                        sprintf(
+                            'public readonly %s $dep1,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface1,
+                        ),
+                        sprintf(
+                            'public readonly %s $dep2,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface2,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface3]),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className4.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interface3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interface1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interface2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+        ];
+        $config = $this->generateConfig(
+            includedPaths: $files,
+            interfaceBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$interface3 => self::GENERATED_CLASS_NAMESPACE.$className4,
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className3);
+        self::assertEquals('test', $class->dep0);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interface1, $class->dep1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class->dep1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interface2, $class->dep2);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $class->dep2);
+        self::assertInstanceOf(
+            self::GENERATED_CLASS_NAMESPACE.$interface3,
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$interface3),
+        );
+        self::assertInstanceOf(
+            self::GENERATED_CLASS_NAMESPACE.$className4,
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$interface3),
+        );
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
     public function testDoesNotCompileDueToNonExistentBoundVariable(): void
@@ -525,7 +753,7 @@ final class BoundVariableTest extends AbstractContainerTestCase
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    public function testDoesNotCompileWithCircularEnvVariableDependencies(): void
+    public function testDoesNotCompileWithCircularEnvVariableDependenciesFromAttribute(): void
     {
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())
@@ -543,6 +771,77 @@ final class BoundVariableTest extends AbstractContainerTestCase
 
         $config = $this->generateConfig(
             includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
+        );
+
+        $this->expectException(EnvVariableCircularException::class);
+        $this->expectExceptionMessage(
+            'Cannot resolve env variable "env(CIRCULAR_ENV_VARIABLE_2)" as '
+            .'it has circular references "CIRCULAR_ENV_VARIABLE_1 -> CIRCULAR_ENV_VARIABLE_2".',
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileWithClassCircularEnvVariableDependenciesFromConfig(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly string $circular,',
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: ['$circular' => 'env(CIRCULAR_ENV_VARIABLE_1)'],
+                ),
+            ],
+        );
+
+        $this->expectException(EnvVariableCircularException::class);
+        $this->expectExceptionMessage(
+            'Cannot resolve env variable "env(CIRCULAR_ENV_VARIABLE_2)" as '
+            .'it has circular references "CIRCULAR_ENV_VARIABLE_1 -> CIRCULAR_ENV_VARIABLE_2".',
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileWithGlobalCircularEnvVariableDependenciesFromConfig(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly string $circular,',
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
+            globalBoundVariables: ['$circular' => 'env(CIRCULAR_ENV_VARIABLE_1)'],
         );
 
         $this->expectException(EnvVariableCircularException::class);

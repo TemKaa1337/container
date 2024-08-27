@@ -37,6 +37,7 @@ final class ConfigBuilder
      */
     private array $include = [];
 
+    /** @codeCoverageIgnore */
     public static function make(): self
     {
         return new self();

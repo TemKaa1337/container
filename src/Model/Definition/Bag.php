@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model\Definition;
 
-final class Bag
+use ArrayIterator;
+use IteratorAggregate;
+use Traversable;
+
+/**
+ * @template-implements IteratorAggregate<class-string, DefinitionInterface>
+ */
+final class Bag implements IteratorAggregate
 {
     /**
      * @var array<class-string, DefinitionInterface>
@@ -32,6 +39,11 @@ final class Bag
     public function get(string $id): DefinitionInterface
     {
         return $this->definitions[$id];
+    }
+
+    public function getIterator(): Traversable
+    {
+        return new ArrayIterator($this->definitions);
     }
 
     /**

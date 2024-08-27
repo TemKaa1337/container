@@ -8,6 +8,7 @@ use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
+use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
@@ -27,22 +28,17 @@ final readonly class Resolver
 {
     private Instantiator $instantiator;
 
-    /**
-     * @param DefinitionInterface[] $definitions
-     */
     public function __construct(
-        private array $definitions,
+        private Bag $definitions,
     ) {
-        $this->instantiator = new Instantiator(new DefinitionRepository(array_values($definitions)));
+        $this->instantiator = new Instantiator(new DefinitionRepository($definitions));
     }
 
     /**
-     * @return DefinitionInterface[]
-     *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    public function resolve(): array
+    public function resolve(): Bag
     {
         foreach ($this->definitions as $definition) {
             $this->resolveDefinition($definition);
@@ -53,19 +49,19 @@ final readonly class Resolver
 
     private function getDefinition(DecoratorReference|Reference $reference): DefinitionInterface
     {
-        $definition = $this->definitions[$reference->getId()];
+        $definition = $this->definitions->get($reference->getId());
         if (!$definition instanceof InterfaceDefinition) {
             return $definition;
         }
 
         if (!$definition->getDecoratedBy()) {
-            return $this->definitions[$definition->getId()];
+            return $this->definitions->get($definition->getId());
         }
 
-        $definition = $this->definitions[$definition->getDecoratedBy()];
+        $definition = $this->definitions->get($definition->getDecoratedBy());
         while ($definition->getDecoratedBy()) {
-            /** @psalm-suppress PossiblyNullArrayOffset */
-            $definition = $this->definitions[$definition->getDecoratedBy()];
+            /** @psalm-suppress PossiblyNullArgument */
+            $definition = $this->definitions->get($definition->getDecoratedBy());
         }
 
         return $definition;
@@ -103,7 +99,7 @@ final readonly class Resolver
     private function resolveDefinition(DefinitionInterface $definition): void
     {
         if ($definition instanceof InterfaceDefinition) {
-            $this->resolveDefinition($this->definitions[$definition->getImplementedById()]);
+            $this->resolveDefinition($this->definitions->get($definition->getImplementedById()));
 
             return;
         }
@@ -113,11 +109,11 @@ final readonly class Resolver
             return;
         }
 
-        if (Flag::isToggled($definition->getId(), group: 'definition')) {
-            throw new CircularReferenceException($definition->getId(), Flag::getToggled(group: 'definition'));
+        if (Flag::isToggled($definition->getId(), group: 'resolver')) {
+            throw new CircularReferenceException($definition->getId(), Flag::getToggled(group: 'resolver'));
         }
 
-        Flag::toggle($definition->getId(), group: 'definition');
+        Flag::toggle($definition->getId(), group: 'resolver');
 
         $resolvedArguments = array_map(
             fn (mixed $argument): mixed => $this->resolveArgument($argument),
@@ -128,7 +124,7 @@ final readonly class Resolver
 
         $definition->setInstance($reflection->newInstanceArgs($resolvedArguments));
 
-        Flag::untoggle($definition->getId(), group: 'definition');
+        Flag::untoggle($definition->getId(), group: 'resolver');
     }
 
     /**
@@ -137,14 +133,16 @@ final readonly class Resolver
      */
     private function resolveTaggedArgument(TaggedReference $argument): array
     {
-        $definitionRepository = new DefinitionRepository(array_values($this->definitions));
+        $definitionRepository = new DefinitionRepository($this->definitions);
         $taggedDefinitions = $definitionRepository->findAllByTag($argument->getTag());
 
         $resolvedArguments = [];
         foreach ($taggedDefinitions as $taggedDefinition) {
-            $this->resolveDefinition($this->definitions[$taggedDefinition->getId()]);
+            $this->resolveDefinition($this->definitions->get($taggedDefinition->getId()));
 
-            $resolvedArguments[] = $this->instantiator->instantiate($this->definitions[$taggedDefinition->getId()]);
+            $resolvedArguments[] = $this->instantiator->instantiate(
+                $this->definitions->get($taggedDefinition->getId()),
+            );
         }
 
         return $resolvedArguments;

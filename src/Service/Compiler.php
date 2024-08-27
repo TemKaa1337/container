@@ -36,7 +36,7 @@ final readonly class Compiler
     public function compile(): ContainerInterface
     {
         $configurator = new DecoratorConfigurator(new InterfaceConfigurator(new BaseConfigurator($this->configs)));
-        $definitions = $configurator->configure()->all();
+        $definitions = $configurator->configure();
 
         (new DuplicatedAliasValidator())->validate($definitions);
 

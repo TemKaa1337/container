@@ -6,6 +6,7 @@ namespace Temkaa\SimpleContainer\Repository;
 
 use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
+use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
@@ -16,33 +17,24 @@ use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 #[Autowire(load: false)]
 final readonly class DefinitionRepository
 {
-    /**
-     * @var array<class-string, DefinitionInterface>
-     */
-    private array $definitions;
-
-    /**
-     * @param DefinitionInterface[] $definitions
-     */
-    public function __construct(array $definitions)
-    {
-        $this->definitions = array_combine(
-            array_map(
-                static fn (DefinitionInterface $definition): string => $definition->getId(),
-                $definitions,
-            ),
-            $definitions,
-        );
+    public function __construct(
+        private Bag $definitions,
+    ) {
     }
 
     public function find(string $id): DefinitionInterface
     {
-        $entry = $this->definitions[$id] ?? $this->findOneByAlias($id);
-        if (!$entry) {
-            throw new EntryNotFoundException(sprintf('Could not find entry "%s".', $id));
+        /** @psalm-suppress ArgumentTypeCoercion */
+        if ($this->definitions->has($id)) {
+            /** @psalm-suppress ArgumentTypeCoercion */
+            return $this->resolveDecorators($this->definitions->get($id));
         }
 
-        return $this->resolveDecorators($entry);
+        if ($entry = $this->findOneByAlias($id)) {
+            return $this->resolveDecorators($entry);
+        }
+
+        throw new EntryNotFoundException(sprintf('Could not find entry "%s".', $id));
     }
 
     /**
@@ -67,7 +59,8 @@ final readonly class DefinitionRepository
 
     public function has(string $id): bool
     {
-        return isset($this->definitions[$id]) || $this->findOneByAlias($id);
+        /** @psalm-suppress ArgumentTypeCoercion */
+        return $this->definitions->has($id) || $this->findOneByAlias($id);
     }
 
     private function findOneByAlias(string $alias): ?DefinitionInterface
@@ -89,8 +82,8 @@ final readonly class DefinitionRepository
     private function getRootDecoratorDefinition(DefinitionInterface $definition): DefinitionInterface
     {
         while ($definition->getDecoratedBy()) {
-            /** @psalm-suppress PossiblyNullArrayOffset */
-            $definition = $this->definitions[$definition->getDecoratedBy()];
+            /** @psalm-suppress PossiblyNullArgument */
+            $definition = $this->definitions->get($definition->getDecoratedBy());
         }
 
         return $definition;
@@ -100,7 +93,7 @@ final readonly class DefinitionRepository
     {
         if ($definition instanceof InterfaceDefinition) {
             if (!$definition->getDecoratedBy()) {
-                return $this->definitions[$definition->getImplementedById()];
+                return $this->definitions->get($definition->getImplementedById());
             }
 
             return $this->getRootDecoratorDefinition($definition);
