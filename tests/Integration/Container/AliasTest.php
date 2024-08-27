@@ -50,6 +50,7 @@ final class AliasTest extends AbstractContainerTestCase
                     ->setName($className1)
                     ->setAttributes([
                         sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'empty_2'),
+                        sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'empty_2'),
                         sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'empty2'),
                     ])
                     ->setConstructorArguments([
@@ -149,6 +150,7 @@ final class AliasTest extends AbstractContainerTestCase
      */
     public function testDoesNotCompileDueToDuplicatedAliasesFromAttributes(): void
     {
+        $interfaceName = ClassGenerator::getClassName();
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
         (new ClassGenerator())
@@ -158,7 +160,8 @@ final class AliasTest extends AbstractContainerTestCase
                     ->setName($className1)
                     ->setAttributes([
                         sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'NonUniqueAlias'),
-                    ]),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
             )
             ->addBuilder(
                 (new ClassBuilder())
@@ -168,14 +171,26 @@ final class AliasTest extends AbstractContainerTestCase
                         sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'NonUniqueAlias'),
                     ]),
             )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
             ->generate();
 
         $files = [
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName.php",
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
         ];
 
-        $config = $this->generateConfig(includedPaths: $files);
+        $config = $this->generateConfig(
+            includedPaths: $files,
+            interfaceBindings: [
+                self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName => self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+            ],
+        );
 
         $this->expectException(DuplicatedEntryAliasException::class);
         $this->expectExceptionMessage(
@@ -197,20 +212,29 @@ final class AliasTest extends AbstractContainerTestCase
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(
                 (new ClassBuilder())
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
-                    ->setName($className1),
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
             )
             ->addBuilder(
                 (new ClassBuilder())
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
                     ->setName($className2),
             )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
             ->generate();
 
         $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName.php",
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
         ];
@@ -249,6 +273,7 @@ final class AliasTest extends AbstractContainerTestCase
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(
                 (new ClassBuilder())
@@ -256,16 +281,24 @@ final class AliasTest extends AbstractContainerTestCase
                     ->setName($className1)
                     ->setAttributes([
                         sprintf(self::ATTRIBUTE_ALIAS_SIGNATURE, 'non_unique_alias'),
-                    ]),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
             )
             ->addBuilder(
                 (new ClassBuilder())
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
                     ->setName($className2),
             )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
             ->generate();
 
         $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName.php",
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
         ];

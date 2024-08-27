@@ -14,6 +14,7 @@ use Temkaa\SimpleContainer\Exception\Config\CannotBindInterfaceException;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableCircularException;
 use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
 use Temkaa\SimpleContainer\Exception\Config\InvalidPathException;
+use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 use Tests\Helper\Service\ClassBuilder;
@@ -31,6 +32,10 @@ final class BuilderTest extends AbstractTestCase
      */
     protected const string GENERATED_CLASS_STUB_PATH = '/../../Fixture/Stub/Class/';
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompileWithClassInIncludeAndExcludeSection(): void
     {
         $className = ClassGenerator::getClassName();
@@ -453,18 +458,20 @@ final class BuilderTest extends AbstractTestCase
         $reflection = new ReflectionClass($container);
         $definitionRepository = $reflection->getProperty('definitionRepository')->getValue($container);
         $reflection = new ReflectionClass($definitionRepository);
+
+        /** @var Bag $definitions */
         $definitions = $reflection->getProperty('definitions')->getValue($definitionRepository);
 
         /** @var InterfaceDefinition $interfaceDefinition */
-        $interfaceDefinition = $definitions[self::GENERATED_CLASS_NAMESPACE.$interfaceName];
+        $interfaceDefinition = $definitions->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
         /** @var ClassDefinition $rootDecoratedClass */
-        $rootDecoratedClass = $definitions[self::GENERATED_CLASS_NAMESPACE.$className1];
+        $rootDecoratedClass = $definitions->get(self::GENERATED_CLASS_NAMESPACE.$className1);
         /** @var ClassDefinition $firstLevelDecoratorClass */
-        $firstLevelDecoratorClass = $definitions[self::GENERATED_CLASS_NAMESPACE.$className2];
+        $firstLevelDecoratorClass = $definitions->get(self::GENERATED_CLASS_NAMESPACE.$className2);
         /** @var ClassDefinition $secondLevelDecoratorClass */
-        $secondLevelDecoratorClass = $definitions[self::GENERATED_CLASS_NAMESPACE.$className3];
+        $secondLevelDecoratorClass = $definitions->get(self::GENERATED_CLASS_NAMESPACE.$className3);
         /** @var ClassDefinition $thirdLevelDecoratorClass */
-        $thirdLevelDecoratorClass = $definitions[self::GENERATED_CLASS_NAMESPACE.$className4];
+        $thirdLevelDecoratorClass = $definitions->get(self::GENERATED_CLASS_NAMESPACE.$className4);
 
         self::assertEquals(self::GENERATED_CLASS_NAMESPACE.$className2, $interfaceDefinition->getDecoratedBy());
         self::assertNull($rootDecoratedClass->getDecorates());

@@ -38,6 +38,11 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
      */
     private function addInterfaceDefinitions(Bag $definitions, array $interfaceImplementations): void
     {
+        /**
+         * We auto bind interface to its implementations in 2 cases:
+         * 1. there is only one interface implementation
+         * 2. there are multiple interface implementations but only one which does not decorate any oneer class
+         */
         foreach ($interfaceImplementations as $interface => $definitionIds) {
             if (count($definitionIds) === 1) {
                 $definitions->add(
@@ -47,22 +52,6 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                     ),
                 );
 
-                continue;
-            }
-
-            $interfaceDecorators = array_values(
-                array_filter(
-                    $definitionIds,
-                    static function (string $definitionId) use ($definitions, $interface): bool {
-                        /** @var ClassDefinition $definition */
-                        $definition = $definitions->get($definitionId);
-
-                        return $definition->getDecorates()?->getId() === $interface;
-                    },
-                ),
-            );
-
-            if (!$interfaceDecorators) {
                 continue;
             }
 

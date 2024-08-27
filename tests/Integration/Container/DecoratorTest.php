@@ -145,6 +145,7 @@ final class DecoratorTest extends AbstractContainerTestCase
         self::assertEquals('test_one', $class2->arg);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class2->inner);
 
+        /** @psalm-suppress MixedArgument */
         self::assertCount(2, $class2->dependency);
 
         /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
@@ -402,6 +403,82 @@ final class DecoratorTest extends AbstractContainerTestCase
 
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorator);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithDifferentInterfaceImplementationsAndOnlyOneDecorator(): void
+    {
+        $interfaceName = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public %s $decorated,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$interfaceName.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+        ];
+        $config = $this->generateConfig(
+            includedPaths: $files,
+            interfaceBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$className1,
+            ],
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className4,
+                    decorates: new Decorator(id: self::GENERATED_CLASS_NAMESPACE.$interfaceName),
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
+        self::assertSame($container->get(self::GENERATED_CLASS_NAMESPACE.$className4), $decorator);
+        self::assertSame($container->get(self::GENERATED_CLASS_NAMESPACE.$className1), $decorator->decorated);
     }
 
     /**

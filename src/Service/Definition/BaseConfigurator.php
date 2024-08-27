@@ -73,13 +73,8 @@ final class BaseConfigurator implements ConfiguratorInterface
         foreach ($this->configs as $config) {
             $this->resolvingConfig = $config;
 
-            $includedClasses = $this->classExtractor->extract(
-                paths: array_map(realpath(...), $config->getIncludedPaths()),
-            );
-
-            $this->excludedClasses = $this->classExtractor->extract(
-                paths: array_map(realpath(...), $config->getExcludedPaths()),
-            );
+            $includedClasses = $this->classExtractor->extract($config->getIncludedPaths());
+            $this->excludedClasses = $this->classExtractor->extract($config->getExcludedPaths());
 
             foreach ($includedClasses as $class) {
                 $this->configureDefinition($class, failIfUninstantiable: false);
@@ -207,13 +202,9 @@ final class BaseConfigurator implements ConfiguratorInterface
         $boundClassInfo = $this->resolvingConfig->getBoundedClass($reflection->getName());
 
         /** @var string[] $aliases */
-        $aliases = array_values(
-            array_unique(
-                array_merge(
-                    AttributeExtractor::extractParameters($classAliases, parameter: 'name'),
-                    $this->resolvingConfig->getBoundedClass($definition->getId())?->getAliases() ?? [],
-                ),
-            ),
+        $aliases = array_merge(
+            AttributeExtractor::extractParameters($classAliases, parameter: 'name'),
+            $this->resolvingConfig->getBoundedClass($definition->getId())?->getAliases() ?? [],
         );
 
         $definition

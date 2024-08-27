@@ -132,6 +132,7 @@ final class ArgumentConfigurator
         $argumentName = $argument->getName();
 
         $boundVariableValue = $this->getBoundVariableValue($config, $argumentName, $id);
+        /** @psalm-suppress RiskyTruthyFalsyComparison */
         if (!$boundVariableValue && !$argumentType->allowsNull()) {
             throw new UnresolvableArgumentException(
                 sprintf(
@@ -143,7 +144,7 @@ final class ArgumentConfigurator
             );
         }
 
-        /** @psalm-suppress PossiblyNullArgument, MixedAssignment */
+        /** @psalm-suppress MixedAssignment, RiskyTruthyFalsyComparison */
         $resolvedValue = $boundVariableValue
             ? TypeCaster::cast(
                 $this->expressionParser->parse($boundVariableValue),

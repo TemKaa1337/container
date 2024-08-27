@@ -14,40 +14,23 @@
     },
     "mutators": {
         "@default": true,
-        "TrueValue": {
-            ignore: [
-                "Temkaa\\SimpleContainer\\Util\\Flag"
-            ]
-        },
-        "UnwrapArrayUnique": {
-            ignore: [
-                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setAliases",
-                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements"
-            ]
-        },
-        "UnwrapArrayValues": {
-            ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::addInterfaceDefinitions",
-                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setAliases",
-                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements"
-            ]
-        },
+        "global-ignoreSourceCodeByRegex": [
+            "Flag::.*"
+        ],
         "CastString": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Util\\Env::get"
             ]
         },
-        "PublicVisibility": {
-            ignore: ["*"]
+        "Continue_": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Repository\\DefinitionRepository::findOneByAlias",
+                "Temkaa\\SimpleContainer\\Validator\\Definition\\DuplicatedAliasValidator::validate"
+            ]
         },
         "DecrementInteger": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority",
-                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::configure"
-            ]
-        },
-        "IncrementInteger": {
-            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::configure",
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority"
             ]
         },
@@ -56,16 +39,49 @@
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority"
             ]
         },
-        "Continue_": {
+        "IncrementInteger": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Repository\\DefinitionRepository::findOneByAlias"
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority"
             ]
+        },
+        "MethodCallRemoval": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\ArgumentConfigurator::configureInterfaceArgument"
+            ]
+        },
+        "NewObject": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\ArgumentConfigurator::configureInterfaceArgument"
+            ]
+        },
+        "PublicVisibility": {
+            ignore: ["*"]
         },
         "Throw_": {
             ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\BaseConfigurator::configureDefinition",
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Resolver::resolveDefinition",
-                "Temkaa\\SimpleContainer\\Util\\ExpressionParser::parse",
-                "Temkaa\\SimpleContainer\\Service\\Definition\\BaseConfigurator::configureDefinition"
+                "Temkaa\\SimpleContainer\\Util\\ExpressionParser::parse"
+            ]
+        },
+        "TrueValue": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Util\\Flag"
+            ]
+        },
+        "UnwrapArrayValues": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Repository\\DefinitionRepository::__construct",
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::addTags",
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setAliases",
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::addInterfaceDefinitions"
+            ]
+        },
+        "UnwrapArrayUnique": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::addTags",
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements"
             ]
         }
     },

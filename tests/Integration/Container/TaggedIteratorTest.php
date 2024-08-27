@@ -15,7 +15,7 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion
+ * @psalm-suppress ArgumentTypeCoercion, MixedAssignment, MixedArrayAccess, MixedPropertyFetch
  */
 final class TaggedIteratorTest extends AbstractContainerTestCase
 {
@@ -196,6 +196,7 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
                 (new ClassBuilder())
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$taggedClassName.php")
                     ->setName($taggedClassName)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'tag_1')])
                     ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'tag_1')]),
             )
             ->generate();

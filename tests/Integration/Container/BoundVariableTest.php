@@ -581,9 +581,11 @@ final class BoundVariableTest extends AbstractContainerTestCase
     {
         $interface1 = ClassGenerator::getClassName();
         $interface2 = ClassGenerator::getClassName();
+        $interface3 = ClassGenerator::getClassName();
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
         $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(
                 (new ClassBuilder())
@@ -595,6 +597,12 @@ final class BoundVariableTest extends AbstractContainerTestCase
                 (new ClassBuilder())
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface2.php")
                     ->setName($interface2)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface3.php")
+                    ->setName($interface3)
                     ->setPrefix('interface'),
             )
             ->addBuilder(
@@ -615,6 +623,8 @@ final class BoundVariableTest extends AbstractContainerTestCase
                     ->setName($className3)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'test'),
+                        'public readonly string $dep0,',
                         sprintf(
                             'public readonly %s $dep1,',
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface1,
@@ -625,24 +635,46 @@ final class BoundVariableTest extends AbstractContainerTestCase
                         ),
                     ]),
             )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface3]),
+            )
             ->generate();
 
         $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className4.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$interface3.'.php',
             __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
             __DIR__.self::GENERATED_CLASS_STUB_PATH.$interface1.'.php',
             __DIR__.self::GENERATED_CLASS_STUB_PATH.$interface2.'.php',
             __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
             __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
         ];
-        $config = $this->generateConfig(includedPaths: $files);
+        $config = $this->generateConfig(
+            includedPaths: $files,
+            interfaceBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$interface3 => self::GENERATED_CLASS_NAMESPACE.$className4,
+            ],
+        );
 
         $container = (new ContainerBuilder())->add($config)->build();
 
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className3);
+        self::assertEquals('test', $class->dep0);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interface1, $class->dep1);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class->dep1);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interface2, $class->dep2);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $class->dep2);
+        self::assertInstanceOf(
+            self::GENERATED_CLASS_NAMESPACE.$interface3,
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$interface3),
+        );
+        self::assertInstanceOf(
+            self::GENERATED_CLASS_NAMESPACE.$className4,
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$interface3),
+        );
     }
 
     /**

@@ -18,6 +18,7 @@ use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
+use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
 use Tests\Helper\Service\ClassBuilder;
@@ -31,8 +32,8 @@ use Tests\Helper\Service\ClassGenerator;
  * @SuppressWarnings(PHPMD.TooManyMethods)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment, MixedArrayAccess,
- *                 MixedPropertyFetch
+ * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment, MixedArrayAccess
+ * @psalm-suppress MixedPropertyFetch
  */
 final class GeneralTest extends AbstractContainerTestCase
 {
@@ -68,6 +69,11 @@ final class GeneralTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $object);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithDefaultAutowireTagValues(): void
     {
         $className1 = ClassGenerator::getClassName();
@@ -396,10 +402,11 @@ final class GeneralTest extends AbstractContainerTestCase
         $definitionRepository = $reflection->getProperty('definitionRepository')->getValue($container);
 
         $reflection = new ReflectionClass($definitionRepository);
+        /** @var Bag $definitions */
         $definitions = $reflection->getProperty('definitions')->getValue($definitionRepository);
 
         /** @var ClassDefinition $classDefinition */
-        $classDefinition = $definitions[self::GENERATED_CLASS_NAMESPACE.$className];
+        $classDefinition = $definitions->get(self::GENERATED_CLASS_NAMESPACE.$className);
 
         self::assertEqualsCanonicalizing(
             [
@@ -1256,7 +1263,18 @@ final class GeneralTest extends AbstractContainerTestCase
         (new ContainerBuilder())->add($config)->build();
     }
 
-    public function testDoesNotCompileWithNonExistentClass(): void
+    public function testDoesNotCompileWithNonExistentClassExcludedPaths(): void
+    {
+        $classPath = __DIR__.self::GENERATED_CLASS_STUB_PATH.'NonExistentClass.php';
+        $config = $this->generateConfig(excludedPaths: [$classPath]);
+
+        $this->expectException(InvalidPathException::class);
+        $this->expectExceptionMessage('The specified path "'.$classPath.'" does not exist.');
+
+        (new ContainerBuilder())->add($config);
+    }
+
+    public function testDoesNotCompileWithNonExistentClassInIncludedPaths(): void
     {
         $classPath = __DIR__.self::GENERATED_CLASS_STUB_PATH.'NonExistentClass.php';
         $config = $this->generateConfig(includedPaths: [$classPath]);

@@ -66,7 +66,7 @@ final class ClassBuilder
     {
         return new ClassConfig(
             $this->class,
-            array_values(array_unique($this->aliases)),
+            $this->aliases,
             $this->boundedVariables,
             $this->decorates,
             $this->singleton,
