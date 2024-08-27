@@ -107,6 +107,7 @@
       <path value="$PROJECT_DIR$/vendor/phpbench/container" />
       <path value="$PROJECT_DIR$/vendor/phpbench/dom" />
       <path value="$PROJECT_DIR$/vendor/doctrine/lexer" />
+      <path value="$PROJECT_DIR$/vendor/rregeer/phpunit-coverage-check" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.3">

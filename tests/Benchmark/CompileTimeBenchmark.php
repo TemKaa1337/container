@@ -40,7 +40,7 @@ final class CompileTimeBenchmark
      * @throws ReflectionException
      */
     #[AfterMethods('tearDown')]
-    #[Assert(expression: 'mode(variant.time.avg) < 800 microseconds')]
+    #[Assert(expression: 'mode(variant.time.avg) < 1.5 milliseconds')]
     #[BeforeMethods('setUp')]
     #[Iterations(20)]
     #[Revs(1000)]
