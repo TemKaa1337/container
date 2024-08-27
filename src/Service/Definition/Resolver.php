@@ -38,13 +38,11 @@ final readonly class Resolver
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    public function resolve(): Bag
+    public function resolve(): void
     {
         foreach ($this->definitions as $definition) {
             $this->resolveDefinition($definition);
         }
-
-        return $this->definitions;
     }
 
     private function getDefinition(DecoratorReference|Reference $reference): DefinitionInterface

@@ -16,6 +16,7 @@ final class ClassGenerator
     %s
     %s %s %s %s
     {
+        %s
     }
     CLASS;
     private const string CLASS_STUB_WITH_CONSTRUCTOR = <<<CLASS
@@ -32,6 +33,8 @@ final class ClassGenerator
             %s
         ) {
         }
+        
+        %s
     }
     CLASS;
 
@@ -76,6 +79,11 @@ final class ClassGenerator
                     implode(PHP_EOL.'        ', $builder->getConstructorArguments()),
                 ];
             }
+
+            $args = [
+                ...$args,
+                implode(PHP_EOL, $builder->getMethods()),
+            ];
 
             file_put_contents(
                 $builder->getAbsolutePath(),

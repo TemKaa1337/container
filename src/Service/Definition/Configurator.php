@@ -33,16 +33,18 @@ use Temkaa\SimpleContainer\Validator\Argument\DecoratorValidator;
  *
  * @internal
  */
-final class BaseConfigurator implements ConfiguratorInterface
+final class Configurator implements ConfiguratorInterface
 {
-    private ArgumentConfigurator $argumentConfigurator;
+    private readonly ArgumentConfigurator $argumentConfigurator;
 
-    private ClassExtractor $classExtractor;
+    private readonly ClassExtractor $classExtractor;
 
     /**
      * @var Config[] $configs
      */
     private readonly array $configs;
+
+    private readonly ConfiguratorInterface $configurator;
 
     private Bag $definitions;
 
@@ -56,12 +58,12 @@ final class BaseConfigurator implements ConfiguratorInterface
     /**
      * @param Config[] $configs
      */
-    public function __construct(array $configs)
+    public function __construct(ConfiguratorInterface $configurator, array $configs)
     {
         $this->argumentConfigurator = new ArgumentConfigurator($this);
         $this->classExtractor = new ClassExtractor();
         $this->configs = $configs;
-        $this->definitions = new Bag();
+        $this->configurator = $configurator;
     }
 
     /**
@@ -70,6 +72,8 @@ final class BaseConfigurator implements ConfiguratorInterface
      */
     public function configure(): Bag
     {
+        $this->definitions = $this->configurator->configure();
+
         foreach ($this->configs as $config) {
             $this->resolvingConfig = $config;
 
