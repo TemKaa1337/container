@@ -46,7 +46,8 @@
         },
         "MethodCallRemoval": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\ArgumentConfigurator::configureInterfaceArgument"
+                "Temkaa\\SimpleContainer\\Service\\Definition\\ArgumentConfigurator::configureInterfaceArgument",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\BaseConfigurator"
             ]
         },
         "NewObject": {
@@ -59,7 +60,7 @@
         },
         "Throw_": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\BaseConfigurator::configureDefinition",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator::configureDefinition",
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Resolver::resolveDefinition",
                 "Temkaa\\SimpleContainer\\Util\\ExpressionParser::parse"
             ]

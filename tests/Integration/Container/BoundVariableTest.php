@@ -16,6 +16,7 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
  * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment
@@ -37,25 +38,25 @@ final class BoundVariableTest extends AbstractContainerTestCase
                     ->setName($className)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
                         'public readonly int $varOne,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
                         'public readonly string $varTwo,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
                         'public readonly float $varThree,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_CASTABLE_STRING_VAR)'),
                         'public readonly bool $varFour,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_FLOAT_VAR)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_FLOAT_VAR)'),
                         'public readonly mixed $varFive,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_BOOL_VAL)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_BOOL_VAL)'),
                         'public readonly mixed $varSix,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_INT_VAL)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_INT_VAL)'),
                         'public readonly mixed $varSeven,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_STRING_VAL)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_STRING_VAL)'),
                         'public readonly mixed $varEight,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_BOOL_VAL)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_BOOL_VAL)'),
                         'public readonly bool $varNine,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VAR_4)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_VAR_4)'),
                         'public readonly bool $varTen,',
                     ]),
             )
@@ -168,7 +169,7 @@ final class BoundVariableTest extends AbstractContainerTestCase
                     ->setName($className)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VARIABLE_REFERENCE)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_VARIABLE_REFERENCE)'),
                         'public readonly string $envReference,',
                     ]),
             )
@@ -207,9 +208,9 @@ final class BoundVariableTest extends AbstractContainerTestCase
                         ),
                     ])
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VARIABLE_REFERENCE)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_VARIABLE_REFERENCE)'),
                         'public readonly string $envReference1,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(ENV_VAR_3)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(ENV_VAR_3)'),
                         'public readonly string $envReference2,',
                     ]),
             )
@@ -311,21 +312,21 @@ final class BoundVariableTest extends AbstractContainerTestCase
                     ->setName($className)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, '10.1'),
                         'public readonly int $varOne,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, '10.1'),
                         'public readonly string $varTwo,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, '10.1'),
                         'public readonly float $varThree,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, '10.1'),
                         'public readonly bool $varFour,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '10.1'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, '10.1'),
                         'public readonly mixed $varFive,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'false'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'false'),
                         'public readonly mixed $varSix,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, '3'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, '3'),
                         'public readonly mixed $varSeven,',
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'string'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'string'),
                         'public readonly mixed $varEight,',
                     ]),
             )
@@ -413,6 +414,184 @@ final class BoundVariableTest extends AbstractContainerTestCase
         self::assertEquals('false', $class->varSix);
         self::assertEquals('3', $class->varSeven);
         self::assertEquals('string', $class->varEight);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithEnumsFromAttribute(): void
+    {
+        $className = ClassGenerator::getClassName();
+        $unitEnum = ClassGenerator::getClassName().'UnitEnum';
+        $backedEnum = ClassGenerator::getClassName().'BackedEnum';
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$unitEnum.php")
+                    ->setName($unitEnum)
+                    ->setPrefix('enum')
+                    ->setMethods([
+                        'case EnumCaseOne;',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$backedEnum.php")
+                    ->setName($backedEnum)
+                    ->setPrefix('enum')
+                    ->setPostfix(': string')
+                    ->setMethods([
+                        "case EnumCaseOne = 'enum_case_one';",
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            self::ATTRIBUTE_PARAMETER_RAW_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum.'::EnumCaseOne',
+                        ),
+                        'public readonly \UnitEnum $abstractUnitEnum,',
+                        sprintf(
+                            self::ATTRIBUTE_PARAMETER_RAW_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$backedEnum.'::EnumCaseOne',
+                        ),
+                        'public readonly \BackedEnum $abstractBackedEnum,',
+                        sprintf(
+                            self::ATTRIBUTE_PARAMETER_RAW_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum.'::EnumCaseOne',
+                        ),
+                        sprintf(
+                            'public readonly %s $concreteUnitEnum,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum,
+                        ),
+                        sprintf(
+                            self::ATTRIBUTE_PARAMETER_RAW_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$backedEnum.'::EnumCaseOne',
+                        ),
+                        sprintf(
+                            'public readonly %s $concreteBackedEnum,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$backedEnum,
+                        ),
+                    ]),
+            )
+            ->generate();
+        $unitEnumValue = constant(self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum.'::EnumCaseOne');
+        $backedEnumValue = constant(self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$backedEnum.'::EnumCaseOne');
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$backedEnum.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$unitEnum.'.php',
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$unitEnum, $class->abstractUnitEnum);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$unitEnum, $class->concreteUnitEnum);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$backedEnum, $class->abstractBackedEnum);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$backedEnum, $class->concreteBackedEnum);
+
+        self::assertEquals($unitEnumValue, $class->abstractUnitEnum);
+        self::assertEquals($unitEnumValue, $class->concreteUnitEnum);
+        self::assertEquals($backedEnumValue, $class->abstractBackedEnum);
+        self::assertEquals($backedEnumValue, $class->concreteBackedEnum);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithEnumsFromConfig(): void
+    {
+        $className = ClassGenerator::getClassName();
+        $unitEnum = ClassGenerator::getClassName().'UnitEnum';
+        $backedEnum = ClassGenerator::getClassName().'BackedEnum';
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$unitEnum.php")
+                    ->setName($unitEnum)
+                    ->setPrefix('enum')
+                    ->setMethods([
+                        'case EnumCaseOne;',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$backedEnum.php")
+                    ->setName($backedEnum)
+                    ->setPrefix('enum')
+                    ->setPostfix(': string')
+                    ->setMethods([
+                        "case EnumCaseOne = 'enum_case_one';",
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly \UnitEnum $abstractUnitEnum,',
+                        'public readonly \BackedEnum $abstractBackedEnum,',
+                        sprintf(
+                            'public readonly %s $concreteUnitEnum,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum,
+                        ),
+                        sprintf(
+                            'public readonly %s $concreteBackedEnum,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$backedEnum,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $unitEnumValue = constant(self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum.'::EnumCaseOne');
+        $backedEnumValue = constant(self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$backedEnum.'::EnumCaseOne');
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$backedEnum.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$unitEnum.'.php',
+            ],
+            globalBoundVariables: [
+                '$abstractUnitEnum'   => $unitEnumValue,
+                '$abstractBackedEnum' => $backedEnumValue,
+            ],
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: [
+                        '$concreteUnitEnum'   => $unitEnumValue,
+                        '$concreteBackedEnum' => $backedEnumValue,
+                    ],
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$unitEnum, $class->abstractUnitEnum);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$unitEnum, $class->concreteUnitEnum);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$backedEnum, $class->abstractBackedEnum);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$backedEnum, $class->concreteBackedEnum);
+
+        self::assertEquals($unitEnumValue, $class->abstractUnitEnum);
+        self::assertEquals($unitEnumValue, $class->concreteUnitEnum);
+        self::assertEquals($backedEnumValue, $class->abstractBackedEnum);
+        self::assertEquals($backedEnumValue, $class->concreteBackedEnum);
     }
 
     /**
@@ -511,7 +690,7 @@ final class BoundVariableTest extends AbstractContainerTestCase
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
                         sprintf(
-                            self::ATTRIBUTE_PARAMETER_SIGNATURE,
+                            self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE,
                             'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)',
                         ),
                         'public readonly string $arg,',
@@ -623,7 +802,7 @@ final class BoundVariableTest extends AbstractContainerTestCase
                     ->setName($className3)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'test'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'test'),
                         'public readonly string $dep0,',
                         sprintf(
                             'public readonly %s $dep1,',
@@ -675,6 +854,259 @@ final class BoundVariableTest extends AbstractContainerTestCase
             self::GENERATED_CLASS_NAMESPACE.$className4,
             $container->get(self::GENERATED_CLASS_NAMESPACE.$interface3),
         );
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileDueToDifferentEnumFromAttribute(): void
+    {
+        $className = ClassGenerator::getClassName();
+        $unitEnum1 = ClassGenerator::getClassName().'UnitEnum';
+        $unitEnum2 = ClassGenerator::getClassName().'UnitEnum';
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$unitEnum1.php")
+                    ->setName($unitEnum1)
+                    ->setPrefix('enum')
+                    ->setMethods([
+                        'case EnumCaseOne;',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$unitEnum2.php")
+                    ->setName($unitEnum2)
+                    ->setPrefix('enum')
+                    ->setMethods([
+                        'case EnumCaseOne;',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            self::ATTRIBUTE_PARAMETER_RAW_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum1.'::EnumCaseOne',
+                        ),
+                        sprintf(
+                            'public readonly %s $enum,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum2,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$unitEnum2.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$unitEnum1.'.php',
+            ],
+        );
+
+        $this->expectException(UnresolvableArgumentException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Cannot instantiate entry "%s" with argument "%s::%s" as bound expression has incompatible type "%s".',
+                self::GENERATED_CLASS_NAMESPACE.$className,
+                'enum',
+                self::GENERATED_CLASS_NAMESPACE.$unitEnum2,
+                self::GENERATED_CLASS_NAMESPACE.$unitEnum1,
+            ),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileDueToDifferentEnumFromConfig(): void
+    {
+        $className = ClassGenerator::getClassName();
+        $unitEnum1 = ClassGenerator::getClassName().'UnitEnum';
+        $unitEnum2 = ClassGenerator::getClassName().'UnitEnum';
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$unitEnum1.php")
+                    ->setName($unitEnum1)
+                    ->setPrefix('enum')
+                    ->setMethods([
+                        'case EnumCaseOne;',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$unitEnum2.php")
+                    ->setName($unitEnum2)
+                    ->setPrefix('enum')
+                    ->setMethods([
+                        'case EnumCaseOne;',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $enum,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum2,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $enumValue = constant(self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum1.'::EnumCaseOne');
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$unitEnum2.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$unitEnum1.'.php',
+            ],
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: ['$enum' => $enumValue],
+                ),
+            ],
+        );
+
+        $this->expectException(UnresolvableArgumentException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Cannot instantiate entry "%s" with argument "%s::%s" as bound expression has incompatible type "%s".',
+                self::GENERATED_CLASS_NAMESPACE.$className,
+                'enum',
+                self::GENERATED_CLASS_NAMESPACE.$unitEnum2,
+                self::GENERATED_CLASS_NAMESPACE.$unitEnum1,
+            ),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileDueToNonEnumPropertyTypeFromAttribute(): void
+    {
+        $className = ClassGenerator::getClassName();
+        $unitEnum = ClassGenerator::getClassName().'UnitEnum';
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$unitEnum.php")
+                    ->setName($unitEnum)
+                    ->setPrefix('enum')
+                    ->setMethods([
+                        'case EnumCaseOne;',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            self::ATTRIBUTE_PARAMETER_RAW_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum.'::EnumCaseOne',
+                        ),
+                        'public readonly string $enum,',
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$unitEnum.'.php',
+            ],
+        );
+
+        $this->expectException(UnresolvableArgumentException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Cannot instantiate entry "%s" with argument "%s::%s" as bound expression has incompatible type "%s".',
+                self::GENERATED_CLASS_NAMESPACE.$className,
+                'enum',
+                'string',
+                self::GENERATED_CLASS_NAMESPACE.$unitEnum,
+            ),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileDueToNonEnumPropertyTypeFromConfig(): void
+    {
+        $className = ClassGenerator::getClassName();
+        $unitEnum = ClassGenerator::getClassName().'UnitEnum';
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$unitEnum.php")
+                    ->setName($unitEnum)
+                    ->setPrefix('enum')
+                    ->setMethods([
+                        'case EnumCaseOne;',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $enum,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$unitEnum,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php',
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$unitEnum.'.php',
+            ],
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: ['$enum' => 'string'],
+                ),
+            ],
+        );
+
+        $this->expectException(UnresolvableArgumentException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Cannot instantiate entry "%s" with argument "%s::%s" as bound expression has incompatible type "%s".',
+                self::GENERATED_CLASS_NAMESPACE.$className,
+                'enum',
+                self::GENERATED_CLASS_NAMESPACE.$unitEnum,
+                'string',
+            ),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
@@ -763,7 +1195,7 @@ final class BoundVariableTest extends AbstractContainerTestCase
                     ->setName($className)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_PARAMETER_SIGNATURE, 'env(CIRCULAR_ENV_VARIABLE_1)'),
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(CIRCULAR_ENV_VARIABLE_1)'),
                         'public readonly string $circular,',
                     ]),
             )

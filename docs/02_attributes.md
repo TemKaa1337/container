@@ -53,6 +53,8 @@ class Example implements ExampleInterface
         private readonly iterable $tagged,
         #[Parameter(expression: 'env(INT_VARIABLE)')]
         private readonly int $age,
+        #[Parameter(expression: SomeEnumCase::CaseOne)]
+        private readonly int $enumCase,
     ) {
     }
 }

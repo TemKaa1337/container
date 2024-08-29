@@ -7,6 +7,7 @@ namespace Temkaa\SimpleContainer\Builder\Config;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
+use UnitEnum;
 
 /**
  * @psalm-api
@@ -19,7 +20,7 @@ final class ClassBuilder
     private array $aliases = [];
 
     /**
-     * @var array<string, string>
+     * @var array<string, string|UnitEnum>
      */
     private array $boundedVariables = [];
 
@@ -55,7 +56,7 @@ final class ClassBuilder
         return $this;
     }
 
-    public function bindVariable(string $variableName, string $expression): self
+    public function bindVariable(string $variableName, string|UnitEnum $expression): self
     {
         $this->boundedVariables[str_replace('$', '', $variableName)] = $expression;
 

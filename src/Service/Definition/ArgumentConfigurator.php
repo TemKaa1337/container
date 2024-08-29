@@ -25,7 +25,9 @@ use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
 use Temkaa\SimpleContainer\Util\TypeCaster;
+use Temkaa\SimpleContainer\Validator\Argument\ExpressionTypeCompatibilityValidator;
 use Temkaa\SimpleContainer\Validator\ArgumentValidator;
+use UnitEnum;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -77,7 +79,7 @@ final class ArgumentConfigurator
         [
             'value'    => $configuredArgument,
             'resolved' => $resolved,
-        ] = $this->configureBuiltinArgument($config, $argument, $id);
+        ] = $this->configureNonObjectArgument($config, $argument, $id);
 
         if ($resolved) {
             return $configuredArgument;
@@ -97,62 +99,6 @@ final class ArgumentConfigurator
         }
 
         return new Reference($entryId);
-    }
-
-    /**
-     * @param Config              $config
-     * @param ReflectionParameter $argument
-     * @param class-string        $id
-     *
-     * @return array{value: mixed, resolved: boolean}
-     *
-     * @throws ContainerExceptionInterface
-     */
-    private function configureBuiltinArgument(Config $config, ReflectionParameter $argument, string $id): array
-    {
-        /** @var ReflectionNamedType $argumentType */
-        $argumentType = $argument->getType();
-
-        if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
-            $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
-
-            return [
-                'value'    => TypeCaster::cast(
-                    $this->expressionParser->parse($expression),
-                    $argumentType->getName(),
-                ),
-                'resolved' => true,
-            ];
-        }
-
-        if (!$argumentType->isBuiltin()) {
-            return ['value' => null, 'resolved' => false];
-        }
-
-        $argumentName = $argument->getName();
-
-        $boundVariableValue = $this->getBoundVariableValue($config, $argumentName, $id);
-        /** @psalm-suppress RiskyTruthyFalsyComparison */
-        if (!$boundVariableValue && !$argumentType->allowsNull()) {
-            throw new UnresolvableArgumentException(
-                sprintf(
-                    'Cannot instantiate entry "%s" with argument "%s::%s".',
-                    $id,
-                    $argumentName,
-                    $argumentType->getName(),
-                ),
-            );
-        }
-
-        /** @psalm-suppress MixedAssignment, RiskyTruthyFalsyComparison */
-        $resolvedValue = $boundVariableValue
-            ? TypeCaster::cast(
-                $this->expressionParser->parse($boundVariableValue),
-                $argumentType->getName(),
-            )
-            : null;
-
-        return ['value' => $resolvedValue, 'resolved' => true];
     }
 
     /**
@@ -200,6 +146,72 @@ final class ArgumentConfigurator
      * @param ReflectionParameter $argument
      * @param class-string        $id
      *
+     * @return array{value: mixed, resolved: boolean}
+     *
+     * @throws ContainerExceptionInterface
+     */
+    private function configureNonObjectArgument(Config $config, ReflectionParameter $argument, string $id): array
+    {
+        /** @var ReflectionNamedType $argumentType */
+        $argumentType = $argument->getType();
+        $argumentTypeName = $argumentType->getName();
+
+        if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
+            $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
+
+            (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
+
+            if ($expression instanceof UnitEnum) {
+                return ['value' => $expression, 'resolved' => true];
+            }
+
+            return [
+                'value'    => TypeCaster::cast(
+                    $this->expressionParser->parse($expression),
+                    $argumentTypeName,
+                ),
+                'resolved' => true,
+            ];
+        }
+
+        $argumentName = $argument->getName();
+        $expression = $this->getBoundVariableValue($config, $argumentName, $id);
+        if ($expression === null) {
+            if (!$argumentType->isBuiltin()) {
+                return ['value' => null, 'resolved' => false];
+            }
+
+            if ($argumentType->allowsNull()) {
+                return ['value' => null, 'resolved' => true];
+            }
+
+            throw new UnresolvableArgumentException(
+                sprintf(
+                    'Cannot instantiate entry "%s" with argument "%s::%s".',
+                    $id,
+                    $argumentName,
+                    $argumentTypeName,
+                ),
+            );
+        }
+
+        (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
+
+        if ($expression instanceof UnitEnum) {
+            return ['value' => $expression, 'resolved' => true];
+        }
+
+        return [
+            'value'    => TypeCaster::cast($this->expressionParser->parse($expression), $argumentTypeName),
+            'resolved' => true,
+        ];
+    }
+
+    /**
+     * @param Config              $config
+     * @param ReflectionParameter $argument
+     * @param class-string        $id
+     *
      * @return TaggedReference|null
      */
     private function configureTaggedArgument(
@@ -211,6 +223,7 @@ final class ArgumentConfigurator
         $argumentType = $argument->getType();
 
         if ($argumentAttributes = $argument->getAttributes(Tagged::class)) {
+            /** @var string $boundTagName */
             $boundTagName = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'tag')[0];
 
             if (!in_array($argumentType->getName(), ['iterable', 'array'])) {
@@ -232,7 +245,11 @@ final class ArgumentConfigurator
         }
 
         $boundVariableValue = $this->getBoundVariableValue($config, $argument->getName(), $id);
-        /** @psalm-suppress PossiblyNullArgument, RiskyTruthyFalsyComparison */
+        if (!is_string($boundVariableValue)) {
+            return null;
+        }
+
+        /** @psalm-suppress RiskyTruthyFalsyComparison */
         if ($boundVariableValue && str_starts_with($boundVariableValue, '!tagged')) {
             $tag = trim(str_replace('!tagged', '', $boundVariableValue));
 
@@ -247,9 +264,9 @@ final class ArgumentConfigurator
      * @param string       $argumentName
      * @param class-string $id
      *
-     * @return string|null
+     * @return null|string|UnitEnum
      */
-    private function getBoundVariableValue(Config $config, string $argumentName, string $id): ?string
+    private function getBoundVariableValue(Config $config, string $argumentName, string $id): null|string|UnitEnum
     {
         $boundClassInfo = $config->getBoundedClasses()[$id] ?? null;
         $classBoundVars = $boundClassInfo?->getBoundedVariables() ?? [];

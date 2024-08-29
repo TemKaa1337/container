@@ -79,7 +79,7 @@ final class DecoratorTest extends AbstractContainerTestCase
                     ])
                     ->setConstructorArguments([
                         sprintf(
-                            self::ATTRIBUTE_PARAMETER_SIGNATURE,
+                            self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE,
                             'env(ENV_VAR_1)',
                         ),
                         'public readonly string $arg,',
@@ -2019,7 +2019,7 @@ final class DecoratorTest extends AbstractContainerTestCase
                     ])
                     ->setConstructorArguments([
                         sprintf(
-                            self::ATTRIBUTE_PARAMETER_SIGNATURE,
+                            self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE,
                             'env(ENV_VAR_1)',
                         ),
                         'public readonly string $arg,',
@@ -2085,7 +2085,7 @@ final class DecoratorTest extends AbstractContainerTestCase
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
                         sprintf(
-                            self::ATTRIBUTE_PARAMETER_SIGNATURE,
+                            self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE,
                             'env(ENV_VAR_1)',
                         ),
                         'public readonly string $arg,',

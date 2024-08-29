@@ -13,6 +13,8 @@ final readonly class Class1
         public string $variable1,
         #[Parameter('env(ENV_VAR_2)')]
         public int $variable2,
+        #[Parameter(Enum1::EnumCase)]
+        public Enum1 $variable3,
     ) {
     }
 }

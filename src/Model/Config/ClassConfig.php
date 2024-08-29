@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model\Config;
 
+use UnitEnum;
+
 final readonly class ClassConfig
 {
     /**
-     * @param class-string          $class
-     * @param string[]              $aliases
-     * @param array<string, string> $boundVariables
-     * @param Decorator|null        $decorates
-     * @param bool                  $singleton
-     * @param string[]              $tags
+     * @param class-string                   $class
+     * @param string[]                       $aliases
+     * @param array<string, string|UnitEnum> $boundVariables
+     * @param Decorator|null                 $decorates
+     * @param bool                           $singleton
+     * @param string[]                       $tags
      */
     public function __construct(
         private string $class,
@@ -30,7 +32,7 @@ final readonly class ClassConfig
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, string|UnitEnum>
      */
     public function getBoundedVariables(): array
     {

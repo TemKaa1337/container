@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Model;
 
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
+use UnitEnum;
 
 final readonly class Config
 {
     /**
      * @param array<class-string, ClassConfig>  $boundedClasses
      * @param array<class-string, class-string> $boundedInterfaces
-     * @param array<string, string>             $boundedVariables
+     * @param array<string, string|UnitEnum>    $boundedVariables
      * @param string[]                          $excludedPaths
      * @param string[]                          $includedPaths
      */
@@ -63,7 +64,7 @@ final readonly class Config
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, string|UnitEnum>
      */
     public function getBoundedVariables(): array
     {
