@@ -1,3 +1,11 @@
+### v0.1.1
+##### Features:
+- Added option to bind enum cases from config and `#[Parameter]` attribute.
+
+### v0.1.0
+##### Features:
+- First release!
+
 ### v0.0.17
 ##### Features:
 - Added option to inject `Temkaa\SimpleContainer\Container` and `Psr\Container\ContainerInterface` into class constructors.

@@ -211,9 +211,11 @@ final class Configurator implements ConfiguratorInterface
             $this->resolvingConfig->getBoundedClass($definition->getId())?->getAliases() ?? [],
         );
 
+        /** @var string[] $tags */
+        $tags = AttributeExtractor::extractParameters($classTags, parameter: 'name');
         $definition
             ->addTags($boundClassInfo?->getTags() ?? [])
-            ->addTags(AttributeExtractor::extractParameters($classTags, parameter: 'name'))
+            ->addTags($tags)
             ->setAliases($aliases);
 
         $interfaces = $reflection->getInterfaces();
@@ -234,7 +236,9 @@ final class Configurator implements ConfiguratorInterface
             }
 
             $interfaceTags = $interface->getAttributes(Tag::class);
-            $definition->addTags(AttributeExtractor::extractParameters($interfaceTags, parameter: 'name'));
+            /** @var string[] $tags */
+            $tags = AttributeExtractor::extractParameters($interfaceTags, parameter: 'name');
+            $definition->addTags($tags);
         }
 
         if ($decorates = $boundClassInfo?->getDecorates()) {

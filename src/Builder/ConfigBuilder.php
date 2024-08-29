@@ -6,6 +6,7 @@ namespace Temkaa\SimpleContainer\Builder;
 
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
+use UnitEnum;
 
 /**
  * @psalm-api
@@ -23,7 +24,7 @@ final class ConfigBuilder
     private array $boundedInterfaces = [];
 
     /**
-     * @var array<string, string>
+     * @var array<string, string|UnitEnum>
      */
     private array $boundedVariables = [];
 
@@ -61,7 +62,7 @@ final class ConfigBuilder
         return $this;
     }
 
-    public function bindVariable(string $variableName, string $expression): self
+    public function bindVariable(string $variableName, string|UnitEnum $expression): self
     {
         $this->boundedVariables[str_replace('$', '', $variableName)] = $expression;
 

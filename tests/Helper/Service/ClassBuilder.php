@@ -30,6 +30,8 @@ final class ClassBuilder
 
     private string $name;
 
+    private string $postfix = '';
+
     private string $prefix = 'final class';
 
     public function getAbsolutePath(): string
@@ -127,6 +129,18 @@ final class ClassBuilder
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getPostfix(): string
+    {
+        return $this->postfix;
+    }
+
+    public function setPostfix(string $postfix): self
+    {
+        $this->postfix = $postfix;
 
         return $this;
     }

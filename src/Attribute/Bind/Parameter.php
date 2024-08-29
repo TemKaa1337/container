@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Attribute\Bind;
 
 use Attribute;
+use UnitEnum;
 
 /**
  * @psalm-api
@@ -13,7 +14,7 @@ use Attribute;
 final readonly class Parameter
 {
     public function __construct(
-        public string $expression,
+        public string|UnitEnum $expression,
     ) {
     }
 }

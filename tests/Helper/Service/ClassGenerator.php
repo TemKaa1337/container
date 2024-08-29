@@ -14,7 +14,7 @@ final class ClassGenerator
     namespace Tests\Fixture\Stub\Class;
     
     %s
-    %s %s %s %s
+    %s %s %s %s %s
     {
         %s
     }
@@ -27,7 +27,7 @@ final class ClassGenerator
     namespace Tests\Fixture\Stub\Class;
     
     %s
-    %s %s %s %s
+    %s %s %s %s %s
     {
         %s function __construct(
             %s
@@ -65,6 +65,7 @@ final class ClassGenerator
                 implode(PHP_EOL, $builder->getAttributes()),
                 $builder->getPrefix(),
                 $builder->getName(),
+                $builder->getPostfix(),
                 $builder->getExtends() ? 'extends '.implode(', ', $builder->getExtends()) : '',
                 $builder->getInterfaceImplementations()
                     ? ' implements '.implode(', ', $builder->getInterfaceImplementations())

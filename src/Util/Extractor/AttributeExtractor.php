@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Util\Extractor;
 
 use ReflectionAttribute;
+use UnitEnum;
 
 /**
  * @internal
@@ -34,13 +35,13 @@ final class AttributeExtractor
      *
      * @param ReflectionAttribute<T>[] $attributes
      *
-     * @return string[]
+     * @return string[]|UnitEnum[]
      */
     public static function extractParameters(array $attributes, string $parameter): array
     {
         /** @psalm-suppress MixedReturnStatement, MixedInferredReturnType */
         return array_map(
-            static fn (ReflectionAttribute $attribute): string => $attribute->newInstance()->{$parameter},
+            static fn (ReflectionAttribute $attribute): string|UnitEnum => $attribute->newInstance()->{$parameter},
             $attributes,
         );
     }

@@ -20,7 +20,7 @@ coverage:
 	$(PHP) vendor/bin/coverage-check clover.xml 100
 
 infection:
-	$(PHP) vendor/bin/infection --threads=4
+	$(PHP) vendor/bin/infection --threads=1
 
 bench:
 	$(PHP) vendor/bin/phpbench run --config=phpbench.json

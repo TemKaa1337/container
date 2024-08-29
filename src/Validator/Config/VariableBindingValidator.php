@@ -16,13 +16,17 @@ final class VariableBindingValidator implements ValidatorInterface
     {
         $expressionParser = new ExpressionParser();
         foreach ($config->getBoundedVariables() as $variableValue) {
-            $expressionParser->parse($variableValue);
+            if (is_string($variableValue)) {
+                $expressionParser->parse($variableValue);
+            }
         }
 
         $boundedClasses = $config->getBoundedClasses();
         foreach ($boundedClasses as $class) {
             foreach ($class->getBoundedVariables() as $variableValue) {
-                $expressionParser->parse($variableValue);
+                if (is_string($variableValue)) {
+                    $expressionParser->parse($variableValue);
+                }
             }
         }
     }
