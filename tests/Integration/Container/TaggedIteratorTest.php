@@ -15,7 +15,7 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion, MixedAssignment, MixedArrayAccess, MixedPropertyFetch
+ * @psalm-suppress ArgumentTypeCoercion, MixedAssignment, MixedArrayAccess, MixedPropertyFetch, MixedArgument
  */
 final class TaggedIteratorTest extends AbstractContainerTestCase
 {
