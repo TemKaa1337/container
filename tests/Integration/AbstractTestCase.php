@@ -11,6 +11,7 @@ use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Config\Factory;
 use Temkaa\SimpleContainer\Util\Flag;
 
 /**
@@ -22,6 +23,7 @@ abstract class AbstractTestCase extends TestCase
     protected const string ATTRIBUTE_AUTOWIRE_DEFAULT_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire]';
     protected const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
     protected const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s, signature: \'%s\')]';
+    protected const string ATTRIBUTE_FACTORY_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Factory(id: \'%s\', method: \'%s\')]';
     protected const string ATTRIBUTE_PARAMETER_RAW_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: %s)]';
     protected const string ATTRIBUTE_PARAMETER_STRING_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
     protected const string ATTRIBUTE_TAGGED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Tagged(tag: \'%s\')]';
@@ -33,6 +35,7 @@ abstract class AbstractTestCase extends TestCase
 
     public static function setUpBeforeClass(): void
     {
+        // TODO: move to bootstrap
         parent::setUpBeforeClass();
 
         $envVariables = [
@@ -86,6 +89,7 @@ abstract class AbstractTestCase extends TestCase
         array $aliases = [],
         ?Decorator $decorates = null,
         bool $singleton = true,
+        ?Factory $factory = null,
         array $tags = [],
     ): ClassConfig {
         $builder = ClassConfigBuilder::make($className);
@@ -105,6 +109,10 @@ abstract class AbstractTestCase extends TestCase
 
         foreach ($tags as $tag) {
             $builder->tag($tag);
+        }
+
+        if ($factory) {
+            $builder->factory($factory);
         }
 
         if ($singleton) {

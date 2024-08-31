@@ -10,20 +10,25 @@ use ReflectionException;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Decorates;
+use Temkaa\SimpleContainer\Attribute\Factory;
 use Temkaa\SimpleContainer\Attribute\Tag;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
+use Temkaa\SimpleContainer\Factory\Config\ClassFactoryFactory;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
+use Temkaa\SimpleContainer\Model\Definition\Class\Factory as ClassDefinitionFactory;
+use Temkaa\SimpleContainer\Model\Definition\Class\Method;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
 use Temkaa\SimpleContainer\Util\Extractor\ClassExtractor;
 use Temkaa\SimpleContainer\Util\Flag;
 use Temkaa\SimpleContainer\Validator\Argument\DecoratorValidator;
+use Temkaa\SimpleContainer\Validator\Definition\FactoryValidator;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -114,7 +119,19 @@ final class Configurator implements ConfiguratorInterface
             throw new UninstantiableEntryException(sprintf('Cannot resolve internal entry "%s".', $id));
         }
 
-        if (!$reflection->isInstantiable()) {
+        $factoryAttributes = $reflection->getAttributes(Factory::class);
+        $classConfigFactory = $this->resolvingConfig->getBoundedClass($id)?->getFactory();
+
+        $factory = $factoryAttributes || $classConfigFactory
+            ? $classConfigFactory
+            ?? ClassFactoryFactory::createFromAttribute(AttributeExtractor::extract($factoryAttributes, index: 0))
+            : null;
+
+        if ($factory) {
+            (new FactoryValidator())->validate($factory, $id);
+        }
+
+        if (!$factory && !$reflection->isInstantiable()) {
             Flag::untoggle($id, group: 'definition');
 
             if (!$failIfUninstantiable) {
@@ -169,9 +186,53 @@ final class Configurator implements ConfiguratorInterface
         $arguments = $constructor->getParameters();
         $decorates = $definition->getDecorates();
 
-        (new DecoratorValidator())->validate($decorates, $arguments, $definition->getId());
+        if ($factory) {
+            $reflection = new ReflectionClass($factory->getId());
+            $methodReflection = $reflection->getMethod($factory->getMethod());
+            if (!$methodReflection->isStatic()) {
+                $this->configureDefinition($factory->getId());
 
-        if ($decorates && count($arguments) === 1) {
+                /** @var ClassDefinition $factoryDefinition */
+                $factoryDefinition = $this->definitions->get($factory->getId());
+            } else {
+                $factoryDefinition = null;
+            }
+
+            (new DecoratorValidator())->validate($decorates, $methodReflection->getParameters(), $definition->getId());
+
+            if ($decorates && count($methodReflection->getParameters()) === 1) {
+                $factoryArguments = [
+                    new DecoratorReference(
+                        $decorates->getId(),
+                        $decorates->getPriority(),
+                        $decorates->getSignature(),
+                    )
+                ];
+            } else {
+                $factoryArguments = [];
+                foreach ($methodReflection->getParameters() as $argument) {
+                    $factoryArguments[] = $this->argumentConfigurator->configureArgument(
+                        $this->resolvingConfig,
+                        $this->definitions,
+                        $argument,
+                        $factoryDefinition,
+                        $factory->getId(),
+                        $factory,
+                        $definition->getDecorates()
+                    );
+                }
+            }
+
+            // TODO: move to factory
+            $factory = new ClassDefinitionFactory(
+                $factory->getId(),
+                new Method($factory->getMethod(), $factoryArguments, $methodReflection->isStatic()),
+            );
+
+            $definition->setFactory($factory);
+        } else if ($decorates && count($arguments) === 1) {
+            (new DecoratorValidator())->validate($decorates, $arguments, $definition->getId());
+
             $definition->addArgument(
                 new DecoratorReference(
                     $decorates->getId(),
@@ -180,6 +241,8 @@ final class Configurator implements ConfiguratorInterface
                 ),
             );
         } else {
+            (new DecoratorValidator())->validate($decorates, $arguments, $definition->getId());
+
             foreach ($arguments as $argument) {
                 $definition->addArgument(
                     $this->argumentConfigurator->configureArgument(
@@ -188,6 +251,8 @@ final class Configurator implements ConfiguratorInterface
                         $argument,
                         $definition,
                         $id,
+                        factory: null,
+                        decorates: $definition->getDecorates()
                     ),
                 );
             }

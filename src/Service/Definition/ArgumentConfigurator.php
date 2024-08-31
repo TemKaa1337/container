@@ -15,6 +15,8 @@ use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Config;
+use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Config\Factory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
@@ -45,11 +47,13 @@ final class ArgumentConfigurator
     }
 
     /**
-     * @param Config              $config
-     * @param Bag                 $definitions
-     * @param ReflectionParameter $argument
-     * @param ClassDefinition     $definition
-     * @param class-string        $id
+     * @param Config               $config
+     * @param Bag                  $definitions
+     * @param ReflectionParameter  $argument
+     * @param ClassDefinition|null $definition
+     * @param class-string         $id
+     * @param bool                 $isConstructor
+     * @param Decorator|null $decorates
      *
      * @return mixed
      *
@@ -60,26 +64,27 @@ final class ArgumentConfigurator
         Config $config,
         Bag $definitions,
         ReflectionParameter $argument,
-        ClassDefinition $definition,
+        ?ClassDefinition $definition,
         string $id,
+        ?Factory $factory,
+        ?Decorator $decorates,
     ): mixed {
         (new ArgumentValidator())->validate($argument, $id);
 
-        $decorates = $definition->getDecorates();
         if ($decorates && $decorates->getSignature() === $argument->getName()) {
             return new DecoratorReference(
                 $decorates->getId(), $decorates->getPriority(), $decorates->getSignature(),
             );
         }
 
-        if ($configuredArgument = $this->configureTaggedArgument($config, $argument, $id)) {
+        if ($configuredArgument = $this->configureTaggedArgument($config, $argument, $id, $factory)) {
             return $configuredArgument;
         }
 
         [
             'value'    => $configuredArgument,
             'resolved' => $resolved,
-        ] = $this->configureNonObjectArgument($config, $argument, $id);
+        ] = $this->configureNonObjectArgument($config, $argument, $id, $factory);
 
         if ($resolved) {
             return $configuredArgument;
@@ -145,13 +150,18 @@ final class ArgumentConfigurator
      * @param Config              $config
      * @param ReflectionParameter $argument
      * @param class-string        $id
+     * @param Factory|null        $factory
      *
      * @return array{value: mixed, resolved: boolean}
      *
      * @throws ContainerExceptionInterface
      */
-    private function configureNonObjectArgument(Config $config, ReflectionParameter $argument, string $id): array
-    {
+    private function configureNonObjectArgument(
+        Config $config,
+        ReflectionParameter $argument,
+        string $id,
+        ?Factory $factory,
+    ): array {
         /** @var ReflectionNamedType $argumentType */
         $argumentType = $argument->getType();
         $argumentTypeName = $argumentType->getName();
@@ -175,7 +185,7 @@ final class ArgumentConfigurator
         }
 
         $argumentName = $argument->getName();
-        $expression = $this->getBoundVariableValue($config, $argumentName, $id);
+        $expression = $this->getBoundVariableValue($config, $argumentName, $id, $factory);
         if ($expression === null) {
             if (!$argumentType->isBuiltin()) {
                 return ['value' => null, 'resolved' => false];
@@ -211,6 +221,7 @@ final class ArgumentConfigurator
      * @param Config              $config
      * @param ReflectionParameter $argument
      * @param class-string        $id
+     * @param Factory|null        $factory
      *
      * @return TaggedReference|null
      */
@@ -218,6 +229,7 @@ final class ArgumentConfigurator
         Config $config,
         ReflectionParameter $argument,
         string $id,
+        ?Factory $factory,
     ): ?TaggedReference {
         /** @var ReflectionNamedType $argumentType */
         $argumentType = $argument->getType();
@@ -244,7 +256,7 @@ final class ArgumentConfigurator
             return null;
         }
 
-        $boundVariableValue = $this->getBoundVariableValue($config, $argument->getName(), $id);
+        $boundVariableValue = $this->getBoundVariableValue($config, $argument->getName(), $id, $factory);
         if (!is_string($boundVariableValue)) {
             return null;
         }
@@ -263,15 +275,24 @@ final class ArgumentConfigurator
      * @param Config       $config
      * @param string       $argumentName
      * @param class-string $id
+     * @param Factory|null $factory
      *
      * @return null|string|UnitEnum
      */
-    private function getBoundVariableValue(Config $config, string $argumentName, string $id): null|string|UnitEnum
-    {
-        $boundClassInfo = $config->getBoundedClasses()[$id] ?? null;
-        $classBoundVars = $boundClassInfo?->getBoundedVariables() ?? [];
+    private function getBoundVariableValue(
+        Config $config,
+        string $argumentName,
+        string $id,
+        ?Factory $factory,
+    ): null|string|UnitEnum {
+        $classBinding = $config->getBoundedClass($id);
+        $classBoundVars = $classBinding?->getBoundedVariables() ?? [];
+        $classFactoryBindings = $factory?->getBoundedVariables() ?? [];
+
         $globalBoundVars = $config->getBoundedVariables();
 
-        return $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;
+        return $factory
+            ? $classFactoryBindings[$argumentName] ?? $globalBoundVars[$argumentName] ?? null
+            : $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;
     }
 }

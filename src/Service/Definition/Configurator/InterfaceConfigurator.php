@@ -7,6 +7,8 @@ namespace Temkaa\SimpleContainer\Service\Definition\Configurator;
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
+use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
+use Temkaa\SimpleContainer\Model\Definition\Class\Method;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\InterfaceReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
@@ -103,6 +105,16 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                 $unboundInterfaces[$definition->getId()][] = $argument->getId();
             }
 
+            /** @psalm-suppress MixedAssignment */
+            foreach ($definition->getFactory()?->getMethod()?->getArguments() ?? [] as $argument) {
+                if (!$argument instanceof InterfaceReference) {
+                    continue;
+                }
+
+                $unboundInterfaces[$definition->getId()] ??= [];
+                $unboundInterfaces[$definition->getId()][] = $argument->getId();
+            }
+
             if (!$interfaces = $definition->getImplements()) {
                 continue;
             }
@@ -125,10 +137,10 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
     private function updateInterfaceReferences(Bag $definitions, array $unboundInterfaces): void
     {
         foreach ($unboundInterfaces as $definitionId => $unboundInterfaceIds) {
-
             /** @var ClassDefinition $definition */
             $definition = $definitions->get($definitionId);
             $resolvedArguments = $definition->getArguments();
+            $resolvedFactoryArguments = $definition->getFactory()?->getMethod()?->getArguments();
 
             foreach ($unboundInterfaceIds as $unboundInterfaceId) {
                 if (!$definitions->has($unboundInterfaceId)) {
@@ -146,9 +158,36 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                         $resolvedArguments[$index] = new Reference($unboundInterfaceId);
                     }
                 }
+
+                if ($resolvedFactoryArguments !== null) {
+                    /** @psalm-suppress MixedAssignment */
+                    foreach ($resolvedFactoryArguments as $index => $resolvedArgument) {
+                        if (
+                            $resolvedArgument instanceof InterfaceReference
+                            && $resolvedArgument->getId() === $unboundInterfaceId
+                        ) {
+                            $resolvedFactoryArguments[$index] = new Reference($unboundInterfaceId);
+                        }
+                    }
+                }
             }
 
             $definition->setArguments($resolvedArguments);
+
+            if ($resolvedFactoryArguments !== null) {
+                $factory = $definition->getFactory();
+
+                $definition->setFactory(
+                    new Factory(
+                        $factory->getId(),
+                        new Method(
+                            $factory->getMethod()->getName(),
+                            $resolvedFactoryArguments,
+                            $factory->getMethod()->isStatic(),
+                        ),
+                    ),
+                );
+            }
         }
     }
 }

@@ -43,11 +43,35 @@ final readonly class Instantiator
             return $definition->getInstance();
         }
 
-        $arguments = [];
-        foreach ($definition->getArguments() as $argument) {
+        $factory = $definition->getFactory();
+        if (!$factory || !$factory->getMethod()->isStatic()) {
+            $resolvedArguments = $this->resolveArguments($definition->getArguments());
+
+            $reflection = new ReflectionClass($definition->getId());
+
+            $instance = $reflection->newInstanceArgs($resolvedArguments);
+
+            if (!$factory) {
+                return $instance;
+            }
+
+            $factoryResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
+
+            return $instance->{$factory->getMethod()->getName()}(...$factoryResolvedArguments);
+        }
+
+        $factoryResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
+
+        return $factory->getId()::{$factory->getMethod()->getName()}(...$factoryResolvedArguments);
+    }
+
+    private function resolveArguments(array $arguments): array
+    {
+        $resolvedArguments = [];
+        foreach ($arguments as $argument) {
             if (!$argument instanceof ReferenceInterface) {
                 /** @psalm-suppress MixedAssignment */
-                $arguments[] = $argument;
+                $resolvedArguments[] = $argument;
 
                 continue;
             }
@@ -57,11 +81,9 @@ final readonly class Instantiator
                 ? array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getTag()))
                 : $this->instantiate($this->definitionRepository->find($argument->getId()));
 
-            $arguments[] = $resolvedArgument;
+            $resolvedArguments[] = $resolvedArgument;
         }
 
-        $reflection = new ReflectionClass($definition->getId());
-
-        return $reflection->newInstanceArgs($arguments);
+        return $resolvedArguments;
     }
 }

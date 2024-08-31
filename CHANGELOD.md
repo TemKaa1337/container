@@ -1,3 +1,7 @@
+### v0.1.2
+##### Features:
+- Added option to declare class factories.
+
 ### v0.1.1
 ##### Features:
 - Added option to bind enum cases from config and `#[Parameter]` attribute.

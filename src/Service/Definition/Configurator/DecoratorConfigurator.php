@@ -6,6 +6,8 @@ namespace Temkaa\SimpleContainer\Service\Definition\Configurator;
 
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
+use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
+use Temkaa\SimpleContainer\Model\Definition\Class\Method;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
@@ -62,6 +64,37 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                 }
 
                 $currentDecorator->setArguments($arguments);
+
+                if ($factory = $currentDecorator->getFactory()) {
+                    $arguments = $factory->getMethod()->getArguments();
+                    /** @psalm-suppress MixedAssignment */
+                    foreach ($arguments as $index => $argument) {
+                        if (!$argument instanceof DecoratorReference) {
+                            continue;
+                        }
+
+                        if ($previousDecorator && $argument->getId() === $id) {
+                            $arguments[$index] = new DecoratorReference(
+                                $previousDecorator->getId(),
+                                $argument->getPriority(),
+                                $argument->getSignature(),
+                            );
+                        } else if ($i === 0 && $rootDecoratedDefinition instanceof InterfaceDefinition) {
+                            $arguments[$index] = new DecoratorReference(
+                                $definitions->get($rootDecoratedDefinition->getImplementedById())->getId(),
+                                $argument->getPriority(),
+                                $argument->getSignature(),
+                            );
+                        }
+                    }
+
+                    $currentDecorator->setFactory(
+                        new Factory(
+                            $factory->getId(),
+                            new Method($factory->getMethod()->getName(), $arguments, $factory->getMethod()->isStatic())
+                        )
+                    );
+                }
 
                 if ($previousDecorator && $decorates = $currentDecorator->getDecorates()) {
                     $currentDecorator->setDecorates(

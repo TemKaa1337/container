@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Model\Definition;
 
 use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
 
 /**
  * @psalm-suppress MissingConstructor
@@ -13,6 +14,8 @@ use Temkaa\SimpleContainer\Model\Config\Decorator;
  */
 final class ClassDefinition implements DefinitionInterface
 {
+    public ?Factory $factory = null;
+
     /**
      * @var string[]
      */
@@ -121,6 +124,18 @@ final class ClassDefinition implements DefinitionInterface
     public function setDecorates(Decorator $decorator): self
     {
         $this->decorates = $decorator;
+
+        return $this;
+    }
+
+    public function getFactory(): ?Factory
+    {
+        return $this->factory;
+    }
+
+    public function setFactory(Factory $factory): self
+    {
+        $this->factory = $factory;
 
         return $this;
     }

@@ -113,14 +113,37 @@ final readonly class Resolver
 
         Flag::toggle($definition->getId(), group: 'resolver');
 
-        $resolvedArguments = array_map(
-            fn (mixed $argument): mixed => $this->resolveArgument($argument),
-            $definition->getArguments(),
-        );
+        if ($factory = $definition->getFactory()) {
+            $resolvedArguments = array_map(
+                fn (mixed $argument): mixed => $this->resolveArgument($argument),
+                $factory->getMethod()->getArguments(),
+            );
 
-        $reflection = new ReflectionClass($definition->getId());
+            if ($factory->getMethod()->isStatic()) {
+                $instance = $factory->getId()::{$factory->getMethod()->getName()}(...$resolvedArguments);
+            } else {
+                $factoryInstanceResolvedArguments = array_map(
+                    fn (mixed $argument): mixed => $this->resolveArgument($argument),
+                    $this->definitions->get($factory->getId())->getArguments(),
+                );
 
-        $definition->setInstance($reflection->newInstanceArgs($resolvedArguments));
+                $factoryId = $factory->getId();
+                $factoryInstance = new $factoryId(...$factoryInstanceResolvedArguments);
+
+                $instance = $factoryInstance->{$factory->getMethod()->getName()}(...$resolvedArguments);
+            }
+        } else {
+            $resolvedArguments = array_map(
+                fn (mixed $argument): mixed => $this->resolveArgument($argument),
+                $definition->getArguments(),
+            );
+
+            $reflection = new ReflectionClass($definition->getId());
+
+            $instance = $reflection->newInstanceArgs($resolvedArguments);
+        }
+
+        $definition->setInstance($instance);
 
         Flag::untoggle($definition->getId(), group: 'resolver');
     }

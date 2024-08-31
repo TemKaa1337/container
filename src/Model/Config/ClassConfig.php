@@ -15,6 +15,7 @@ final readonly class ClassConfig
      * @param Decorator|null                 $decorates
      * @param bool                           $singleton
      * @param string[]                       $tags
+     * @param Factory|null                   $factory
      */
     public function __construct(
         private string $class,
@@ -23,6 +24,7 @@ final readonly class ClassConfig
         private ?Decorator $decorates,
         private bool $singleton,
         private array $tags,
+        private ?Factory $factory,
     ) {
     }
 
@@ -50,6 +52,11 @@ final readonly class ClassConfig
     public function getDecorates(): ?Decorator
     {
         return $this->decorates;
+    }
+
+    public function getFactory(): ?Factory
+    {
+        return $this->factory;
     }
 
     /**
