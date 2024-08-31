@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Service\Definition\Configurator;
 
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
+use Temkaa\SimpleContainer\Factory\Definition\ClassFactoryFactory;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
-use Temkaa\SimpleContainer\Model\Definition\Class\Method;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\InterfaceReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
@@ -25,25 +24,21 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
     {
         $definitions = $this->configurator->configure();
 
-        [$unboundInterfaces, $interfaceImplementations] = $this->collectInterfaces($definitions);
+        $this->addMissingInterfaceDefinitions($definitions);
 
-        $this->addInterfaceDefinitions($definitions, $interfaceImplementations);
-
-        $this->updateInterfaceReferences($definitions, $unboundInterfaces);
+        $this->updateInterfaceReferences($definitions);
 
         return $definitions;
     }
 
-    /**
-     * @param Bag                                 $definitions
-     * @param array<class-string, class-string[]> $interfaceImplementations
-     */
-    private function addInterfaceDefinitions(Bag $definitions, array $interfaceImplementations): void
+    private function addMissingInterfaceDefinitions(Bag $definitions): void
     {
+        $interfaceImplementations = $this->collectInterfaceImplementations($definitions);
+
         /**
          * We auto bind interface to its implementations in 2 cases:
          * 1. there is only one interface implementation
-         * 2. there are multiple interface implementations but only one which does not decorate any oneer class
+         * 2. there are multiple interface implementations but only one which does not decorate any other class
          */
         foreach ($interfaceImplementations as $interface => $definitionIds) {
             if (count($definitionIds) === 1) {
@@ -80,17 +75,31 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
         }
     }
 
-    /**
-     * @return array{
-     *     0: array<class-string, class-string[]>,
-     *     1: array<class-string, class-string[]>
-     * }
-     */
-    private function collectInterfaces(Bag $definitions): array
+    private function collectInterfaceImplementations(Bag $definitions): array
     {
-        $unboundInterfaces = [];
         $interfaceImplementations = [];
         foreach ($definitions->all() as $definition) {
+            if (!$definition instanceof ClassDefinition) {
+                continue;
+            }
+
+            if (!$interfaces = $definition->getImplements()) {
+                continue;
+            }
+
+            foreach ($interfaces as $interface) {
+                $interfaceImplementations[$interface] ??= [];
+                $interfaceImplementations[$interface][] = $definition->getId();
+            }
+        }
+
+        return $interfaceImplementations;
+    }
+
+    private function collectUnboundInterfaces(Bag $definitions): array
+    {
+        $unboundInterfaces = [];
+        foreach ($definitions as $definition) {
             if (!$definition instanceof ClassDefinition) {
                 continue;
             }
@@ -114,28 +123,15 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                 $unboundInterfaces[$definition->getId()] ??= [];
                 $unboundInterfaces[$definition->getId()][] = $argument->getId();
             }
-
-            if (!$interfaces = $definition->getImplements()) {
-                continue;
-            }
-
-            foreach ($interfaces as $interface) {
-                $interfaceImplementations[$interface] ??= [];
-                $interfaceImplementations[$interface][] = $definition->getId();
-            }
         }
 
-        return [$unboundInterfaces, $interfaceImplementations];
+        return $unboundInterfaces;
     }
 
-    /**
-     * @param Bag                                 $definitions
-     * @param array<class-string, class-string[]> $unboundInterfaces
-     *
-     * @return void
-     */
-    private function updateInterfaceReferences(Bag $definitions, array $unboundInterfaces): void
+    private function updateInterfaceReferences(Bag $definitions): void
     {
+        $unboundInterfaces = $this->collectUnboundInterfaces($definitions);
+
         foreach ($unboundInterfaces as $definitionId => $unboundInterfaceIds) {
             /** @var ClassDefinition $definition */
             $definition = $definitions->get($definitionId);
@@ -178,13 +174,11 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                 $factory = $definition->getFactory();
 
                 $definition->setFactory(
-                    new Factory(
+                    ClassFactoryFactory::create(
                         $factory->getId(),
-                        new Method(
-                            $factory->getMethod()->getName(),
-                            $resolvedFactoryArguments,
-                            $factory->getMethod()->isStatic(),
-                        ),
+                        $factory->getMethod()->getName(),
+                        $resolvedFactoryArguments,
+                        $factory->getMethod()->isStatic(),
                     ),
                 );
             }

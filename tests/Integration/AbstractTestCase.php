@@ -33,35 +33,11 @@ abstract class AbstractTestCase extends TestCase
     protected const string GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';
     protected const string GITKEEP_FILENAME = '.gitkeep';
 
-    public static function setUpBeforeClass(): void
-    {
-        // TODO: move to bootstrap
-        parent::setUpBeforeClass();
-
-        $envVariables = [
-            'APP_BOUND_VAR'           => 'bound_variable_value',
-            'ENV_CASTABLE_STRING_VAR' => '10.1',
-            'ENV_FLOAT_VAR'           => '10.1',
-            'ENV_BOOL_VAL'            => 'false',
-            'ENV_INT_VAL'             => '3',
-            'ENV_STRING_VAL'          => 'string',
-            'ENV_STRING_VAR'          => 'string',
-            'ENV_VAR_1'               => 'test_one',
-            'ENV_VAR_2'               => '10.1',
-            'ENV_VAR_3'               => 'test-three',
-            'ENV_VAR_4'               => 'true',
-            'CIRCULAR_ENV_VARIABLE_1' => 'env(CIRCULAR_ENV_VARIABLE_2)',
-            'CIRCULAR_ENV_VARIABLE_2' => 'env(CIRCULAR_ENV_VARIABLE_1)',
-            'ENV_VARIABLE_REFERENCE'  => 'env(ENV_STRING_VAR)_additional_string',
-        ];
-
-        foreach ($envVariables as $name => $value) {
-            putenv("$name=$value");
-        }
-    }
-
     public static function tearDownAfterClass(): void
     {
+        // TODO: add factories to docs
+        // TODO: add factories to examples
+        // TODO: add option to set required attribute from config?
         parent::tearDownAfterClass();
 
         self::clearClassFixtures();

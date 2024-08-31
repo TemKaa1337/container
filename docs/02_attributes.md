@@ -20,6 +20,9 @@ each time you retrieve this class.
 Using this parameter you can specify a class/interface which you want to decorate.
 
 ### \#[Tag]
+Using this parameter you can add class factory which will be used to instantiate it.
+
+### \#[Tag]
 Using this parameter you can add tags to class.
 
 ```php
@@ -36,6 +39,7 @@ use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
 use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Attribute\Decorates;
+use Temkaa\SimpleContainer\Attribute\Factory;
 use Temkaa\SimpleContainer\Attribute\Tag
 
 interface ExampleInterface
@@ -45,6 +49,7 @@ interface ExampleInterface
 #[Alias(name: 'class_alias')]
 #[Autowire(load: true, singleton: false)]
 #[Decorates(id: ExampleInterface::class)]
+#[Factory(id: ExampleFactory::class, method: 'create')]
 #[Tag(name: 'tag_name')]
 class Example implements ExampleInterface
 {

@@ -1,6 +1,8 @@
 ### v0.1.2
 ##### Features:
-- Added option to declare class factories.
+- Added option to declare class factories using `#[Factory]` attribute or from config;
+- Added option to bind something after object creation using `#[Required]` attribute;
+- Refactoring.
 
 ### v0.1.1
 ##### Features:

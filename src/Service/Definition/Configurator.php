@@ -7,21 +7,17 @@ namespace Temkaa\SimpleContainer\Service\Definition;
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
-use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Autowire;
-use Temkaa\SimpleContainer\Attribute\Decorates;
 use Temkaa\SimpleContainer\Attribute\Factory;
-use Temkaa\SimpleContainer\Attribute\Tag;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
 use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
-use Temkaa\SimpleContainer\Factory\Config\ClassFactoryFactory;
-use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
-use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
+use Temkaa\SimpleContainer\Factory\Config\ClassFactoryFactory as ConfigClassFactoryFactory;
+use Temkaa\SimpleContainer\Factory\Definition\ClassFactoryFactory as DefinitionClassFactoryFactory;
 use Temkaa\SimpleContainer\Model\Config;
+use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Config\Factory as ConfigFactory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\Class\Factory as ClassDefinitionFactory;
-use Temkaa\SimpleContainer\Model\Definition\Class\Method;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
@@ -122,10 +118,13 @@ final class Configurator implements ConfiguratorInterface
         $factoryAttributes = $reflection->getAttributes(Factory::class);
         $classConfigFactory = $this->resolvingConfig->getBoundedClass($id)?->getFactory();
 
-        $factory = $factoryAttributes || $classConfigFactory
-            ? $classConfigFactory
-            ?? ClassFactoryFactory::createFromAttribute(AttributeExtractor::extract($factoryAttributes, index: 0))
-            : null;
+        $factory = match (true) {
+            (bool) $factoryAttributes  => ConfigClassFactoryFactory::createFromAttribute(
+                AttributeExtractor::extract($factoryAttributes, index: 0),
+            ),
+            (bool) $classConfigFactory => $classConfigFactory,
+            default                    => null,
+        };
 
         if ($factory) {
             (new FactoryValidator())->validate($factory, $id);
@@ -149,12 +148,7 @@ final class Configurator implements ConfiguratorInterface
             );
         }
 
-        $definition = (new ClassDefinition())->setId($id);
-
-        if ($autowireTags = $reflection->getAttributes(Autowire::class)) {
-            $isSingleton = AttributeExtractor::extract($autowireTags, index: 0)->singleton;
-            $definition->setIsSingleton($isSingleton);
-        }
+        $autowireTags = $reflection->getAttributes(Autowire::class);
 
         $isNonAutowirable = AttributeExtractor::hasParameterByValue($autowireTags, parameter: 'load', value: false);
         if ($isNonAutowirable) {
@@ -169,13 +163,21 @@ final class Configurator implements ConfiguratorInterface
             );
         }
 
+        $definition = (new ClassDefinition())->setId($id);
+
+        if ($autowireTags) {
+            $isSingleton = AttributeExtractor::extract($autowireTags, index: 0)->singleton;
+            $definition->setIsSingleton($isSingleton);
+        }
+
         if ($boundClassInfo = $this->resolvingConfig->getBoundedClass($id)) {
             $definition->setIsSingleton($boundClassInfo->isSingleton());
         }
 
-        $this->populateDefinition($definition, $reflection);
+        (new Populator())->populate($definition, $reflection, $this->resolvingConfig, $this->definitions);
 
-        if (!$constructor = $reflection->getConstructor()) {
+        $constructor = $reflection->getConstructor();
+        if (!$constructor && !$factory) {
             Flag::untoggle($id, group: 'definition');
 
             $this->definitions->add($definition);
@@ -183,7 +185,15 @@ final class Configurator implements ConfiguratorInterface
             return;
         }
 
-        $arguments = $constructor->getParameters();
+        $this->configureArguments($constructor?->getParameters() ?? [], $definition, $factory);
+
+        $this->definitions->add($definition);
+
+        Flag::untoggle($id, group: 'definition');
+    }
+
+    private function configureArguments(array $arguments, ClassDefinition $definition, ?ConfigFactory $factory): void
+    {
         $decorates = $definition->getDecorates();
 
         if ($factory) {
@@ -206,7 +216,7 @@ final class Configurator implements ConfiguratorInterface
                         $decorates->getId(),
                         $decorates->getPriority(),
                         $decorates->getSignature(),
-                    )
+                    ),
                 ];
             } else {
                 $factoryArguments = [];
@@ -218,15 +228,16 @@ final class Configurator implements ConfiguratorInterface
                         $factoryDefinition,
                         $factory->getId(),
                         $factory,
-                        $definition->getDecorates()
+                        $definition->getDecorates(),
                     );
                 }
             }
 
-            // TODO: move to factory
-            $factory = new ClassDefinitionFactory(
+            $factory = DefinitionClassFactoryFactory::create(
                 $factory->getId(),
-                new Method($factory->getMethod(), $factoryArguments, $methodReflection->isStatic()),
+                $factory->getMethod(),
+                $factoryArguments,
+                $methodReflection->isStatic(),
             );
 
             $definition->setFactory($factory);
@@ -250,68 +261,12 @@ final class Configurator implements ConfiguratorInterface
                         $this->definitions,
                         $argument,
                         $definition,
-                        $id,
+                        $definition->getId(),
                         factory: null,
-                        decorates: $definition->getDecorates()
+                        decorates: $definition->getDecorates(),
                     ),
                 );
             }
-        }
-
-        $this->definitions->add($definition);
-
-        Flag::untoggle($id, group: 'definition');
-    }
-
-    private function populateDefinition(ClassDefinition $definition, ReflectionClass $reflection): void
-    {
-        $classTags = $reflection->getAttributes(Tag::class);
-        $classAliases = $reflection->getAttributes(Alias::class);
-
-        $boundClassInfo = $this->resolvingConfig->getBoundedClass($reflection->getName());
-
-        /** @var string[] $aliases */
-        $aliases = array_merge(
-            AttributeExtractor::extractParameters($classAliases, parameter: 'name'),
-            $this->resolvingConfig->getBoundedClass($definition->getId())?->getAliases() ?? [],
-        );
-
-        /** @var string[] $tags */
-        $tags = AttributeExtractor::extractParameters($classTags, parameter: 'name');
-        $definition
-            ->addTags($boundClassInfo?->getTags() ?? [])
-            ->addTags($tags)
-            ->setAliases($aliases);
-
-        $interfaces = $reflection->getInterfaces();
-        $definition->setImplements(array_keys($interfaces));
-        foreach ($interfaces as $interface) {
-            $interfaceName = $interface->getName();
-
-            if (
-                $this->resolvingConfig->hasBoundInterface($interfaceName)
-                && $this->resolvingConfig->getBoundInterfaceImplementation($interfaceName) === $reflection->getName()
-            ) {
-                $this->definitions->add(
-                    InterfaceFactory::create(
-                        $interfaceName,
-                        implementedById: $reflection->getName(),
-                    ),
-                );
-            }
-
-            $interfaceTags = $interface->getAttributes(Tag::class);
-            /** @var string[] $tags */
-            $tags = AttributeExtractor::extractParameters($interfaceTags, parameter: 'name');
-            $definition->addTags($tags);
-        }
-
-        if ($decorates = $boundClassInfo?->getDecorates()) {
-            $definition->setDecorates($decorates);
-        } else if ($decoratesAttribute = $reflection->getAttributes(Decorates::class)) {
-            $decoratesAttribute = AttributeExtractor::extract($decoratesAttribute, index: 0);
-
-            $definition->setDecorates(DecoratorFactory::createFromAttribute($decoratesAttribute));
         }
     }
 }

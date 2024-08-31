@@ -28,6 +28,16 @@ final class FactoryValidator
         }
 
         $factoryReflection = new ReflectionClass($factory->getId());
+        $this->validateFactoryClass($factoryReflection, $factory, $id);
+
+        $this->validateRootClass($factoryReflection, $factory, $id);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    private function validateFactoryClass(ReflectionClass $factoryReflection, Factory $factory, string $id): void
+    {
         if ($factoryReflection->isInternal()) {
             throw new ClassFactoryException(
                 sprintf(
@@ -84,12 +94,27 @@ final class FactoryValidator
                 ),
             );
         }
+    }
 
-        $classWithFactoryReflection = new ReflectionClass($id);
+    /**
+     * @throws ReflectionException
+     */
+    private function validateRootClass(ReflectionClass $factoryReflection, Factory $factory, string $id): void
+    {
+        $rootClassReflection = new ReflectionClass($id);
 
-        $constructor = $classWithFactoryReflection->getConstructor();
-        $emptyConstructor = $classWithFactoryReflection->hasMethod('__construct') ? $classWithFactoryReflection->getMethod('__construct') : null;
-        if ($factory->getId() !== $id && (($constructor && !$constructor?->isPublic()) || ($emptyConstructor && !$emptyConstructor?->isPublic()))) {
+        $constructor = $rootClassReflection->getConstructor();
+        $emptyConstructor = $rootClassReflection->hasMethod('__construct')
+            ? $rootClassReflection->getMethod('__construct')
+            : null;
+
+        if (
+            $factory->getId() !== $id
+            && (
+                ($constructor && !$constructor->isPublic())
+                || ($emptyConstructor && !$emptyConstructor->isPublic())
+            )
+        ) {
             throw new ClassFactoryException(
                 sprintf(
                     'Invalid factory method "%s::%s" for class "%s", as class "%s" has inaccessible constructor.',
@@ -101,8 +126,8 @@ final class FactoryValidator
             );
         }
 
-        $returnType = $methodReturnType->getName();
-        if ($returnType !== 'self' && $returnType !== $id && !$classWithFactoryReflection->isSubclassOf($returnType)) {
+        $returnType = $factoryReflection->getMethod($factory->getMethod())->getReturnType()->getName();
+        if ($returnType !== 'self' && $returnType !== $id && !$rootClassReflection->isSubclassOf($returnType)) {
             throw new ClassFactoryException(
                 sprintf(
                     'Factory method "%s::%s" for class "%s" must return compatible instance, got "%s".',

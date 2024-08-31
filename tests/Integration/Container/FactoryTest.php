@@ -544,7 +544,7 @@ final class FactoryTest extends AbstractContainerTestCase
                             }
                             METHOD,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className3,
-                            self::GENERATED_CLASS_NAMESPACE.$className1,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
                         ),
                     ]),
             )
@@ -1493,7 +1493,7 @@ final class FactoryTest extends AbstractContainerTestCase
                             }
                             METHOD,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
-                            self::GENERATED_CLASS_NAMESPACE.$className1,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
                         ),
                     ]),
             )

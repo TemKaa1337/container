@@ -53,7 +53,7 @@ final class ArgumentConfigurator
      * @param ClassDefinition|null $definition
      * @param class-string         $id
      * @param bool                 $isConstructor
-     * @param Decorator|null $decorates
+     * @param Decorator|null       $decorates
      *
      * @return mixed
      *
@@ -165,28 +165,17 @@ final class ArgumentConfigurator
         /** @var ReflectionNamedType $argumentType */
         $argumentType = $argument->getType();
         $argumentTypeName = $argumentType->getName();
-
-        if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
-            $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
-
-            (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
-
-            if ($expression instanceof UnitEnum) {
-                return ['value' => $expression, 'resolved' => true];
-            }
-
-            return [
-                'value'    => TypeCaster::cast(
-                    $this->expressionParser->parse($expression),
-                    $argumentTypeName,
-                ),
-                'resolved' => true,
-            ];
-        }
-
         $argumentName = $argument->getName();
-        $expression = $this->getBoundVariableValue($config, $argumentName, $id, $factory);
-        if ($expression === null) {
+
+        $argumentAttributes = AttributeExtractor::extractParameters(
+            $argument->getAttributes(Parameter::class),
+            parameter: 'expression',
+        );
+
+        $configExpression = $this->getBoundVariableValue($config, $argumentName, $id, $factory);
+        $argumentExpression = $argumentAttributes ? current($argumentAttributes) : null;
+
+        if ($configExpression === null && $argumentExpression === null) {
             if (!$argumentType->isBuiltin()) {
                 return ['value' => null, 'resolved' => false];
             }
@@ -205,14 +194,14 @@ final class ArgumentConfigurator
             );
         }
 
+        $expression = $configExpression ?? $argumentExpression;
+
         (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
 
-        if ($expression instanceof UnitEnum) {
-            return ['value' => $expression, 'resolved' => true];
-        }
-
         return [
-            'value'    => TypeCaster::cast($this->expressionParser->parse($expression), $argumentTypeName),
+            'value'    => $expression instanceof UnitEnum
+                ? $expression
+                : TypeCaster::cast($this->expressionParser->parse($expression), $argumentTypeName),
             'resolved' => true,
         ];
     }
@@ -233,42 +222,42 @@ final class ArgumentConfigurator
     ): ?TaggedReference {
         /** @var ReflectionNamedType $argumentType */
         $argumentType = $argument->getType();
-
-        if ($argumentAttributes = $argument->getAttributes(Tagged::class)) {
-            /** @var string $boundTagName */
-            $boundTagName = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'tag')[0];
-
-            if (!in_array($argumentType->getName(), ['iterable', 'array'])) {
-                throw new UnresolvableArgumentException(
-                    sprintf(
-                        'Cannot instantiate entry "%s" with tagged argument "%s::%s" as it\'s type is neither "array" or "iterable".',
-                        $id,
-                        $argument->getName(),
-                        $argumentType->getName(),
-                    ),
-                );
-            }
-
-            return new TaggedReference(tag: $boundTagName);
-        }
+        $argumentName = $argument->getName();
 
         if (!$argumentType->isBuiltin()) {
             return null;
         }
 
-        $boundVariableValue = $this->getBoundVariableValue($config, $argument->getName(), $id, $factory);
-        if (!is_string($boundVariableValue)) {
+        $argumentAttributes = AttributeExtractor::extractParameters(
+            $argument->getAttributes(Tagged::class),
+            parameter: 'tag',
+        );
+
+        $configExpression = $this->getBoundVariableValue($config, $argumentName, $id, $factory);
+        $argumentExpression = $argumentAttributes ? current($argumentAttributes) : null;
+
+        if (!$configExpression && !$argumentExpression) {
             return null;
         }
 
-        /** @psalm-suppress RiskyTruthyFalsyComparison */
-        if ($boundVariableValue && str_starts_with($boundVariableValue, '!tagged')) {
-            $tag = trim(str_replace('!tagged', '', $boundVariableValue));
-
-            return new TaggedReference($tag);
+        if ($configExpression && (!is_string($configExpression) || !str_starts_with($configExpression, '!tagged'))) {
+            return null;
         }
 
-        return null;
+        if (!in_array($argumentType->getName(), ['iterable', 'array'])) {
+            throw new UnresolvableArgumentException(
+                sprintf(
+                    'Cannot instantiate entry "%s" with tagged argument "%s::%s" as it\'s type is neither "array" or "iterable".',
+                    $id,
+                    $argumentName,
+                    $argumentType->getName(),
+                ),
+            );
+        }
+
+        return new TaggedReference(
+            $configExpression ? trim(str_replace('!tagged', '', $configExpression)) : $argumentExpression,
+        );
     }
 
     /**

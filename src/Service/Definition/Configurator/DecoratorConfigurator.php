@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Service\Definition\Configurator;
 
+use Temkaa\SimpleContainer\Factory\Definition\ClassFactoryFactory;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
-use Temkaa\SimpleContainer\Model\Definition\Class\Method;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
@@ -27,10 +26,10 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
     public function configure(): Bag
     {
         $definitions = $this->configurator->configure();
-        foreach ($this->getDecorators($definitions) as $id => $decorators) {
+        foreach ($this->getDecorators($definitions) as $decoratedId => $decorators) {
             $decorators = $this->sortByPriority($decorators);
 
-            $rootDecoratedDefinition = $definitions->get($id);
+            $rootDecoratedDefinition = $definitions->get($decoratedId);
             if ($decorators) {
                 $rootDecoratedDefinition->setDecoratedBy(current($decorators)->getId());
             }
@@ -41,58 +40,32 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                 $currentDecorator = $decorators[$i];
                 $nextDecorator = $decorators[$i + 1] ?? null;
 
-                $arguments = $currentDecorator->getArguments();
-                /** @psalm-suppress MixedAssignment */
-                foreach ($arguments as $index => $argument) {
-                    if (!$argument instanceof DecoratorReference) {
-                        continue;
-                    }
-
-                    if ($previousDecorator && $argument->getId() === $id) {
-                        $arguments[$index] = new DecoratorReference(
-                            $previousDecorator->getId(),
-                            $argument->getPriority(),
-                            $argument->getSignature(),
-                        );
-                    } else if ($i === 0 && $rootDecoratedDefinition instanceof InterfaceDefinition) {
-                        $arguments[$index] = new DecoratorReference(
-                            $definitions->get($rootDecoratedDefinition->getImplementedById())->getId(),
-                            $argument->getPriority(),
-                            $argument->getSignature(),
-                        );
-                    }
-                }
+                $arguments = $this->updateDecoratorReferences(
+                    $currentDecorator->getArguments(),
+                    $decoratedId,
+                    $definitions,
+                    $previousDecorator,
+                    $rootDecoratedDefinition,
+                );
 
                 $currentDecorator->setArguments($arguments);
 
                 if ($factory = $currentDecorator->getFactory()) {
-                    $arguments = $factory->getMethod()->getArguments();
-                    /** @psalm-suppress MixedAssignment */
-                    foreach ($arguments as $index => $argument) {
-                        if (!$argument instanceof DecoratorReference) {
-                            continue;
-                        }
-
-                        if ($previousDecorator && $argument->getId() === $id) {
-                            $arguments[$index] = new DecoratorReference(
-                                $previousDecorator->getId(),
-                                $argument->getPriority(),
-                                $argument->getSignature(),
-                            );
-                        } else if ($i === 0 && $rootDecoratedDefinition instanceof InterfaceDefinition) {
-                            $arguments[$index] = new DecoratorReference(
-                                $definitions->get($rootDecoratedDefinition->getImplementedById())->getId(),
-                                $argument->getPriority(),
-                                $argument->getSignature(),
-                            );
-                        }
-                    }
+                    $arguments = $this->updateDecoratorReferences(
+                        $factory->getMethod()->getArguments(),
+                        $decoratedId,
+                        $definitions,
+                        $previousDecorator,
+                        $rootDecoratedDefinition,
+                    );
 
                     $currentDecorator->setFactory(
-                        new Factory(
+                        ClassFactoryFactory::create(
                             $factory->getId(),
-                            new Method($factory->getMethod()->getName(), $arguments, $factory->getMethod()->isStatic())
-                        )
+                            $factory->getMethod()->getName(),
+                            $arguments,
+                            $factory->getMethod()->isStatic(),
+                        ),
                     );
                 }
 
@@ -162,5 +135,35 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
         );
 
         return $definitions;
+    }
+
+    private function updateDecoratorReferences(
+        array $arguments,
+        string $decoratedId,
+        Bag $definitions,
+        ?ClassDefinition $previousDecorator,
+        DefinitionInterface $rootDecoratedDefinition,
+    ): array {
+        foreach ($arguments as $index => $argument) {
+            if (!$argument instanceof DecoratorReference) {
+                continue;
+            }
+
+            if ($previousDecorator && $argument->getId() === $decoratedId) {
+                $arguments[$index] = new DecoratorReference(
+                    $previousDecorator->getId(),
+                    $argument->getPriority(),
+                    $argument->getSignature(),
+                );
+            } else if (!$previousDecorator && $rootDecoratedDefinition instanceof InterfaceDefinition) {
+                $arguments[$index] = new DecoratorReference(
+                    $definitions->get($rootDecoratedDefinition->getImplementedById())->getId(),
+                    $argument->getPriority(),
+                    $argument->getSignature(),
+                );
+            }
+        }
+
+        return $arguments;
     }
 }
