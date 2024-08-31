@@ -16,11 +16,6 @@ use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
 /**
- * @TODO: add more does not compile tests
- *      11. add decorator cases (class which has factory decorates someone)
- */
-
-/**
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
@@ -359,6 +354,163 @@ final class FactoryTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
+    public function testCompilesWhenClassWithFactoryIsDecoratorWithNonSingletonDecorators(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        $className5 = ClassGenerator::getClassName();
+        $interface = ClassGenerator::getClassName().'interface';
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                            'create',
+                        ),
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            1,
+                            'dependency',
+                        ),
+                        sprintf(
+                            self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
+                            'true',
+                            'false',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $decorated,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setMethods([
+                        sprintf(
+                            <<<'METHOD'
+                            public static function create(%s $priorityTwoDecorator): %s
+                            {
+                                return new %s($priorityTwoDecorator);
+                            }
+                            METHOD,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            2,
+                            'dependency',
+                        ),
+                        sprintf(
+                            self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
+                            'true',
+                            'false',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $decorated,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            0,
+                            'dependency',
+                        ),
+                        sprintf(
+                            self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
+                            'true',
+                            'false',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $decorated,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface.php")
+                    ->setName($interface)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className5.php")
+                    ->setName($className5)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
+                            'true',
+                            'false',
+                        ),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className5.php",
+        ];
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $decoratedInstance1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$interface);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $decoratedInstance1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $decoratedInstance1->decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $decoratedInstance1->decorated->decorated);
+        self::assertInstanceOf(
+            self::GENERATED_CLASS_NAMESPACE.$className5,
+            $decoratedInstance1->decorated->decorated->decorated,
+        );
+
+        $decoratedInstance2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$interface);
+        self::assertNotSame($decoratedInstance2, $decoratedInstance1);
+        self::assertNotSame($decoratedInstance2->decorated, $decoratedInstance1->decorated);
+        self::assertNotSame($decoratedInstance2->decorated->decorated, $decoratedInstance1->decorated->decorated);
+        self::assertNotSame(
+            $decoratedInstance2->decorated->decorated->decorated,
+            $decoratedInstance1->decorated->decorated->decorated,
+        );
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithAbstractClassAsAFactoryReturnType(): void
     {
         $className1 = ClassGenerator::getClassName();
@@ -508,8 +660,8 @@ final class FactoryTest extends AbstractContainerTestCase
                         id: self::GENERATED_CLASS_NAMESPACE.$className4,
                         method: 'create',
                         boundedVariables: [
-                            'varOne' => 'env(APP_BOUND_VAR)',
-                            'varTwo' => 'env(ENV_VAR_2)',
+                            'varOne'   => 'env(APP_BOUND_VAR)',
+                            'varTwo'   => 'env(ENV_VAR_2)',
                             'varThree' => constant(self::GENERATED_CLASS_NAMESPACE.$enum.'::FirstCase'),
                         ],
                     ),
@@ -620,6 +772,226 @@ final class FactoryTest extends AbstractContainerTestCase
             $class->arg1,
         );
         self::assertEquals('some_string', $class->arg2);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithClassFactoryWhichIsDecoratorWithDynamicMethod(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        $interface = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            self::GENERATED_CLASS_NAMESPACE.$className2,
+                            'create',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface])
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            0,
+                            'property',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $decorated,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ])
+                    ->setMethods([
+                        sprintf(
+                            <<<'METHOD'
+                            public function create(%s $arg): %s
+                            {
+                                return new %s($arg);
+                            }
+                            METHOD,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            1,
+                            'property',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $decorated,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface.php")
+                    ->setName($interface)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+        ];
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interface, $class1->arg);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $class1->arg);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $class1->arg->decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $class1->arg->decorated->decorated);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithClassFactoryWhichIsDecoratorWithStaticMethod(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        $interface = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            self::GENERATED_CLASS_NAMESPACE.$className2,
+                            'create',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $arg,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface])
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            0,
+                            'property',
+                        ),
+                    ])
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $decorated,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ])
+                    ->setMethods([
+                        sprintf(
+                            <<<'METHOD'
+                            public static function create(%s $arg): %s
+                            {
+                                return new %s($arg);
+                            }
+                            METHOD,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            1,
+                            'property',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $decorated,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface.php")
+                    ->setName($interface)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+        ];
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interface, $class1->arg);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $class1->arg);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $class1->arg->decorated);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $class1->arg->decorated->decorated);
     }
 
     /**
