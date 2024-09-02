@@ -27,8 +27,8 @@ use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 use Temkaa\SimpleContainer\Util\ExpressionParser;
 use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
 use Temkaa\SimpleContainer\Util\TypeCaster;
-use Temkaa\SimpleContainer\Validator\Argument\ExpressionTypeCompatibilityValidator;
-use Temkaa\SimpleContainer\Validator\ArgumentValidator;
+use Temkaa\SimpleContainer\Validator\Definition\Argument\ExpressionTypeCompatibilityValidator;
+use Temkaa\SimpleContainer\Validator\Definition\ArgumentValidator;
 use UnitEnum;
 
 /**

@@ -16,6 +16,7 @@ final readonly class ClassConfig
      * @param bool                           $singleton
      * @param string[]                       $tags
      * @param Factory|null                   $factory
+     * @param string[]                       $methodCalls
      */
     public function __construct(
         private string $class,
@@ -25,7 +26,16 @@ final readonly class ClassConfig
         private bool $singleton,
         private array $tags,
         private ?Factory $factory,
+        private array $methodCalls,
     ) {
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getMethodCalls(): array
+    {
+        return $this->methodCalls;
     }
 
     public function getAliases(): array

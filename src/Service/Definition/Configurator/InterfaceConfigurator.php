@@ -123,6 +123,18 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                 $unboundInterfaces[$definition->getId()] ??= [];
                 $unboundInterfaces[$definition->getId()][] = $argument->getId();
             }
+
+            /** @psalm-suppress MixedAssignment */
+            foreach ($definition->getRequiredMethodCalls() as $method => $requiredMethodArguments) {
+                foreach ($requiredMethodArguments as $requiredMethodArgument) {
+                    if (!$requiredMethodArgument instanceof InterfaceReference) {
+                        continue;
+                    }
+
+                    $unboundInterfaces[$definition->getId()] ??= [];
+                    $unboundInterfaces[$definition->getId()][] = $requiredMethodArgument->getId();
+                }
+            }
         }
 
         return $unboundInterfaces;
@@ -166,6 +178,20 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                         }
                     }
                 }
+
+                $requiredMethodCallsInfo = $definition->getRequiredMethodCalls();
+                foreach ($requiredMethodCallsInfo as $method => $arguments) {
+                    foreach ($arguments as $index => $argument) {
+                        if (
+                            $argument instanceof InterfaceReference
+                            && $argument->getId() === $unboundInterfaceId
+                        ) {
+                            $requiredMethodCallsInfo[$method][$index] = new Reference($unboundInterfaceId);
+                        }
+                    }
+                }
+
+                $definition->setRequiredMethodCalls($requiredMethodCallsInfo);
             }
 
             $definition->setArguments($resolvedArguments);

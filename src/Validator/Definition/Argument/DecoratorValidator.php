@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator\Argument;
+namespace Temkaa\SimpleContainer\Validator\Definition\Argument;
 
 use ReflectionParameter;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;

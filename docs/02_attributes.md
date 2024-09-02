@@ -25,6 +25,9 @@ Using this parameter you can add class factory which will be used to instantiate
 ### \#[Tag]
 Using this parameter you can add tags to class.
 
+### \#[Required]
+Using this parameter you can add methods, which will be called after object instantiation.
+
 ```php
 
 <?php
@@ -37,6 +40,7 @@ use phpDocumentor\Reflection\DocBlock\Tags\Example;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Autowire;
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
+use Temkaa\SimpleContainer\Attribute\Bind\Required;
 use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Attribute\Decorates;
 use Temkaa\SimpleContainer\Attribute\Factory;
@@ -53,6 +57,8 @@ interface ExampleInterface
 #[Tag(name: 'tag_name')]
 class Example implements ExampleInterface
 {
+    private LoggerInterface $logger;
+ 
     public function __construct(
         #[Tagged(tag: 'any_tag_name')]
         private readonly iterable $tagged,
@@ -61,6 +67,12 @@ class Example implements ExampleInterface
         #[Parameter(expression: SomeEnumCase::CaseOne)]
         private readonly int $enumCase,
     ) {
+    }
+    
+    #[Required]
+    public function setLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
     }
 }
 ```

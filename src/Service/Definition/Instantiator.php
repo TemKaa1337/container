@@ -44,27 +44,40 @@ final readonly class Instantiator
         }
 
         $factory = $definition->getFactory();
-        if (!$factory || !$factory->getMethod()->isStatic()) {
+        if ($factory && $factory->getMethod()->isStatic()) {
+            $factoryResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
+
+            $instance = $factory->getId()::{$factory->getMethod()->getName()}(...$factoryResolvedArguments);
+        } else if ($factory && !$factory->getMethod()->isStatic()) {
+            $factoryResolvedArguments = $this->resolveArguments(
+                $this->definitionRepository->find($factory->getId())->getArguments(),
+            );
+
+            $factoryReflection = new ReflectionClass($factory->getId());
+
+            $factory = $factoryReflection->newInstanceArgs($factoryResolvedArguments);
+
+            $factoryMethodResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
+
+            $instance = $factory->{$factory->getMethod()->getName()}(...$factoryMethodResolvedArguments);
+        } else {
             $resolvedArguments = $this->resolveArguments($definition->getArguments());
 
             $reflection = new ReflectionClass($definition->getId());
 
             $instance = $reflection->newInstanceArgs($resolvedArguments);
-
-            if (!$factory) {
-                return $instance;
-            }
-
-            $factoryResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
-
-            return $instance->{$factory->getMethod()->getName()}(...$factoryResolvedArguments);
         }
 
-        $factoryResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
+        foreach ($definition->getRequiredMethodCalls() as $method => $arguments) {
+            $instance->{$method}(...$this->resolveArguments($arguments));
+        }
 
-        return $factory->getId()::{$factory->getMethod()->getName()}(...$factoryResolvedArguments);
+        return $instance;
     }
 
+    /**
+     * @throws ReflectionException
+     */
     private function resolveArguments(array $arguments): array
     {
         $resolvedArguments = [];

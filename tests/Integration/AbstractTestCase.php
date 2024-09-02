@@ -26,6 +26,7 @@ abstract class AbstractTestCase extends TestCase
     protected const string ATTRIBUTE_FACTORY_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Factory(id: \'%s\', method: \'%s\')]';
     protected const string ATTRIBUTE_PARAMETER_RAW_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: %s)]';
     protected const string ATTRIBUTE_PARAMETER_STRING_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
+    protected const string ATTRIBUTE_REQUIRED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Required()]';
     protected const string ATTRIBUTE_TAGGED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Tagged(tag: \'%s\')]';
     protected const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Tag(name: \'%s\')]';
     protected const string GENERATED_CLASS_ABSOLUTE_NAMESPACE = '\Tests\Fixture\Stub\Class\\';
@@ -35,9 +36,6 @@ abstract class AbstractTestCase extends TestCase
 
     public static function tearDownAfterClass(): void
     {
-        // TODO: add factories to docs
-        // TODO: add factories to examples
-        // TODO: add option to set required attribute from config?
         parent::tearDownAfterClass();
 
         self::clearClassFixtures();
@@ -67,6 +65,7 @@ abstract class AbstractTestCase extends TestCase
         bool $singleton = true,
         ?Factory $factory = null,
         array $tags = [],
+        array $requiredMethodCalls = [],
     ): ClassConfig {
         $builder = ClassConfigBuilder::make($className);
 
@@ -89,6 +88,10 @@ abstract class AbstractTestCase extends TestCase
 
         if ($factory) {
             $builder->factory($factory);
+        }
+
+        foreach ($requiredMethodCalls as $method) {
+            $builder->call($method);
         }
 
         if ($singleton) {

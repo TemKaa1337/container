@@ -8,6 +8,7 @@ use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
 use Temkaa\SimpleContainer\Attribute\Autowire;
+use Temkaa\SimpleContainer\Attribute\Bind\Required;
 use Temkaa\SimpleContainer\Attribute\Factory;
 use Temkaa\SimpleContainer\Exception\CircularReferenceException;
 use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
@@ -15,7 +16,6 @@ use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Factory\Config\ClassFactoryFactory as ConfigClassFactoryFactory;
 use Temkaa\SimpleContainer\Factory\Definition\ClassFactoryFactory as DefinitionClassFactoryFactory;
 use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Temkaa\SimpleContainer\Model\Config\Factory as ConfigFactory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
@@ -23,8 +23,9 @@ use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
 use Temkaa\SimpleContainer\Util\Extractor\ClassExtractor;
 use Temkaa\SimpleContainer\Util\Flag;
-use Temkaa\SimpleContainer\Validator\Argument\DecoratorValidator;
+use Temkaa\SimpleContainer\Validator\Definition\Argument\DecoratorValidator;
 use Temkaa\SimpleContainer\Validator\Definition\FactoryValidator;
+use Temkaa\SimpleContainer\Validator\Definition\Method\RequiredMethodCallValidator;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -176,6 +177,8 @@ final class Configurator implements ConfiguratorInterface
 
         (new Populator())->populate($definition, $reflection, $this->resolvingConfig, $this->definitions);
 
+        $this->configureRequiredMethodCalls($definition);
+
         $constructor = $reflection->getConstructor();
         if (!$constructor && !$factory) {
             Flag::untoggle($id, group: 'definition');
@@ -185,88 +188,149 @@ final class Configurator implements ConfiguratorInterface
             return;
         }
 
-        $this->configureArguments($constructor?->getParameters() ?? [], $definition, $factory);
+        if ($factory) {
+            $this->configureFactory($definition, $factory);
+        } else {
+            $arguments = $this->configureArguments($constructor?->getParameters() ?? [], $definition);
+            $definition->setArguments($arguments);
+        }
 
         $this->definitions->add($definition);
 
         Flag::untoggle($id, group: 'definition');
     }
 
-    private function configureArguments(array $arguments, ClassDefinition $definition, ?ConfigFactory $factory): void
+    private function configureArguments(array $arguments, ClassDefinition $definition): array
     {
         $decorates = $definition->getDecorates();
+        (new DecoratorValidator())->validate($decorates, $arguments, $definition->getId());
 
-        if ($factory) {
-            $reflection = new ReflectionClass($factory->getId());
-            $methodReflection = $reflection->getMethod($factory->getMethod());
-            if (!$methodReflection->isStatic()) {
-                $this->configureDefinition($factory->getId());
+        if ($decorates && count($arguments) === 1) {
+            return [
+                new DecoratorReference(
+                    $decorates->getId(),
+                    $decorates->getPriority(),
+                    $decorates->getSignature(),
+                )
+            ];
+        }
 
-                /** @var ClassDefinition $factoryDefinition */
-                $factoryDefinition = $this->definitions->get($factory->getId());
-            } else {
-                $factoryDefinition = null;
-            }
-
-            (new DecoratorValidator())->validate($decorates, $methodReflection->getParameters(), $definition->getId());
-
-            if ($decorates && count($methodReflection->getParameters()) === 1) {
-                $factoryArguments = [
-                    new DecoratorReference(
-                        $decorates->getId(),
-                        $decorates->getPriority(),
-                        $decorates->getSignature(),
-                    ),
-                ];
-            } else {
-                $factoryArguments = [];
-                foreach ($methodReflection->getParameters() as $argument) {
-                    $factoryArguments[] = $this->argumentConfigurator->configureArgument(
-                        $this->resolvingConfig,
-                        $this->definitions,
-                        $argument,
-                        $factoryDefinition,
-                        $factory->getId(),
-                        $factory,
-                        $definition->getDecorates(),
-                    );
-                }
-            }
-
-            $factory = DefinitionClassFactoryFactory::create(
-                $factory->getId(),
-                $factory->getMethod(),
-                $factoryArguments,
-                $methodReflection->isStatic(),
+        $configuredArguments = [];
+        foreach ($arguments as $argument) {
+            $configuredArguments[] = $this->argumentConfigurator->configureArgument(
+                $this->resolvingConfig,
+                $this->definitions,
+                $argument,
+                $definition,
+                $definition->getId(),
+                factory: null,
+                decorates: $definition->getDecorates(),
             );
+        }
 
-            $definition->setFactory($factory);
-        } else if ($decorates && count($arguments) === 1) {
-            (new DecoratorValidator())->validate($decorates, $arguments, $definition->getId());
+        return $configuredArguments;
+    }
 
-            $definition->addArgument(
+    private function configureFactory(ClassDefinition $definition, ?ConfigFactory $factory): void
+    {
+        if (!$factory) {
+            return;
+        }
+
+        $decorates = $definition->getDecorates();
+
+        $reflection = new ReflectionClass($factory->getId());
+        $methodReflection = $reflection->getMethod($factory->getMethod());
+        if (!$methodReflection->isStatic()) {
+            $this->configureDefinition($factory->getId());
+
+            /** @var ClassDefinition $factoryDefinition */
+            $factoryDefinition = $this->definitions->get($factory->getId());
+        } else {
+            $factoryDefinition = null;
+        }
+
+        (new DecoratorValidator())->validate($decorates, $methodReflection->getParameters(), $definition->getId());
+
+        if ($decorates && count($methodReflection->getParameters()) === 1) {
+            $factoryArguments = [
                 new DecoratorReference(
                     $decorates->getId(),
                     $decorates->getPriority(),
                     $decorates->getSignature(),
                 ),
-            );
+            ];
         } else {
-            (new DecoratorValidator())->validate($decorates, $arguments, $definition->getId());
-
-            foreach ($arguments as $argument) {
-                $definition->addArgument(
-                    $this->argumentConfigurator->configureArgument(
-                        $this->resolvingConfig,
-                        $this->definitions,
-                        $argument,
-                        $definition,
-                        $definition->getId(),
-                        factory: null,
-                        decorates: $definition->getDecorates(),
-                    ),
+            $factoryArguments = [];
+            foreach ($methodReflection->getParameters() as $argument) {
+                $factoryArguments[] = $this->argumentConfigurator->configureArgument(
+                    $this->resolvingConfig,
+                    $this->definitions,
+                    $argument,
+                    $factoryDefinition,
+                    $factory->getId(),
+                    $factory,
+                    $definition->getDecorates(),
                 );
             }
         }
+
+        $factory = DefinitionClassFactoryFactory::create(
+            $factory->getId(),
+            $factory->getMethod(),
+            $factoryArguments,
+            $methodReflection->isStatic(),
+        );
+
+        $definition->setFactory($factory);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    private function configureRequiredMethodCalls(ClassDefinition $definition): void
+    {
+        $reflection = new ReflectionClass($definition->getId());
+
+        $definitionConfig = $this->resolvingConfig->getBoundedClass($definition->getId());
+
+        (new RequiredMethodCallValidator())->validate($definitionConfig, $reflection);
+
+        $requiredMethodCalls = $definitionConfig?->getMethodCalls() ?? [];
+
+        foreach ($reflection->getMethods() as $method) {
+            if (!$method->getAttributes(Required::class)) {
+                continue;
+            }
+
+            $requiredMethodCalls[] = $method->getName();
+        }
+
+        $resolvedMethodCalls = [];
+
+        foreach (array_unique($requiredMethodCalls) as $requiredMethodCall) {
+            $method = $reflection->getMethod($requiredMethodCall);
+
+            $resolvedMethodCalls[$requiredMethodCall] = [];
+
+            // TODO: add decorator validator (because there might be a lot of required methods and we dont know what method can accept decorator)
+
+            $resolvedMethodCalls[$requiredMethodCall] = $this->configureArguments($method->getParameters(), $definition);
+            // $arguments = $method->getParameters();
+            // foreach ($arguments as $argument) {
+            //     $resolvedMethodCalls[$requiredMethodCall][] = $this->argumentConfigurator->configureArgument(
+            //         $this->resolvingConfig,
+            //         $this->definitions,
+            //         $argument,
+            //         $definition,
+            //         $definition->getId(),
+            //         factory: null,
+            //         decorates: $definition->getDecorates(),
+            //     );
+            // }
+        }
+
+        $definition->setRequiredMethodCalls($resolvedMethodCalls);
     }
 }

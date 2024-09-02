@@ -69,6 +69,19 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                     );
                 }
 
+                $requiredMethodCalls = $currentDecorator->getRequiredMethodCalls();
+                foreach ($requiredMethodCalls as $method => $arguments) {
+                    $requiredMethodCalls[$method] = $this->updateDecoratorReferences(
+                        $arguments,
+                        $decoratedId,
+                        $definitions,
+                        $previousDecorator,
+                        $rootDecoratedDefinition,
+                    );
+                }
+
+                $currentDecorator->setRequiredMethodCalls($requiredMethodCalls);
+
                 if ($previousDecorator && $decorates = $currentDecorator->getDecorates()) {
                     $currentDecorator->setDecorates(
                         DecoratorFactory::create(

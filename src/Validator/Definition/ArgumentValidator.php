@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator;
+namespace Temkaa\SimpleContainer\Validator\Definition;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionNamedType;

@@ -45,6 +45,11 @@ final class ClassDefinition implements DefinitionInterface
     private bool $isSingleton = true;
 
     /**
+     * @var array<string, array>
+     */
+    private array $requiredMethodCalls = [];
+
+    /**
      * @var string[]
      */
     private array $tags = [];
@@ -184,6 +189,24 @@ final class ClassDefinition implements DefinitionInterface
     public function setInstance(object $instance): self
     {
         $this->instance = $instance;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, array>
+     */
+    public function getRequiredMethodCalls(): array
+    {
+        return $this->requiredMethodCalls;
+    }
+
+    /**
+     * @param array<string, array> $methods
+     */
+    public function setRequiredMethodCalls(array $methods): self
+    {
+        $this->requiredMethodCalls = $methods;
 
         return $this;
     }

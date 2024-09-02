@@ -13,6 +13,11 @@ final class ClassBuilder
 
     private array $attributes = [];
 
+    /**
+     * @var string[]
+     */
+    private array $body = [];
+
     private array $constructorArguments = [];
 
     private string $constructorVisibility = 'public';
@@ -22,11 +27,6 @@ final class ClassBuilder
     private bool $hasConstructor = false;
 
     private array $interfaceImplementations = [];
-
-    /**
-     * @var string[]
-     */
-    private array $methods = [];
 
     private string $name;
 
@@ -54,6 +54,21 @@ final class ClassBuilder
     public function setAttributes(array $attributes): self
     {
         $this->attributes = $attributes;
+
+        return $this;
+    }
+
+    public function getBody(): array
+    {
+        return $this->body;
+    }
+
+    /**
+     * @param string[] $body
+     */
+    public function setBody(array $body): self
+    {
+        $this->body = $body;
 
         return $this;
     }
@@ -102,21 +117,6 @@ final class ClassBuilder
     public function setInterfaceImplementations(array $interfaceImplementations): self
     {
         $this->interfaceImplementations = $interfaceImplementations;
-
-        return $this;
-    }
-
-    public function getMethods(): array
-    {
-        return $this->methods;
-    }
-
-    /**
-     * @param string[] $methods
-     */
-    public function setMethods(array $methods): self
-    {
-        $this->methods = $methods;
 
         return $this;
     }

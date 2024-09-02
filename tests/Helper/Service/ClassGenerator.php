@@ -83,7 +83,7 @@ final class ClassGenerator
 
             $args = [
                 ...$args,
-                implode(PHP_EOL, $builder->getMethods()),
+                implode(PHP_EOL, $builder->getBody()),
             ];
 
             file_put_contents(

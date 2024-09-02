@@ -2,8 +2,7 @@
 ##### Features:
 - Added option to declare class factories using `#[Factory]` attribute or from config;
 - Added option to bind something after object creation using `#[Required]` attribute;
-- Refactoring.
-
+- Separated tests by configuration type, e.g. config or attribute. 
 ### v0.1.1
 ##### Features:
 - Added option to bind enum cases from config and `#[Parameter]` attribute.

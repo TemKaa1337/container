@@ -143,6 +143,15 @@ final readonly class Resolver
             $instance = $reflection->newInstanceArgs($resolvedArguments);
         }
 
+        foreach ($definition->getRequiredMethodCalls() as $methodName => $methodArguments) {
+            $resolvedArguments = array_map(
+                fn (mixed $argument): mixed => $this->resolveArgument($argument),
+                $methodArguments,
+            );
+
+            $instance->{$methodName}(...$resolvedArguments);
+        }
+
         $definition->setInstance($instance);
 
         Flag::untoggle($definition->getId(), group: 'resolver');

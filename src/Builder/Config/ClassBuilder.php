@@ -29,6 +29,11 @@ final class ClassBuilder
 
     private ?Factory $factory = null;
 
+    /**
+     * @var string[]
+     */
+    private array $methodCalls = [];
+
     private bool $singleton = true;
 
     /**
@@ -76,7 +81,15 @@ final class ClassBuilder
             $this->singleton,
             $this->tags,
             $this->factory,
+            array_values(array_unique($this->methodCalls))
         );
+    }
+
+    public function call(string $method): self
+    {
+        $this->methodCalls[] = $method;
+
+        return $this;
     }
 
     /**
