@@ -29,7 +29,7 @@ final class RequiredTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithBindingDecoratorFromConfig(): void
+    public function testCompilesWithBindingDecorator(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
@@ -149,7 +149,7 @@ final class RequiredTest extends AbstractContainerTestCase
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    public function testCompilesWithMultipleRequiredMethodFromConfig(): void
+    public function testCompilesWithMultipleRequiredMethod(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
@@ -225,7 +225,7 @@ final class RequiredTest extends AbstractContainerTestCase
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    public function testCompilesWithMultipleRequiredMethodWithArgumentsBindFromConfig(): void
+    public function testCompilesWithMultipleRequiredMethodWithArgumentsBind(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
@@ -341,7 +341,7 @@ final class RequiredTest extends AbstractContainerTestCase
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    public function testCompilesWithNonSingletonClassAndMultipleRequiredMethodFromConfig(): void
+    public function testCompilesWithNonSingletonClassAndMultipleRequiredMethod(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
@@ -427,8 +427,7 @@ final class RequiredTest extends AbstractContainerTestCase
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    public function testCompilesWithNonSingletonClassAndMultipleRequiredMethodWhichBoundNonSingletonClassesFromConfig(
-    ): void
+    public function testCompilesWithNonSingletonClassAndMultipleRequiredMethodWhichBoundNonSingletonClasses(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
@@ -524,7 +523,7 @@ final class RequiredTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithTraitWithMultipleRequiredMethodFromConfig(): void
+    public function testCompilesWithTraitWithMultipleRequiredMethod(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();

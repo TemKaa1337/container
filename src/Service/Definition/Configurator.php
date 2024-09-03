@@ -194,7 +194,6 @@ final class Configurator implements ConfiguratorInterface
                     $this->resolvingConfig,
                     $this->definitions,
                     $constructor->getParameters(),
-                    $definition,
                     $definition->getId(),
                     factory: null,
                     decorates: $definition->getDecorates(),
@@ -217,18 +216,20 @@ final class Configurator implements ConfiguratorInterface
         $methodReflection = $reflection->getMethod($factory->getMethod());
         if (!$methodReflection->isStatic()) {
             $this->configureDefinition($factory->getId());
-
-            /** @var ClassDefinition $factoryDefinition */
-            $factoryDefinition = $this->definitions->get($factory->getId());
-        } else {
-            $factoryDefinition = null;
         }
+        // if (!$methodReflection->isStatic()) {
+        //     $this->configureDefinition($factory->getId());
+        //
+        //     /** @var ClassDefinition $factoryDefinition */
+        //     $factoryDefinition = $this->definitions->get($factory->getId());
+        // } else {
+        //     $factoryDefinition = null;
+        // }
 
         $factoryArguments = $this->argumentConfigurator->configure(
             $this->resolvingConfig,
             $this->definitions,
             $methodReflection->getParameters(),
-            $factoryDefinition ?? $definition,
             $factory->getId(),
             $factory,
             $definition->getDecorates(),
@@ -273,7 +274,6 @@ final class Configurator implements ConfiguratorInterface
                 $this->resolvingConfig,
                 $this->definitions,
                 $reflection->getMethod($requiredMethodCall)->getParameters(),
-                $definition,
                 $definition->getId(),
                 factory: null,
                 decorates: $definition->getDecorates(),

@@ -27,7 +27,7 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithTaggedIteratorFromConfig(): void
+    public function testCompilesWithTaggedIterator(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
         $taggedClassName = ClassGenerator::getClassName();

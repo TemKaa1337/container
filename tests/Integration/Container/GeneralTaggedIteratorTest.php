@@ -25,9 +25,6 @@ final class GeneralTaggedIteratorTest extends AbstractContainerTestCase
     public function testDoesNotCompileDueToCircularExceptionByTaggedBinding(): void
     {
         // TODO: write test on tagging an interface from config
-        // TODO: add badge with code coverage
-        // TODO: add badge with infection score
-        // TODO: rename test methods froma ttribute/from config etc
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(

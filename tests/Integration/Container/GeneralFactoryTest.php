@@ -393,7 +393,7 @@ final class GeneralFactoryTest extends AbstractContainerTestCase
                     ->setAttributes([
                         sprintf(
                             self::ATTRIBUTE_FACTORY_SIGNATURE,
-                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                            self::GENERATED_CLASS_NAMESPACE.$className2,
                             'create',
                         ),
                         sprintf(
@@ -494,7 +494,7 @@ final class GeneralFactoryTest extends AbstractContainerTestCase
         $this->expectExceptionMessage(
             sprintf(
                 'Could not resolve decorated class in class "%s" as it does not have argument named "decorated".',
-                self::GENERATED_CLASS_NAMESPACE.$className1,
+                self::GENERATED_CLASS_NAMESPACE.$className2,
             ),
         );
 

@@ -28,7 +28,7 @@ final class DecoratorTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithDecoratorFromConfig(): void
+    public function testCompilesWithDecorator(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
@@ -85,7 +85,7 @@ final class DecoratorTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithDecoratorWithoutDecoratedServiceInjectedFromConfig(): void
+    public function testCompilesWithDecoratorWithoutDecoratedServiceInjected(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();

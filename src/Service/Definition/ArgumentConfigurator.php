@@ -48,7 +48,6 @@ final readonly class ArgumentConfigurator
      * @param Config                $config
      * @param Bag                   $definitions
      * @param ReflectionParameter[] $arguments
-     * @param ClassDefinition       $definition
      * @param class-string          $id
      * @param Factory|null          $factory
      * @param Decorator|null        $decorates
@@ -62,12 +61,11 @@ final readonly class ArgumentConfigurator
         Config $config,
         Bag $definitions,
         array $arguments,
-        ClassDefinition $definition,
         string $id,
         ?Factory $factory,
         ?Decorator $decorates,
     ): array {
-        (new DecoratorValidator())->validate($decorates, $arguments, $definition->getId());
+        (new DecoratorValidator())->validate($decorates, $arguments, $id);
 
         if ($decorates && count($arguments) === 1) {
             return [

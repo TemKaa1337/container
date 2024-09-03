@@ -66,13 +66,14 @@ final class FactoryValidator
         $reflectionMethod = $factoryReflection->getMethod($factory->getMethod());
         $methodReturnType = $reflectionMethod->getReturnType();
         if (!$methodReturnType instanceof ReflectionNamedType) {
+            /** @psalm-suppress PossiblyNullArgument */
             throw new ClassFactoryException(
                 sprintf(
                     'Factory method "%s::%s" for class "%s" must have an explicit non-union and non-intersection type, got "%s".',
                     $factoryReflection->getName(),
                     $factory->getMethod(),
                     $id,
-                    (string) $methodReturnType,
+                    $methodReturnType,
                 ),
             );
         }

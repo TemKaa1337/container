@@ -28,7 +28,7 @@ final class FactoryTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithBoundVariablesForFactoryMethodFromConfig(): void
+    public function testCompilesWithBoundVariablesForFactoryMethod(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
@@ -141,7 +141,7 @@ final class FactoryTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithDynamicFactoryFromConfig(): void
+    public function testCompilesWithDynamicFactory(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
@@ -368,7 +368,7 @@ final class FactoryTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithStaticFactoryFromConfig(): void
+    public function testCompilesWithStaticFactory(): void
     {
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();

@@ -27,7 +27,7 @@ final class BindVariableTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompileWithCastedBoundVariablesFromConfig(): void
+    public function testCompileWithCastedBoundVariables(): void
     {
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())
@@ -96,7 +96,7 @@ final class BindVariableTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithCastedBoundVariablesFromConfig(): void
+    public function testCompilesWithCastedBoundVariables(): void
     {
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())
@@ -159,7 +159,7 @@ final class BindVariableTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithCastingStringsFromConfig(): void
+    public function testCompilesWithCastingStrings(): void
     {
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())
@@ -222,7 +222,7 @@ final class BindVariableTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithEnumsFromConfig(): void
+    public function testCompilesWithEnums(): void
     {
         $className = ClassGenerator::getClassName();
         $unitEnum = ClassGenerator::getClassName().'UnitEnum';
@@ -390,7 +390,7 @@ final class BindVariableTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithMultipleEnvVarsInSingleBoundVariableFromConfig(): void
+    public function testCompilesWithMultipleEnvVarsInSingleBoundVariable(): void
     {
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())

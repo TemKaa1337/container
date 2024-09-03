@@ -46,7 +46,7 @@
         },
         "MethodCallRemoval": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\ArgumentConfigurator::configureInterfaceArgument",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\Argument\\InterfaceConfigurator::configure",
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\BaseConfigurator"
             ]
         },
