@@ -24,6 +24,42 @@ final class GeneralRequiredTest extends AbstractContainerTestCase
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
+    public function testDoesNotCompileDoeToMissingRequiredMethod(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+        ];
+        $config = $this->generateConfig(
+            includedPaths: $files,
+            classBindings: [
+                $this->generateClassConfig(self::GENERATED_CLASS_NAMESPACE.$className1, requiredMethodCalls: ['create']),
+            ],
+        );
+
+        $this->expectException(RequiredMethodCallException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Class "%s" does not have method called "create".',
+                self::GENERATED_CLASS_NAMESPACE.$className1,
+            ),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     public function testDoesNotCompileDueToIncorrectDecoratorSignature(): void
     {
         $className1 = ClassGenerator::getClassName();

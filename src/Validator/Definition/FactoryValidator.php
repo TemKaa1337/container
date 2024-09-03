@@ -31,9 +31,9 @@ final class FactoryValidator
         }
 
         $factoryReflection = new ReflectionClass($factory->getId());
-        $this->validateFactoryClass($factoryReflection, $factory, $id);
 
-        $this->validateRootClass($factoryReflection, $factory, $id);
+        $this->validateFactoryClass($factoryReflection, $factory, $id);
+        $this->validateFactoryMethod($factoryReflection, $factory, $id);
     }
 
     /**
@@ -45,8 +45,8 @@ final class FactoryValidator
             throw new ClassFactoryException(
                 sprintf(
                     'Factory method "%s::%s" for class "%s" cannot not be internal.',
-                    $factory->getMethod(),
                     $factoryReflection->getName(),
+                    $factory->getMethod(),
                     $id,
                 ),
             );
@@ -64,17 +64,7 @@ final class FactoryValidator
         }
 
         $reflectionMethod = $factoryReflection->getMethod($factory->getMethod());
-        if (!$methodReturnType = $reflectionMethod->getReturnType()) {
-            throw new ClassFactoryException(
-                sprintf(
-                    'Factory method "%s::%s" for class "%s" must have a return type.',
-                    $factoryReflection->getName(),
-                    $factory->getMethod(),
-                    $id,
-                ),
-            );
-        }
-
+        $methodReturnType = $reflectionMethod->getReturnType();
         if (!$methodReturnType instanceof ReflectionNamedType) {
             throw new ClassFactoryException(
                 sprintf(
@@ -82,7 +72,7 @@ final class FactoryValidator
                     $factoryReflection->getName(),
                     $factory->getMethod(),
                     $id,
-                    $methodReturnType,
+                    (string) $methodReturnType,
                 ),
             );
         }
@@ -100,9 +90,17 @@ final class FactoryValidator
     }
 
     /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @param ReflectionClass $factoryReflection
+     * @param Factory         $factory
+     * @param class-string    $id
+     *
+     * @return void
+     *
      * @throws ReflectionException
      */
-    private function validateRootClass(ReflectionClass $factoryReflection, Factory $factory, string $id): void
+    private function validateFactoryMethod(ReflectionClass $factoryReflection, Factory $factory, string $id): void
     {
         $rootClassReflection = new ReflectionClass($id);
 
@@ -114,8 +112,8 @@ final class FactoryValidator
         if (
             $factory->getId() !== $id
             && (
-                ($constructor && !$constructor->isPublic())
-                || ($emptyConstructor && !$emptyConstructor->isPublic())
+                $constructor && !$constructor->isPublic()
+                || $emptyConstructor && !$emptyConstructor->isPublic()
             )
         ) {
             throw new ClassFactoryException(
@@ -129,6 +127,11 @@ final class FactoryValidator
             );
         }
 
+        /**
+         * @psalm-suppress PossiblyNullReference, UndefinedMethod
+         *
+         * @var class-string|'self' $returnType
+         */
         $returnType = $factoryReflection->getMethod($factory->getMethod())->getReturnType()->getName();
         if ($returnType !== 'self' && $returnType !== $id && !$rootClassReflection->isSubclassOf($returnType)) {
             throw new ClassFactoryException(

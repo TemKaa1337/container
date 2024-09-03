@@ -44,22 +44,31 @@ final readonly class Instantiator
         }
 
         $factory = $definition->getFactory();
-        if ($factory && $factory->getMethod()->isStatic()) {
-            $factoryResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
+        if ($factory) {
+            if (!$factory->getMethod()->isStatic()) {
+                /**
+                 * @noinspection   PhpPossiblePolymorphicInvocationInspection
+                 * @psalm-suppress UndefinedInterfaceMethod
+                 *
+                 * @var array $unresolvedArguments
+                 */
+                $unresolvedArguments = $this->definitionRepository->find($factory->getId())->getArguments();
+                $factoryResolvedArguments = $this->resolveArguments($unresolvedArguments);
 
-            $instance = $factory->getId()::{$factory->getMethod()->getName()}(...$factoryResolvedArguments);
-        } else if ($factory && !$factory->getMethod()->isStatic()) {
-            $factoryResolvedArguments = $this->resolveArguments(
-                $this->definitionRepository->find($factory->getId())->getArguments(),
-            );
+                $factoryReflection = new ReflectionClass($factory->getId());
 
-            $factoryReflection = new ReflectionClass($factory->getId());
-
-            $factory = $factoryReflection->newInstanceArgs($factoryResolvedArguments);
+                $factoryInstance = $factoryReflection->newInstanceArgs($factoryResolvedArguments);
+            }
 
             $factoryMethodResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
 
-            $instance = $factory->{$factory->getMethod()->getName()}(...$factoryMethodResolvedArguments);
+            /**
+             * @psalm-suppress MixedMethodCall, PossiblyUndefinedVariable
+             * @var object $instance
+             */
+            $instance = $factory->getMethod()->isStatic()
+                ? $factory->getId()::{$factory->getMethod()->getName()}(...$factoryMethodResolvedArguments)
+                : $factoryInstance->{$factory->getMethod()->getName()}(...$factoryMethodResolvedArguments);
         } else {
             $resolvedArguments = $this->resolveArguments($definition->getArguments());
 
@@ -69,6 +78,7 @@ final readonly class Instantiator
         }
 
         foreach ($definition->getRequiredMethodCalls() as $method => $arguments) {
+            /** @psalm-suppress MixedMethodCall */
             $instance->{$method}(...$this->resolveArguments($arguments));
         }
 

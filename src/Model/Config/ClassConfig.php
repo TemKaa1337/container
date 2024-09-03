@@ -33,14 +33,6 @@ final readonly class ClassConfig
     ) {
     }
 
-    /**
-     * @return string[]
-     */
-    public function getMethodCalls(): array
-    {
-        return $this->methodCalls;
-    }
-
     public function getAliases(): array
     {
         return $this->aliases;
@@ -70,6 +62,14 @@ final readonly class ClassConfig
     public function getFactory(): ?Factory
     {
         return $this->factory;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getMethodCalls(): array
+    {
+        return $this->methodCalls;
     }
 
     /**

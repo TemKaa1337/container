@@ -6,6 +6,7 @@ namespace Tests\Integration;
 
 use DirectoryIterator;
 use PHPUnit\Framework\TestCase;
+use Temkaa\SimpleContainer\Builder\Config\Class\FactoryBuilder;
 use Temkaa\SimpleContainer\Builder\Config\ClassBuilder as ClassConfigBuilder;
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Model\Config;
@@ -87,7 +88,13 @@ abstract class AbstractTestCase extends TestCase
         }
 
         if ($factory) {
-            $builder->factory($factory);
+            $factoryBuilder = FactoryBuilder::make($factory->getId(), $factory->getMethod());
+
+            foreach ($factory->getBoundedVariables() as $variableName => $variableValue) {
+                $factoryBuilder->bindVariable($variableName, $variableValue);
+            }
+
+            $builder->factory($factoryBuilder->build());
         }
 
         foreach ($requiredMethodCalls as $method) {

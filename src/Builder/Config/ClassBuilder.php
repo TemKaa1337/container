@@ -81,7 +81,7 @@ final class ClassBuilder
             $this->singleton,
             $this->tags,
             $this->factory,
-            array_values(array_unique($this->methodCalls))
+            array_values(array_unique($this->methodCalls)),
         );
     }
 

@@ -958,6 +958,61 @@ final class FactoryTest extends AbstractContainerTestCase
         self::assertInstanceOf($class2::class, $class1->arg1);
     }
 
+    public function testCompilesWithDynamicFactoryMethodAndNonSingletonClass(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            self::GENERATED_CLASS_NAMESPACE.$className2,
+                            'create',
+                        ),
+                        sprintf(
+                            self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
+                            'true',
+                            'false',
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setBody([
+                        sprintf(
+                            <<<'METHOD'
+                            public function create(): %s
+                            {
+                                return new %s();
+                            }
+                            METHOD,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+        ];
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $classVersion1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        $classVersion2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $classVersion1);
+        self::assertNotSame($classVersion1, $classVersion2);
+    }
+
     /**
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface

@@ -120,16 +120,35 @@ final readonly class Resolver
             );
 
             if ($factory->getMethod()->isStatic()) {
+                /**
+                 * @psalm-suppress MixedMethodCall
+                 *
+                 * @var object $instance
+                 */
                 $instance = $factory->getId()::{$factory->getMethod()->getName()}(...$resolvedArguments);
             } else {
+                /**
+                 * @noinspection   PhpPossiblePolymorphicInvocationInspection
+                 *
+                 * @psalm-suppress UndefinedInterfaceMethod
+                 *
+                 * @var array $unresolvedFactoryClassArguments
+                 */
+                $unresolvedFactoryClassArguments = $this->definitions->get($factory->getId())->getArguments();
                 $factoryInstanceResolvedArguments = array_map(
                     fn (mixed $argument): mixed => $this->resolveArgument($argument),
-                    $this->definitions->get($factory->getId())->getArguments(),
+                    $unresolvedFactoryClassArguments,
                 );
 
                 $factoryId = $factory->getId();
+                /** @psalm-suppress MixedMethodCall */
                 $factoryInstance = new $factoryId(...$factoryInstanceResolvedArguments);
 
+                /**
+                 * @psalm-suppress MixedMethodCall, MixedAssignment
+                 *
+                 * @var object $instance
+                 */
                 $instance = $factoryInstance->{$factory->getMethod()->getName()}(...$resolvedArguments);
             }
         } else {
@@ -149,6 +168,7 @@ final readonly class Resolver
                 $methodArguments,
             );
 
+            /** @psalm-suppress MixedMethodCall */
             $instance->{$methodName}(...$resolvedArguments);
         }
 

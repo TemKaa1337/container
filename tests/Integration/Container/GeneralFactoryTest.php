@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Container;
 
+use Generator;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
@@ -81,7 +82,7 @@ final class GeneralFactoryTest extends AbstractContainerTestCase
         $this->expectException(ClassFactoryException::class);
         $this->expectExceptionMessage(
             sprintf(
-                'Factory method "%s::create" for class "%s" must have a return type.',
+                'Factory method "%s::create" for class "%s" must have an explicit non-union and non-intersection type, got "".',
                 self::GENERATED_CLASS_NAMESPACE.$className2,
                 self::GENERATED_CLASS_NAMESPACE.$className1,
             ),
@@ -554,6 +555,74 @@ final class GeneralFactoryTest extends AbstractContainerTestCase
                 self::GENERATED_CLASS_NAMESPACE.$className1,
             ),
         );
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileWithInternalClassAsFactoryClass(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            Generator::class,
+                            'create',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf('public readonly %s $arg1,', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setBody([
+                        sprintf(
+                            <<<'METHOD'
+                            public static function create(): %s
+                            {
+                                return new %s($this);
+                            }
+                            METHOD,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+        ];
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $this->expectException(ClassFactoryException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Factory method "Generator::create" for class "%s" cannot not be internal.',
+                self::GENERATED_CLASS_NAMESPACE.$className1,
+            ),
+        );
+
         (new ContainerBuilder())->add($config)->build();
     }
 

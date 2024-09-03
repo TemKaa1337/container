@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Attribute\Bind;
 
 use Attribute;
 
+/**
+ * @psalm-api
+ */
 #[Attribute(Attribute::TARGET_METHOD)]
 final class Required
 {

@@ -54,13 +54,6 @@ final class ClassDefinition implements DefinitionInterface
      */
     private array $tags = [];
 
-    public function addArgument(mixed $value): self
-    {
-        $this->arguments[] = $value;
-
-        return $this;
-    }
-
     /**
      * @param string[] $tags
      */

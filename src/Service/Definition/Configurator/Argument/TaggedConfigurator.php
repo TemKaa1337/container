@@ -41,6 +41,7 @@ final readonly class TaggedConfigurator
             return null;
         }
 
+        /** @var string[] $argumentAttributes */
         $argumentAttributes = AttributeExtractor::extractParameters(
             $argument->getAttributes(Tagged::class),
             parameter: 'tag',
@@ -49,14 +50,28 @@ final readonly class TaggedConfigurator
         $configExpression = BoundVariableProvider::provide($config, $argumentName, $id, $factory);
         $argumentExpression = $argumentAttributes ? current($argumentAttributes) : null;
 
-        if (!$configExpression && !$argumentExpression) {
+        if ($configExpression === null && $argumentExpression === null) {
             return null;
         }
 
-        if ($configExpression && (!is_string($configExpression) || !str_starts_with($configExpression, '!tagged'))) {
+        if ($configExpression === null) {
+            $this->validateArgumentType($argumentType, $argumentName, $id);
+
+            return new TaggedReference($argumentExpression);
+        }
+
+        if (!is_string($configExpression) || !str_starts_with($configExpression, '!tagged')) {
             return null;
         }
 
+        $this->validateArgumentType($argumentType, $argumentName, $id);
+
+        /** @psalm-suppress PossiblyInvalidArgument */
+        return new TaggedReference(trim(str_replace('!tagged', '', $configExpression)));
+    }
+
+    private function validateArgumentType(ReflectionNamedType $argumentType, string $argumentName, string $id): void
+    {
         if (!in_array($argumentType->getName(), ['iterable', 'array'])) {
             throw new UnresolvableArgumentException(
                 sprintf(
@@ -67,9 +82,5 @@ final readonly class TaggedConfigurator
                 ),
             );
         }
-
-        return new TaggedReference(
-            $configExpression ? trim(str_replace('!tagged', '', $configExpression)) : $argumentExpression,
-        );
     }
 }

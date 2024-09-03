@@ -166,6 +166,7 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
      */
     private function updateArgumentInterfaceReferences(array $arguments, string $interface): array
     {
+        /** @psalm-suppress MixedAssignment */
         foreach ($arguments as $index => $argument) {
             if (
                 $argument instanceof InterfaceReference
@@ -185,8 +186,10 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
         foreach ($unboundInterfaces as $definitionId => $unboundInterfaceIds) {
             /** @var ClassDefinition $definition */
             $definition = $definitions->get($definitionId);
+            $factory = $definition->getFactory();
+
             $resolvedDefinitionArguments = $definition->getArguments();
-            $resolvedFactoryArguments = $definition->getFactory()?->getMethod()?->getArguments();
+            $resolvedFactoryArguments = $factory?->getMethod()?->getArguments();
 
             foreach ($unboundInterfaceIds as $unboundInterfaceId) {
                 if (!$definitions->has($unboundInterfaceId)) {
@@ -218,9 +221,8 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
 
             $definition->setArguments($resolvedDefinitionArguments);
 
-            if ($resolvedFactoryArguments) {
-                $factory = $definition->getFactory();
-
+            /** @psalm-suppress RiskyTruthyFalsyComparison */
+            if ($resolvedFactoryArguments && $factory) {
                 $definition->setFactory(
                     ClassFactoryFactory::create(
                         $factory->getId(),
