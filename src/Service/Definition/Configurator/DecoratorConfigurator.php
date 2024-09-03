@@ -13,6 +13,9 @@ use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Service\Definition\ConfiguratorInterface;
 
+/**
+ * @internal
+ */
 final readonly class DecoratorConfigurator implements ConfiguratorInterface
 {
     public function __construct(
@@ -40,7 +43,7 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                 $currentDecorator = $decorators[$i];
                 $nextDecorator = $decorators[$i + 1] ?? null;
 
-                $arguments = $this->updateDecoratorReferences(
+                $definitionArguments = $this->updateDecoratorReferences(
                     $currentDecorator->getArguments(),
                     $decoratedId,
                     $definitions,
@@ -48,10 +51,10 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                     $rootDecoratedDefinition,
                 );
 
-                $currentDecorator->setArguments($arguments);
+                $currentDecorator->setArguments($definitionArguments);
 
                 if ($factory = $currentDecorator->getFactory()) {
-                    $arguments = $this->updateDecoratorReferences(
+                    $factoryArguments = $this->updateDecoratorReferences(
                         $factory->getMethod()->getArguments(),
                         $decoratedId,
                         $definitions,
@@ -63,16 +66,16 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                         ClassFactoryFactory::create(
                             $factory->getId(),
                             $factory->getMethod()->getName(),
-                            $arguments,
+                            $factoryArguments,
                             $factory->getMethod()->isStatic(),
                         ),
                     );
                 }
 
                 $requiredMethodCalls = $currentDecorator->getRequiredMethodCalls();
-                foreach ($requiredMethodCalls as $method => $arguments) {
+                foreach ($requiredMethodCalls as $method => $requiredMethodArguments) {
                     $requiredMethodCalls[$method] = $this->updateDecoratorReferences(
-                        $arguments,
+                        $requiredMethodArguments,
                         $decoratedId,
                         $definitions,
                         $previousDecorator,

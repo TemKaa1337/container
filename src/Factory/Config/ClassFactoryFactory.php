@@ -8,6 +8,9 @@ use Temkaa\SimpleContainer\Attribute\Factory as FactoryAttribute;
 use Temkaa\SimpleContainer\Model\Config\Factory;
 use UnitEnum;
 
+/**
+ * @internal
+ */
 final class ClassFactoryFactory
 {
     /**

@@ -9,6 +9,9 @@ use Temkaa\SimpleContainer\Attribute\Bind\Required;
 use Temkaa\SimpleContainer\Exception\RequiredMethodCallException;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 
+/**
+ * @internal
+ */
 final class RequiredMethodCallValidator
 {
     public function validate(?ClassConfig $config, ReflectionClass $reflection): void

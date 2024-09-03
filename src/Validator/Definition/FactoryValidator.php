@@ -11,6 +11,9 @@ use Temkaa\SimpleContainer\Exception\ClassFactoryException;
 use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
 use Temkaa\SimpleContainer\Model\Config\Factory;
 
+/**
+ * @internal
+ */
 final class FactoryValidator
 {
     /**

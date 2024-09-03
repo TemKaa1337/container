@@ -8,6 +8,9 @@ use ReflectionParameter;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 
+/**
+ * @internal
+ */
 final class DecoratorValidator
 {
     /**

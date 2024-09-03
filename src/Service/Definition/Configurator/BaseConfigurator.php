@@ -11,6 +11,9 @@ use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Service\Definition\ConfiguratorInterface;
 
+/**
+ * @internal
+ */
 final readonly class BaseConfigurator implements ConfiguratorInterface
 {
     public function __construct(

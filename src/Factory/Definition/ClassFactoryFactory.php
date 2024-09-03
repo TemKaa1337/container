@@ -7,6 +7,9 @@ namespace Temkaa\SimpleContainer\Factory\Definition;
 use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
 use Temkaa\SimpleContainer\Model\Definition\Class\Method;
 
+/**
+ * @internal
+ */
 final class ClassFactoryFactory
 {
     /**

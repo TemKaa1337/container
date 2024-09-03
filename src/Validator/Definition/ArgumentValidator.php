@@ -17,33 +17,39 @@ use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 final readonly class ArgumentValidator
 {
     /**
+     * @param ReflectionParameter[] $arguments
+     * @param class-string          $id
+     *
      * @throws ContainerExceptionInterface
      */
-    public function validate(ReflectionParameter $argument, string $id): void
+    public function validate(array $arguments, string $id): void
     {
-        $argumentType = $argument->getType();
-        if (!$argumentType) {
-            throw new UninstantiableEntryException(
-                sprintf(
-                    'Cannot instantiate entry with non-typed parameters "%s" -> "%s".',
-                    $id,
-                    $argument->getName(),
-                ),
-            );
-        }
+        foreach ($arguments as $argument) {
 
-        if (!$argumentType instanceof ReflectionNamedType) {
-            $formattedArgumentType = $argumentType instanceof ReflectionUnionType ? 'union' : 'intersection';
+            $argumentType = $argument->getType();
+            if (!$argumentType) {
+                throw new UninstantiableEntryException(
+                    sprintf(
+                        'Cannot instantiate entry with non-typed parameters "%s" -> "%s".',
+                        $id,
+                        $argument->getName(),
+                    ),
+                );
+            }
 
-            throw new UnresolvableArgumentException(
-                sprintf(
-                    'Cannot resolve argument "%s" with %s type "%s" in class "%s".',
-                    $argument->getName(),
-                    $formattedArgumentType,
-                    $argumentType,
-                    $id,
-                ),
-            );
+            if (!$argumentType instanceof ReflectionNamedType) {
+                $formattedArgumentType = $argumentType instanceof ReflectionUnionType ? 'union' : 'intersection';
+
+                throw new UnresolvableArgumentException(
+                    sprintf(
+                        'Cannot resolve argument "%s" with %s type "%s" in class "%s".',
+                        $argument->getName(),
+                        $formattedArgumentType,
+                        $argumentType,
+                        $id,
+                    ),
+                );
+            }
         }
     }
 }

@@ -4,7 +4,8 @@
 - Added option to bind something after object creation using `#[Required]` attribute;
 - Separated docs by functionality;
 - Updated examples;
-- Separated tests by configuration type, e.g. config or attribute.
+- Separated tests by configuration type, e.g. config or attribute;
+- Basic refactoring.
 
 ### v0.1.1
 ##### Features:

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model\Definition\Class;
 
+/**
+ * @internal
+ */
 final readonly class Method
 {
     public function __construct(

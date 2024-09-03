@@ -15,6 +15,9 @@ use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
 
+/**
+ * @internal
+ */
 final class Populator
 {
     public function populate(

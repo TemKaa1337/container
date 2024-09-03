@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Model\Config;
 
 use UnitEnum;
 
+/**
+ * @internal
+ */
 final readonly class ClassConfig
 {
     /**

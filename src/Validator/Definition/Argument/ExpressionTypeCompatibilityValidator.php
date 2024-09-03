@@ -9,6 +9,9 @@ use ReflectionParameter;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use UnitEnum;
 
+/**
+ * @internal
+ */
 final class ExpressionTypeCompatibilityValidator
 {
     public function validate(string|UnitEnum $expression, ReflectionParameter $argument, string $id): void

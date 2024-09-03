@@ -10,6 +10,8 @@ use Traversable;
 
 /**
  * @template-implements IteratorAggregate<class-string, DefinitionInterface>
+ *
+ * @internal
  */
 final class Bag implements IteratorAggregate
 {

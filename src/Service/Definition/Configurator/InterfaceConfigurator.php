@@ -13,6 +13,9 @@ use Temkaa\SimpleContainer\Model\Reference\Deferred\InterfaceReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
 use Temkaa\SimpleContainer\Service\Definition\ConfiguratorInterface;
 
+/**
+ * @internal
+ */
 final readonly class InterfaceConfigurator implements ConfiguratorInterface
 {
     public function __construct(
@@ -75,6 +78,11 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
         }
     }
 
+    /**
+     * @param Bag $definitions
+     *
+     * @return array<class-string, class-string[]>
+     */
     private function collectInterfaceImplementations(Bag $definitions): array
     {
         $interfaceImplementations = [];
@@ -96,6 +104,9 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
         return $interfaceImplementations;
     }
 
+    /**
+     * @return array<class-string, class-string[]>
+     */
     private function collectUnboundInterfaces(Bag $definitions): array
     {
         $unboundInterfaces = [];
@@ -104,40 +115,67 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                 continue;
             }
 
-            /** @psalm-suppress MixedAssignment */
-            foreach ($definition->getArguments() as $argument) {
-                if (!$argument instanceof InterfaceReference) {
-                    continue;
-                }
-
-                $unboundInterfaces[$definition->getId()] ??= [];
-                $unboundInterfaces[$definition->getId()][] = $argument->getId();
-            }
-
-            /** @psalm-suppress MixedAssignment */
-            foreach ($definition->getFactory()?->getMethod()?->getArguments() ?? [] as $argument) {
-                if (!$argument instanceof InterfaceReference) {
-                    continue;
-                }
-
-                $unboundInterfaces[$definition->getId()] ??= [];
-                $unboundInterfaces[$definition->getId()][] = $argument->getId();
-            }
-
-            /** @psalm-suppress MixedAssignment */
-            foreach ($definition->getRequiredMethodCalls() as $method => $requiredMethodArguments) {
-                foreach ($requiredMethodArguments as $requiredMethodArgument) {
-                    if (!$requiredMethodArgument instanceof InterfaceReference) {
-                        continue;
-                    }
-
-                    $unboundInterfaces[$definition->getId()] ??= [];
-                    $unboundInterfaces[$definition->getId()][] = $requiredMethodArgument->getId();
-                }
+            $unboundInterfaces = $this->getUnboundInterfacesFromArguments(
+                $definition->getArguments(),
+                $unboundInterfaces,
+                $definition->getId(),
+            );
+            $unboundInterfaces = $this->getUnboundInterfacesFromArguments(
+                $definition->getFactory()?->getMethod()?->getArguments() ?? [],
+                $unboundInterfaces,
+                $definition->getId(),
+            );
+            foreach ($definition->getRequiredMethodCalls() as $requiredMethodArguments) {
+                $unboundInterfaces = $this->getUnboundInterfacesFromArguments(
+                    $requiredMethodArguments,
+                    $unboundInterfaces,
+                    $definition->getId(),
+                );
             }
         }
 
         return $unboundInterfaces;
+    }
+
+    /**
+     * @param array                               $arguments
+     * @param array<class-string, class-string[]> $unboundInterfaces
+     * @param class-string                        $id
+     *
+     * @return array<class-string, class-string[]>
+     */
+    private function getUnboundInterfacesFromArguments(array $arguments, array $unboundInterfaces, string $id): array
+    {
+        foreach ($arguments as $argument) {
+            if (!$argument instanceof InterfaceReference) {
+                continue;
+            }
+
+            $unboundInterfaces[$id] ??= [];
+            $unboundInterfaces[$id][] = $argument->getId();
+        }
+
+        return $unboundInterfaces;
+    }
+
+    /**
+     * @param array        $arguments
+     * @param class-string $interface
+     *
+     * @return array
+     */
+    private function updateArgumentInterfaceReferences(array $arguments, string $interface): array
+    {
+        foreach ($arguments as $index => $argument) {
+            if (
+                $argument instanceof InterfaceReference
+                && $argument->getId() === $interface
+            ) {
+                $arguments[$index] = new Reference($interface);
+            }
+        }
+
+        return $arguments;
     }
 
     private function updateInterfaceReferences(Bag $definitions): void
@@ -147,7 +185,7 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
         foreach ($unboundInterfaces as $definitionId => $unboundInterfaceIds) {
             /** @var ClassDefinition $definition */
             $definition = $definitions->get($definitionId);
-            $resolvedArguments = $definition->getArguments();
+            $resolvedDefinitionArguments = $definition->getArguments();
             $resolvedFactoryArguments = $definition->getFactory()?->getMethod()?->getArguments();
 
             foreach ($unboundInterfaceIds as $unboundInterfaceId) {
@@ -157,46 +195,30 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                     );
                 }
 
-                /** @psalm-suppress MixedAssignment */
-                foreach ($resolvedArguments as $index => $resolvedArgument) {
-                    if (
-                        $resolvedArgument instanceof InterfaceReference
-                        && $resolvedArgument->getId() === $unboundInterfaceId
-                    ) {
-                        $resolvedArguments[$index] = new Reference($unboundInterfaceId);
-                    }
-                }
+                $resolvedDefinitionArguments = $this->updateArgumentInterfaceReferences(
+                    $resolvedDefinitionArguments,
+                    $unboundInterfaceId,
+                );
 
-                if ($resolvedFactoryArguments !== null) {
-                    /** @psalm-suppress MixedAssignment */
-                    foreach ($resolvedFactoryArguments as $index => $resolvedArgument) {
-                        if (
-                            $resolvedArgument instanceof InterfaceReference
-                            && $resolvedArgument->getId() === $unboundInterfaceId
-                        ) {
-                            $resolvedFactoryArguments[$index] = new Reference($unboundInterfaceId);
-                        }
-                    }
-                }
+                $resolvedFactoryArguments = $this->updateArgumentInterfaceReferences(
+                    $resolvedFactoryArguments ?? [],
+                    $unboundInterfaceId,
+                );
 
                 $requiredMethodCallsInfo = $definition->getRequiredMethodCalls();
-                foreach ($requiredMethodCallsInfo as $method => $arguments) {
-                    foreach ($arguments as $index => $argument) {
-                        if (
-                            $argument instanceof InterfaceReference
-                            && $argument->getId() === $unboundInterfaceId
-                        ) {
-                            $requiredMethodCallsInfo[$method][$index] = new Reference($unboundInterfaceId);
-                        }
-                    }
+                foreach ($requiredMethodCallsInfo as $method => $requiredMethodArguments) {
+                    $requiredMethodCallsInfo[$method] = $this->updateArgumentInterfaceReferences(
+                        $requiredMethodArguments,
+                        $unboundInterfaceId,
+                    );
                 }
 
                 $definition->setRequiredMethodCalls($requiredMethodCallsInfo);
             }
 
-            $definition->setArguments($resolvedArguments);
+            $definition->setArguments($resolvedDefinitionArguments);
 
-            if ($resolvedFactoryArguments !== null) {
+            if ($resolvedFactoryArguments) {
                 $factory = $definition->getFactory();
 
                 $definition->setFactory(
