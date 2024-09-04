@@ -39,6 +39,11 @@
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority"
             ]
         },
+        "NullSafeMethodCall": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::collectUnboundInterfaces"
+            ]
+        },
         "IncrementInteger": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority"
