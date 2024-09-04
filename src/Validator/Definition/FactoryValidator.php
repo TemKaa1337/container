@@ -106,17 +106,7 @@ final class FactoryValidator
         $rootClassReflection = new ReflectionClass($id);
 
         $constructor = $rootClassReflection->getConstructor();
-        $emptyConstructor = $rootClassReflection->hasMethod('__construct')
-            ? $rootClassReflection->getMethod('__construct')
-            : null;
-
-        if (
-            $factory->getId() !== $id
-            && (
-                $constructor && !$constructor->isPublic()
-                || $emptyConstructor && !$emptyConstructor->isPublic()
-            )
-        ) {
+        if ($constructor && !$constructor->isPublic() && $factory->getId() !== $id) {
             throw new ClassFactoryException(
                 sprintf(
                     'Invalid factory method "%s::%s" for class "%s", as class "%s" has inaccessible constructor.',
