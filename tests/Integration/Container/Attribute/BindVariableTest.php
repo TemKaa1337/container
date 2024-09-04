@@ -327,7 +327,7 @@ final class BindVariableTest extends AbstractContainerTestCase
                     ->setConstructorArguments([
                         sprintf(
                             self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE,
-                            'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)',
+                            '123',
                         ),
                         'public readonly string $arg,',
                     ]),
@@ -336,7 +336,15 @@ final class BindVariableTest extends AbstractContainerTestCase
 
         $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
 
-        $config = $this->generateConfig(includedPaths: $files);
+        $config = $this->generateConfig(
+            includedPaths: $files,
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: ['arg' => 'env(ENV_VAR_1)env(ENV_VAR_2)_env(ENV_VAR_3)-TEST-env(ENV_VAR_4)'],
+                ),
+            ],
+        );
 
         $container = (new ContainerBuilder())->add($config)->build();
 

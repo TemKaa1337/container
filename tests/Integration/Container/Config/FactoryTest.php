@@ -102,6 +102,12 @@ final class FactoryTest extends AbstractContainerTestCase
         ];
         $config = $this->generateConfig(
             includedPaths: $files,
+            globalBoundVariables: [
+                'varOne'   => '1',
+                'varTwo'   => '2',
+                'varThree' => '3',
+                '$varFour' => '4',
+            ],
             classBindings: [
                 $this->generateClassConfig(
                     className: self::GENERATED_CLASS_NAMESPACE.$className1,
