@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model\Config;
 
+use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use UnitEnum;
 
 /**
@@ -12,14 +13,14 @@ use UnitEnum;
 final readonly class ClassConfig
 {
     /**
-     * @param class-string                   $class
-     * @param string[]                       $aliases
-     * @param array<string, string|UnitEnum> $boundVariables
-     * @param Decorator|null                 $decorates
-     * @param bool                           $singleton
-     * @param string[]                       $tags
-     * @param Factory|null                   $factory
-     * @param string[]                       $methodCalls
+     * @param class-string                          $class
+     * @param string[]                              $aliases
+     * @param array<string, string|Tagged|UnitEnum> $boundVariables
+     * @param Decorator|null                        $decorates
+     * @param bool                                  $singleton
+     * @param string[]                              $tags
+     * @param Factory|null                          $factory
+     * @param string[]                              $methodCalls
      */
     public function __construct(
         private string $class,
@@ -39,7 +40,7 @@ final readonly class ClassConfig
     }
 
     /**
-     * @return array<string, string|UnitEnum>
+     * @return array<string, string|Tagged|UnitEnum>
      */
     public function getBoundedVariables(): array
     {

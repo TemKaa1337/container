@@ -1,3 +1,7 @@
+### v0.1.3
+##### Features:
+- Reworked binding tagged iterator from config from `->bindValue('variable', '!tagged tag')` to just `new Tagged()`.
+
 ### v0.1.2
 ##### Features:
 - Added option to declare class factories using `#[Factory]` attribute or from config;

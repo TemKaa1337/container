@@ -37,10 +37,6 @@ final readonly class TaggedConfigurator
         $argumentType = $argument->getType();
         $argumentName = $argument->getName();
 
-        if (!$argumentType->isBuiltin()) {
-            return null;
-        }
-
         /** @var string[] $argumentAttributes */
         $argumentAttributes = AttributeExtractor::extractParameters(
             $argument->getAttributes(Tagged::class),
@@ -60,14 +56,14 @@ final readonly class TaggedConfigurator
             return new TaggedReference($argumentExpression);
         }
 
-        if (!is_string($configExpression) || !str_starts_with($configExpression, '!tagged')) {
+        if (!$configExpression instanceof Tagged) {
             return null;
         }
 
         $this->validateArgumentType($argumentType, $argumentName, $id);
 
         /** @psalm-suppress PossiblyInvalidArgument */
-        return new TaggedReference(trim(str_replace('!tagged', '', $configExpression)));
+        return new TaggedReference($configExpression->tag);
     }
 
     private function validateArgumentType(ReflectionNamedType $argumentType, string $argumentName, string $id): void

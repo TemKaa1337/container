@@ -7,6 +7,7 @@ namespace Container\Config;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
+use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Tests\Helper\Service\ClassBuilder;
@@ -61,8 +62,8 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
                 $this->generateClassConfig(
                     className: self::GENERATED_CLASS_NAMESPACE.$collectorClassName,
                     variableBindings: [
-                        'dependency1' => '!tagged empty_2',
-                        'dependency2' => '!tagged empty_2',
+                        'dependency1' => new Tagged('empty_2'),
+                        'dependency2' => new Tagged('empty_2'),
                     ],
                 ),
                 $this->generateClassConfig(
@@ -126,7 +127,7 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
                 $this->generateClassConfig(
                     className: self::GENERATED_CLASS_NAMESPACE.$collectorClassName,
                     variableBindings: [
-                        'dependency1' => '!tagged empty_2',
+                        'dependency1' => new Tagged('empty_2'),
                     ],
                 ),
                 $this->generateClassConfig(

@@ -6,6 +6,7 @@ namespace Example;
 
 use Example\ConfigFactory\Class1;
 use Example\ConfigFactory\Class2;
+use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Builder\Config\Class\FactoryBuilder;
 use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
@@ -19,7 +20,7 @@ $config = ConfigBuilder::make()
         ClassBuilder::make(Class1::class)
             ->factory(
                 FactoryBuilder::make(Class2::class, method: 'create')
-                    ->bindVariable('tagged', '!tagged tag')
+                    ->bindVariable('tagged', new Tagged('tag'))
                     ->bindVariable('intVar', '1')
                     ->build(),
             )

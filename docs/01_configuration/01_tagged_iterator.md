@@ -13,6 +13,7 @@ declare(strict_types=1);
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Generator;
 use LogicException;
 
@@ -87,9 +88,8 @@ $config = ConfigBuilder::make()
     )
     ->bindClass(
         ClassBuilder::make(Processor::class)
-            // here you say that this argument is tagged iterator by typing `!tagged` and then you specify tag name
-            // which is `data.processor` in this case  
-            ->bindVariable('$processors', '!tagged data.processor')
+            // here you say that this argument is tagged iterator of classes with `data.processor` tag
+            ->bindVariable('$processors', new Tagged('data.processor'))
             ->build(),
     )
     ->build();

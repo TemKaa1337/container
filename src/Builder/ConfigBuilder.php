@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Builder;
 
+use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use UnitEnum;
@@ -24,7 +25,7 @@ final class ConfigBuilder
     private array $boundedInterfaces = [];
 
     /**
-     * @var array<string, string|UnitEnum>
+     * @var array<string, string|Tagged|UnitEnum>
      */
     private array $boundedVariables = [];
 
@@ -62,7 +63,7 @@ final class ConfigBuilder
         return $this;
     }
 
-    public function bindVariable(string $variableName, string|UnitEnum $expression): self
+    public function bindVariable(string $variableName, string|Tagged|UnitEnum $expression): self
     {
         $this->boundedVariables[str_replace('$', '', $variableName)] = $expression;
 

@@ -78,6 +78,7 @@ final readonly class OtherConfigurator
             );
         }
 
+        /** @var string|UnitEnum $expression */
         $expression = $configExpression ?? $argumentExpression;
 
         (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
