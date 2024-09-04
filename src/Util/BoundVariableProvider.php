@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Util;
 
+use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\Factory;
 use UnitEnum;
@@ -19,14 +20,14 @@ final class BoundVariableProvider
      * @param class-string $id
      * @param Factory|null $factory
      *
-     * @return string|UnitEnum|null
+     * @return null|string|Tagged|UnitEnum
      */
     public static function provide(
         Config $config,
         string $argumentName,
         string $id,
         ?Factory $factory,
-    ): null|string|UnitEnum {
+    ): null|string|Tagged|UnitEnum {
         $classBinding = $config->getBoundedClass($id);
         $classBoundVars = $classBinding?->getBoundedVariables() ?? [];
         $classFactoryBindings = $factory?->getBoundedVariables() ?? [];

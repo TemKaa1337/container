@@ -8,6 +8,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
+use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Tests\Helper\Service\ClassBuilder;
@@ -297,7 +298,7 @@ final class RequiredTest extends AbstractContainerTestCase
                     className: self::GENERATED_CLASS_NAMESPACE.$className1,
                     variableBindings: [
                         '$arg1' => 'env(APP_BOUND_VAR)',
-                        '$arg2' => '!tagged tag',
+                        '$arg2' => new Tagged('tag'),
                         '$arg3' => constant(self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$enum.'::EnumCaseOne'),
                     ],
                     requiredMethodCalls: [
