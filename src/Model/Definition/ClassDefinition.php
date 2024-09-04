@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Model\Definition;
 
 use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
 
 /**
  * @psalm-suppress MissingConstructor
@@ -13,6 +14,8 @@ use Temkaa\SimpleContainer\Model\Config\Decorator;
  */
 final class ClassDefinition implements DefinitionInterface
 {
+    public ?Factory $factory = null;
+
     /**
      * @var string[]
      */
@@ -42,16 +45,14 @@ final class ClassDefinition implements DefinitionInterface
     private bool $isSingleton = true;
 
     /**
+     * @var array<string, array>
+     */
+    private array $requiredMethodCalls = [];
+
+    /**
      * @var string[]
      */
     private array $tags = [];
-
-    public function addArgument(mixed $value): self
-    {
-        $this->arguments[] = $value;
-
-        return $this;
-    }
 
     /**
      * @param string[] $tags
@@ -125,6 +126,18 @@ final class ClassDefinition implements DefinitionInterface
         return $this;
     }
 
+    public function getFactory(): ?Factory
+    {
+        return $this->factory;
+    }
+
+    public function setFactory(Factory $factory): self
+    {
+        $this->factory = $factory;
+
+        return $this;
+    }
+
     /**
      * @return class-string
      */
@@ -169,6 +182,24 @@ final class ClassDefinition implements DefinitionInterface
     public function setInstance(object $instance): self
     {
         $this->instance = $instance;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, array>
+     */
+    public function getRequiredMethodCalls(): array
+    {
+        return $this->requiredMethodCalls;
+    }
+
+    /**
+     * @param array<string, array> $methods
+     */
+    public function setRequiredMethodCalls(array $methods): self
+    {
+        $this->requiredMethodCalls = $methods;
 
         return $this;
     }

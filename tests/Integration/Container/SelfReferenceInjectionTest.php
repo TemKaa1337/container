@@ -20,7 +20,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress MixedAssignment, MixedPropertyFetch, InternalMethod, ArgumentTypeCoercion, MixedArgument
+ * @psalm-suppress MixedAssignment, MixedPropertyFetch, InternalMethod, ArgumentTypeCoercion
+ * @psalm-suppress MixedArgument, MixedMethodCall, InternalClass
  */
 final class SelfReferenceInjectionTest extends AbstractContainerTestCase
 {
@@ -344,7 +345,7 @@ final class SelfReferenceInjectionTest extends AbstractContainerTestCase
                         sprintf('public readonly %s $inner,', '\\'.ContainerInterface::class),
                     ])
                     ->setInterfaceImplementations(['\\'.ContainerInterface::class])
-                    ->setMethods([
+                    ->setBody([
                         'public function get(string $id): null {return null;}',
                         'public function has(string $id): bool {return true;}',
                     ]),

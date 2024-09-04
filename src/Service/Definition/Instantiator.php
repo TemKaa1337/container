@@ -43,11 +43,58 @@ final readonly class Instantiator
             return $definition->getInstance();
         }
 
-        $arguments = [];
-        foreach ($definition->getArguments() as $argument) {
+        $factory = $definition->getFactory();
+        if ($factory) {
+            if (!$factory->getMethod()->isStatic()) {
+                /**
+                 * @noinspection   PhpPossiblePolymorphicInvocationInspection
+                 * @psalm-suppress UndefinedInterfaceMethod
+                 *
+                 * @var array $unresolvedArguments
+                 */
+                $unresolvedArguments = $this->definitionRepository->find($factory->getId())->getArguments();
+                $factoryResolvedArguments = $this->resolveArguments($unresolvedArguments);
+
+                $factoryReflection = new ReflectionClass($factory->getId());
+
+                $factoryInstance = $factoryReflection->newInstanceArgs($factoryResolvedArguments);
+            }
+
+            $factoryMethodResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
+
+            /**
+             * @psalm-suppress MixedMethodCall, PossiblyUndefinedVariable
+             * @var object $instance
+             */
+            $instance = $factory->getMethod()->isStatic()
+                ? $factory->getId()::{$factory->getMethod()->getName()}(...$factoryMethodResolvedArguments)
+                : $factoryInstance->{$factory->getMethod()->getName()}(...$factoryMethodResolvedArguments);
+        } else {
+            $resolvedArguments = $this->resolveArguments($definition->getArguments());
+
+            $reflection = new ReflectionClass($definition->getId());
+
+            $instance = $reflection->newInstanceArgs($resolvedArguments);
+        }
+
+        foreach ($definition->getRequiredMethodCalls() as $method => $arguments) {
+            /** @psalm-suppress MixedMethodCall */
+            $instance->{$method}(...$this->resolveArguments($arguments));
+        }
+
+        return $instance;
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    private function resolveArguments(array $arguments): array
+    {
+        $resolvedArguments = [];
+        foreach ($arguments as $argument) {
             if (!$argument instanceof ReferenceInterface) {
                 /** @psalm-suppress MixedAssignment */
-                $arguments[] = $argument;
+                $resolvedArguments[] = $argument;
 
                 continue;
             }
@@ -57,11 +104,9 @@ final readonly class Instantiator
                 ? array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getTag()))
                 : $this->instantiate($this->definitionRepository->find($argument->getId()));
 
-            $arguments[] = $resolvedArgument;
+            $resolvedArguments[] = $resolvedArgument;
         }
 
-        $reflection = new ReflectionClass($definition->getId());
-
-        return $reflection->newInstanceArgs($arguments);
+        return $resolvedArguments;
     }
 }

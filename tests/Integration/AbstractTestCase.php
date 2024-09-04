@@ -6,11 +6,13 @@ namespace Tests\Integration;
 
 use DirectoryIterator;
 use PHPUnit\Framework\TestCase;
+use Temkaa\SimpleContainer\Builder\Config\Class\FactoryBuilder;
 use Temkaa\SimpleContainer\Builder\Config\ClassBuilder as ClassConfigBuilder;
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Config\Factory;
 use Temkaa\SimpleContainer\Util\Flag;
 
 /**
@@ -22,40 +24,16 @@ abstract class AbstractTestCase extends TestCase
     protected const string ATTRIBUTE_AUTOWIRE_DEFAULT_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire]';
     protected const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
     protected const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s, signature: \'%s\')]';
+    protected const string ATTRIBUTE_FACTORY_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Factory(id: \'%s\', method: \'%s\')]';
     protected const string ATTRIBUTE_PARAMETER_RAW_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: %s)]';
     protected const string ATTRIBUTE_PARAMETER_STRING_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
+    protected const string ATTRIBUTE_REQUIRED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Required()]';
     protected const string ATTRIBUTE_TAGGED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Tagged(tag: \'%s\')]';
     protected const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Tag(name: \'%s\')]';
     protected const string GENERATED_CLASS_ABSOLUTE_NAMESPACE = '\Tests\Fixture\Stub\Class\\';
     protected const string GENERATED_CLASS_NAMESPACE = 'Tests\Fixture\Stub\Class\\';
     protected const string GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';
     protected const string GITKEEP_FILENAME = '.gitkeep';
-
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-
-        $envVariables = [
-            'APP_BOUND_VAR'           => 'bound_variable_value',
-            'ENV_CASTABLE_STRING_VAR' => '10.1',
-            'ENV_FLOAT_VAR'           => '10.1',
-            'ENV_BOOL_VAL'            => 'false',
-            'ENV_INT_VAL'             => '3',
-            'ENV_STRING_VAL'          => 'string',
-            'ENV_STRING_VAR'          => 'string',
-            'ENV_VAR_1'               => 'test_one',
-            'ENV_VAR_2'               => '10.1',
-            'ENV_VAR_3'               => 'test-three',
-            'ENV_VAR_4'               => 'true',
-            'CIRCULAR_ENV_VARIABLE_1' => 'env(CIRCULAR_ENV_VARIABLE_2)',
-            'CIRCULAR_ENV_VARIABLE_2' => 'env(CIRCULAR_ENV_VARIABLE_1)',
-            'ENV_VARIABLE_REFERENCE'  => 'env(ENV_STRING_VAR)_additional_string',
-        ];
-
-        foreach ($envVariables as $name => $value) {
-            putenv("$name=$value");
-        }
-    }
 
     public static function tearDownAfterClass(): void
     {
@@ -86,7 +64,9 @@ abstract class AbstractTestCase extends TestCase
         array $aliases = [],
         ?Decorator $decorates = null,
         bool $singleton = true,
+        ?Factory $factory = null,
         array $tags = [],
+        array $requiredMethodCalls = [],
     ): ClassConfig {
         $builder = ClassConfigBuilder::make($className);
 
@@ -105,6 +85,20 @@ abstract class AbstractTestCase extends TestCase
 
         foreach ($tags as $tag) {
             $builder->tag($tag);
+        }
+
+        if ($factory) {
+            $factoryBuilder = FactoryBuilder::make($factory->getId(), $factory->getMethod());
+
+            foreach ($factory->getBoundedVariables() as $variableName => $variableValue) {
+                $factoryBuilder->bindVariable($variableName, $variableValue);
+            }
+
+            $builder->factory($factoryBuilder->build());
+        }
+
+        foreach ($requiredMethodCalls as $method) {
+            $builder->call($method);
         }
 
         if ($singleton) {

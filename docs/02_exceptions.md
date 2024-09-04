@@ -1,6 +1,6 @@
 # This package throws the following exceptions:
 
-### \#[Temkaa\SimpleContainer\Exception\CircularReferenceException]
+### Temkaa\SimpleContainer\Exception\CircularReferenceException
 1. Thrown when you bounded circular bounded env variables into class property, e.g:
 `TEST_VAR_2=env(TEST_VAR_3), TEST_VAR_3=env(TEST_VAR_2)`.
 2. Thrown when you bounded circular bounded classes into class property, e.g:
@@ -26,23 +26,31 @@ class TestClass2
 }
 ```
 
-### \#[Temkaa\SimpleContainer\Exception\ClassNotFoundException]
+### Temkaa\SimpleContainer\Exception\ClassFactoryException
+Thrown when class factory is invalid for some reason. For example, factory is uninstantiable with dynamic factory method,
+or method does not exist, etc.
+
+### Temkaa\SimpleContainer\Exception\ClassNotFoundException
 Thrown when container tries to instantiate class which does not exist.
 
-### \#[Temkaa\SimpleContainer\Exception\DuplicatedEntryAliasException]
+### Temkaa\SimpleContainer\Exception\DuplicatedEntryAliasException
 Thrown when 2 different classes have the same alias.
 
-### \#[Temkaa\SimpleContainer\Exception\EntryNotFoundException]
+### Temkaa\SimpleContainer\Exception\EntryNotFoundException
 Thrown when you are trying to retrieve a class which is not present in container.
 
-### \#[Temkaa\SimpleContainer\Exception\NonAutowirableClassException]
+### Temkaa\SimpleContainer\Exception\NonAutowirableClassException
 Thrown when container tries to resolve parameter/class which is internal/in excluded config list/marked with 
 `Autowire(load: false)` attribute.
 
-### \#[Temkaa\SimpleContainer\Exception\UninstantiableEntryException]
+### Temkaa\SimpleContainer\Exception\RequiredMethodCallException
+Thrown when method you want to call is invalid for some reason. For example, it is static (not supported yet), method is 
+not public, class does not have such method, etc.
+
+### Temkaa\SimpleContainer\Exception\UninstantiableEntryException
 Thrown when container tries to resolve class which is `!$reflection->isInstantiable()`.
 
-### \#[Temkaa\SimpleContainer\Exception\UnresolvableArgumentException]
+### Temkaa\SimpleContainer\Exception\UnresolvableArgumentException
 Thrown when container cannot resolve class constructor argument, e.g.:
 ```php
 <?php
@@ -69,7 +77,7 @@ class TestClass3
 }
 ```
 
-### \#[Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException]
+### Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException
 Thrown when, for example, you are trying to bind incompatible types, e.g.:
 ```php
 <?php

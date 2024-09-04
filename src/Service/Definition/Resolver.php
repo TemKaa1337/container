@@ -113,14 +113,66 @@ final readonly class Resolver
 
         Flag::toggle($definition->getId(), group: 'resolver');
 
-        $resolvedArguments = array_map(
-            fn (mixed $argument): mixed => $this->resolveArgument($argument),
-            $definition->getArguments(),
-        );
+        if ($factory = $definition->getFactory()) {
+            $resolvedArguments = array_map(
+                fn (mixed $argument): mixed => $this->resolveArgument($argument),
+                $factory->getMethod()->getArguments(),
+            );
 
-        $reflection = new ReflectionClass($definition->getId());
+            if ($factory->getMethod()->isStatic()) {
+                /**
+                 * @psalm-suppress MixedMethodCall
+                 *
+                 * @var object $instance
+                 */
+                $instance = $factory->getId()::{$factory->getMethod()->getName()}(...$resolvedArguments);
+            } else {
+                /**
+                 * @noinspection   PhpPossiblePolymorphicInvocationInspection
+                 *
+                 * @psalm-suppress UndefinedInterfaceMethod
+                 *
+                 * @var array $unresolvedFactoryClassArguments
+                 */
+                $unresolvedFactoryClassArguments = $this->definitions->get($factory->getId())->getArguments();
+                $factoryInstanceResolvedArguments = array_map(
+                    fn (mixed $argument): mixed => $this->resolveArgument($argument),
+                    $unresolvedFactoryClassArguments,
+                );
 
-        $definition->setInstance($reflection->newInstanceArgs($resolvedArguments));
+                $factoryId = $factory->getId();
+                /** @psalm-suppress MixedMethodCall */
+                $factoryInstance = new $factoryId(...$factoryInstanceResolvedArguments);
+
+                /**
+                 * @psalm-suppress MixedMethodCall, MixedAssignment
+                 *
+                 * @var object $instance
+                 */
+                $instance = $factoryInstance->{$factory->getMethod()->getName()}(...$resolvedArguments);
+            }
+        } else {
+            $resolvedArguments = array_map(
+                fn (mixed $argument): mixed => $this->resolveArgument($argument),
+                $definition->getArguments(),
+            );
+
+            $reflection = new ReflectionClass($definition->getId());
+
+            $instance = $reflection->newInstanceArgs($resolvedArguments);
+        }
+
+        foreach ($definition->getRequiredMethodCalls() as $methodName => $methodArguments) {
+            $resolvedArguments = array_map(
+                fn (mixed $argument): mixed => $this->resolveArgument($argument),
+                $methodArguments,
+            );
+
+            /** @psalm-suppress MixedMethodCall */
+            $instance->{$methodName}(...$resolvedArguments);
+        }
+
+        $definition->setInstance($instance);
 
         Flag::untoggle($definition->getId(), group: 'resolver');
     }

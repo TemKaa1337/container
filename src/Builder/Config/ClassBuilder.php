@@ -7,6 +7,7 @@ namespace Temkaa\SimpleContainer\Builder\Config;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Config\Factory;
 use UnitEnum;
 
 /**
@@ -25,6 +26,13 @@ final class ClassBuilder
     private array $boundedVariables = [];
 
     private ?Decorator $decorates = null;
+
+    private ?Factory $factory = null;
+
+    /**
+     * @var string[]
+     */
+    private array $methodCalls = [];
 
     private bool $singleton = true;
 
@@ -72,7 +80,16 @@ final class ClassBuilder
             $this->decorates,
             $this->singleton,
             $this->tags,
+            $this->factory,
+            array_values(array_unique($this->methodCalls)),
         );
+    }
+
+    public function call(string $method): self
+    {
+        $this->methodCalls[] = $method;
+
+        return $this;
     }
 
     /**
@@ -84,6 +101,13 @@ final class ClassBuilder
         string $signature = Decorator::DEFAULT_SIGNATURE,
     ): self {
         $this->decorates = DecoratorFactory::create($id, $priority, $signature);
+
+        return $this;
+    }
+
+    public function factory(Factory $factory): self
+    {
+        $this->factory = $factory;
 
         return $this;
     }

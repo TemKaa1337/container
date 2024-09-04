@@ -5,51 +5,100 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Service\Definition;
 
 use Psr\Container\ContainerExceptionInterface;
-use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionParameter;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
-use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
-use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
-use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Config;
+use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\SimpleContainer\Model\Config\Factory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\InterfaceReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
-use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
-use Temkaa\SimpleContainer\Util\ExpressionParser;
-use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
-use Temkaa\SimpleContainer\Util\TypeCaster;
-use Temkaa\SimpleContainer\Validator\Argument\ExpressionTypeCompatibilityValidator;
-use Temkaa\SimpleContainer\Validator\ArgumentValidator;
-use UnitEnum;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InterfaceConfigurator;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\OtherConfigurator;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\TaggedConfigurator;
+use Temkaa\SimpleContainer\Validator\Definition\Argument\DecoratorValidator;
+use Temkaa\SimpleContainer\Validator\Definition\ArgumentValidator;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @internal
  */
-final class ArgumentConfigurator
+final readonly class ArgumentConfigurator
 {
     private Configurator $definitionConfigurator;
 
-    private ExpressionParser $expressionParser;
+    private InterfaceConfigurator $interfaceConfigurator;
+
+    private OtherConfigurator $otherConfigurator;
+
+    private TaggedConfigurator $taggedConfigurator;
 
     public function __construct(Configurator $definitionConfigurator)
     {
         $this->definitionConfigurator = $definitionConfigurator;
-        $this->expressionParser = new ExpressionParser();
+        $this->interfaceConfigurator = new InterfaceConfigurator($definitionConfigurator);
+        $this->otherConfigurator = new OtherConfigurator();
+        $this->taggedConfigurator = new TaggedConfigurator();
+    }
+
+    /**
+     * @param Config                $config
+     * @param Bag                   $definitions
+     * @param ReflectionParameter[] $arguments
+     * @param class-string          $id
+     * @param Factory|null          $factory
+     * @param Decorator|null        $decorates
+     *
+     * @return array
+     *
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function configure(
+        Config $config,
+        Bag $definitions,
+        array $arguments,
+        string $id,
+        ?Factory $factory,
+        ?Decorator $decorates,
+    ): array {
+        (new DecoratorValidator())->validate($decorates, $arguments, $id);
+
+        if ($decorates && count($arguments) === 1) {
+            return [
+                new DecoratorReference(
+                    $decorates->getId(),
+                    $decorates->getPriority(),
+                    $decorates->getSignature(),
+                ),
+            ];
+        }
+
+        (new ArgumentValidator())->validate($arguments, $id);
+
+        return array_map(
+            fn (mixed $argument): mixed => $this->configureArgument(
+                $config,
+                $definitions,
+                $argument,
+                $id,
+                $factory,
+                $decorates,
+            ),
+            $arguments,
+        );
     }
 
     /**
      * @param Config              $config
      * @param Bag                 $definitions
      * @param ReflectionParameter $argument
-     * @param ClassDefinition     $definition
      * @param class-string        $id
+     * @param Factory|null        $factory
+     * @param Decorator|null      $decorates
      *
      * @return mixed
      *
@@ -60,26 +109,22 @@ final class ArgumentConfigurator
         Config $config,
         Bag $definitions,
         ReflectionParameter $argument,
-        ClassDefinition $definition,
         string $id,
+        ?Factory $factory,
+        ?Decorator $decorates,
     ): mixed {
-        (new ArgumentValidator())->validate($argument, $id);
-
-        $decorates = $definition->getDecorates();
         if ($decorates && $decorates->getSignature() === $argument->getName()) {
-            return new DecoratorReference(
-                $decorates->getId(), $decorates->getPriority(), $decorates->getSignature(),
-            );
+            return new DecoratorReference($decorates->getId(), $decorates->getPriority(), $decorates->getSignature());
         }
 
-        if ($configuredArgument = $this->configureTaggedArgument($config, $argument, $id)) {
+        if ($configuredArgument = $this->taggedConfigurator->configure($config, $argument, $id, $factory)) {
             return $configuredArgument;
         }
 
         [
             'value'    => $configuredArgument,
             'resolved' => $resolved,
-        ] = $this->configureNonObjectArgument($config, $argument, $id);
+        ] = $this->otherConfigurator->configure($config, $argument, $id, $factory);
 
         if ($resolved) {
             return $configuredArgument;
@@ -90,7 +135,7 @@ final class ArgumentConfigurator
         /** @var class-string $entryId */
         $entryId = $argumentType->getName();
 
-        if ($configuredArgument = $this->configureInterfaceArgument($config, $definitions, $entryId)) {
+        if ($configuredArgument = $this->interfaceConfigurator->configure($config, $definitions, $entryId)) {
             return $configuredArgument;
         }
 
@@ -99,179 +144,5 @@ final class ArgumentConfigurator
         }
 
         return new Reference($entryId);
-    }
-
-    /**
-     * @param Config       $config
-     * @param Bag          $definitions
-     * @param class-string $entryId
-     *
-     * @return ReferenceInterface|null
-     *
-     * @throws ContainerExceptionInterface
-     * @throws ReflectionException
-     */
-    private function configureInterfaceArgument(Config $config, Bag $definitions, string $entryId): ?ReferenceInterface
-    {
-        try {
-            $dependencyReflection = new ReflectionClass($entryId);
-        } catch (ReflectionException) {
-            throw new ClassNotFoundException($entryId);
-        }
-
-        if (!$dependencyReflection->isInterface()) {
-            return null;
-        }
-
-        $interfaceName = $dependencyReflection->getName();
-        if (!$config->hasBoundInterface($interfaceName)) {
-            return new InterfaceReference($interfaceName);
-        }
-
-        $interfaceImplementation = $config->getBoundInterfaceImplementation($interfaceName);
-        $definitions->add(
-            InterfaceFactory::create(
-                $interfaceName,
-                $interfaceImplementation,
-            ),
-        );
-
-        $this->definitionConfigurator->configureDefinition($interfaceImplementation);
-
-        return new Reference($interfaceName);
-    }
-
-    /**
-     * @param Config              $config
-     * @param ReflectionParameter $argument
-     * @param class-string        $id
-     *
-     * @return array{value: mixed, resolved: boolean}
-     *
-     * @throws ContainerExceptionInterface
-     */
-    private function configureNonObjectArgument(Config $config, ReflectionParameter $argument, string $id): array
-    {
-        /** @var ReflectionNamedType $argumentType */
-        $argumentType = $argument->getType();
-        $argumentTypeName = $argumentType->getName();
-
-        if ($argumentAttributes = $argument->getAttributes(Parameter::class)) {
-            $expression = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'expression')[0];
-
-            (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
-
-            if ($expression instanceof UnitEnum) {
-                return ['value' => $expression, 'resolved' => true];
-            }
-
-            return [
-                'value'    => TypeCaster::cast(
-                    $this->expressionParser->parse($expression),
-                    $argumentTypeName,
-                ),
-                'resolved' => true,
-            ];
-        }
-
-        $argumentName = $argument->getName();
-        $expression = $this->getBoundVariableValue($config, $argumentName, $id);
-        if ($expression === null) {
-            if (!$argumentType->isBuiltin()) {
-                return ['value' => null, 'resolved' => false];
-            }
-
-            if ($argumentType->allowsNull()) {
-                return ['value' => null, 'resolved' => true];
-            }
-
-            throw new UnresolvableArgumentException(
-                sprintf(
-                    'Cannot instantiate entry "%s" with argument "%s::%s".',
-                    $id,
-                    $argumentName,
-                    $argumentTypeName,
-                ),
-            );
-        }
-
-        (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
-
-        if ($expression instanceof UnitEnum) {
-            return ['value' => $expression, 'resolved' => true];
-        }
-
-        return [
-            'value'    => TypeCaster::cast($this->expressionParser->parse($expression), $argumentTypeName),
-            'resolved' => true,
-        ];
-    }
-
-    /**
-     * @param Config              $config
-     * @param ReflectionParameter $argument
-     * @param class-string        $id
-     *
-     * @return TaggedReference|null
-     */
-    private function configureTaggedArgument(
-        Config $config,
-        ReflectionParameter $argument,
-        string $id,
-    ): ?TaggedReference {
-        /** @var ReflectionNamedType $argumentType */
-        $argumentType = $argument->getType();
-
-        if ($argumentAttributes = $argument->getAttributes(Tagged::class)) {
-            /** @var string $boundTagName */
-            $boundTagName = AttributeExtractor::extractParameters($argumentAttributes, parameter: 'tag')[0];
-
-            if (!in_array($argumentType->getName(), ['iterable', 'array'])) {
-                throw new UnresolvableArgumentException(
-                    sprintf(
-                        'Cannot instantiate entry "%s" with tagged argument "%s::%s" as it\'s type is neither "array" or "iterable".',
-                        $id,
-                        $argument->getName(),
-                        $argumentType->getName(),
-                    ),
-                );
-            }
-
-            return new TaggedReference(tag: $boundTagName);
-        }
-
-        if (!$argumentType->isBuiltin()) {
-            return null;
-        }
-
-        $boundVariableValue = $this->getBoundVariableValue($config, $argument->getName(), $id);
-        if (!is_string($boundVariableValue)) {
-            return null;
-        }
-
-        /** @psalm-suppress RiskyTruthyFalsyComparison */
-        if ($boundVariableValue && str_starts_with($boundVariableValue, '!tagged')) {
-            $tag = trim(str_replace('!tagged', '', $boundVariableValue));
-
-            return new TaggedReference($tag);
-        }
-
-        return null;
-    }
-
-    /**
-     * @param Config       $config
-     * @param string       $argumentName
-     * @param class-string $id
-     *
-     * @return null|string|UnitEnum
-     */
-    private function getBoundVariableValue(Config $config, string $argumentName, string $id): null|string|UnitEnum
-    {
-        $boundClassInfo = $config->getBoundedClasses()[$id] ?? null;
-        $classBoundVars = $boundClassInfo?->getBoundedVariables() ?? [];
-        $globalBoundVars = $config->getBoundedVariables();
-
-        return $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;
     }
 }

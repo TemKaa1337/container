@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator\Argument;
+namespace Temkaa\SimpleContainer\Validator\Definition\Argument;
 
 use ReflectionNamedType;
 use ReflectionParameter;
 use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use UnitEnum;
 
+/**
+ * @internal
+ */
 final class ExpressionTypeCompatibilityValidator
 {
     public function validate(string|UnitEnum $expression, ReflectionParameter $argument, string $id): void

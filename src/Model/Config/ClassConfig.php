@@ -6,6 +6,9 @@ namespace Temkaa\SimpleContainer\Model\Config;
 
 use UnitEnum;
 
+/**
+ * @internal
+ */
 final readonly class ClassConfig
 {
     /**
@@ -15,6 +18,8 @@ final readonly class ClassConfig
      * @param Decorator|null                 $decorates
      * @param bool                           $singleton
      * @param string[]                       $tags
+     * @param Factory|null                   $factory
+     * @param string[]                       $methodCalls
      */
     public function __construct(
         private string $class,
@@ -23,6 +28,8 @@ final readonly class ClassConfig
         private ?Decorator $decorates,
         private bool $singleton,
         private array $tags,
+        private ?Factory $factory,
+        private array $methodCalls,
     ) {
     }
 
@@ -50,6 +57,19 @@ final readonly class ClassConfig
     public function getDecorates(): ?Decorator
     {
         return $this->decorates;
+    }
+
+    public function getFactory(): ?Factory
+    {
+        return $this->factory;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getMethodCalls(): array
+    {
+        return $this->methodCalls;
     }
 
     /**

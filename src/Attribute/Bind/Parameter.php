@@ -10,7 +10,7 @@ use UnitEnum;
 /**
  * @psalm-api
  */
-#[Attribute(Attribute::TARGET_PARAMETER)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_METHOD)]
 final readonly class Parameter
 {
     public function __construct(

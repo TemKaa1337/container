@@ -7,6 +7,9 @@ namespace Temkaa\SimpleContainer\Factory\Definition;
 use Temkaa\SimpleContainer\Attribute\Decorates;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 
+/**
+ * @internal
+ */
 final class DecoratorFactory
 {
     /**
