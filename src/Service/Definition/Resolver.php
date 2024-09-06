@@ -13,7 +13,8 @@ use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedReference;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\InstanceOfIteratorReference;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedIteratorReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
 use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
@@ -78,7 +79,11 @@ final readonly class Resolver
             return $argument;
         }
 
-        if ($argument instanceof TaggedReference) {
+        if ($argument instanceof TaggedIteratorReference) {
+            return $this->resolveTaggedIteratorArgument($argument);
+        }
+
+        if ($argument instanceof InstanceOfIteratorReference) {
             return $this->resolveTaggedArgument($argument);
         }
 
@@ -181,7 +186,28 @@ final readonly class Resolver
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    private function resolveTaggedArgument(TaggedReference $argument): array
+    private function resolveTaggedArgument(InstanceOfIteratorReference $argument): array
+    {
+        $definitionRepository = new DefinitionRepository($this->definitions);
+        $instanceOfDefinitions = $definitionRepository->findAllByInstanceOf($argument->getId());
+
+        $resolvedArguments = [];
+        foreach ($instanceOfDefinitions as $instanceOfDefinition) {
+            $this->resolveDefinition($this->definitions->get($instanceOfDefinition->getId()));
+
+            $resolvedArguments[] = $this->instantiator->instantiate(
+                $this->definitions->get($instanceOfDefinition->getId()),
+            );
+        }
+
+        return $resolvedArguments;
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    private function resolveTaggedIteratorArgument(TaggedIteratorReference $argument): array
     {
         $definitionRepository = new DefinitionRepository($this->definitions);
         $taggedDefinitions = $definitionRepository->findAllByTag($argument->getTag());

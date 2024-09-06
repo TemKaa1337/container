@@ -34,7 +34,7 @@ final class GeneralTaggedIteratorTest extends AbstractContainerTestCase
                     ->setHasConstructor(true)
                     ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'circular')])
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'circular'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'circular'),
                         'public readonly iterable $arg',
                     ]),
             )
@@ -71,7 +71,7 @@ final class GeneralTaggedIteratorTest extends AbstractContainerTestCase
                     ->setName($className)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'non_iterable_tag'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'non_iterable_tag'),
                         'public readonly string $arg',
                     ]),
             )

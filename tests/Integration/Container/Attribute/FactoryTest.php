@@ -578,6 +578,99 @@ final class FactoryTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
+    public function testCompilesWithBoundedInstanceOfIteratorToFactoryMethod(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        $interface = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface.php")
+                    ->setName($interface)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className2,
+                            'create',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly array $arg1,',
+                        'public readonly string $arg2,',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setBody([
+                        sprintf(
+                            <<<'METHOD'
+                            public static function create(%s array $args, %s string $envVar): %s
+                            {
+                                return new %s($args, $envVar);
+                            }
+                            METHOD,
+                            sprintf(
+                                self::ATTRIBUTE_INSTANCE_OF_ITERATOR_SIGNATURE,
+                                self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            ),
+                            sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'some_string'),
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+        ];
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        self::assertSame(
+            [
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className3),
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className4),
+            ],
+            $class->arg1,
+        );
+        self::assertEquals('some_string', $class->arg2);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithBoundedTaggedIteratorToFactoryMethod(): void
     {
         $className1 = ClassGenerator::getClassName();
@@ -614,7 +707,7 @@ final class FactoryTest extends AbstractContainerTestCase
                                 return new %s($args, $envVar);
                             }
                             METHOD,
-                            sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'tag'),
+                            sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'tag'),
                             sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'some_string'),
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,

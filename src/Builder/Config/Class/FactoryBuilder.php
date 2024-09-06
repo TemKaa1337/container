@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Builder\Config\Class;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
 use Temkaa\SimpleContainer\Factory\Config\ClassFactoryFactory;
 use Temkaa\SimpleContainer\Model\Config\Factory;
 use UnitEnum;
@@ -15,7 +16,7 @@ use UnitEnum;
 final class FactoryBuilder
 {
     /**
-     * @var array<string, string|Tagged|UnitEnum>
+     * @var array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum>
      */
     private array $boundVariables = [];
 
@@ -36,7 +37,7 @@ final class FactoryBuilder
     ) {
     }
 
-    public function bindVariable(string $name, string|Tagged|UnitEnum $value): self
+    public function bindVariable(string $name, string|InstanceOfIterator|TaggedIterator|UnitEnum $value): self
     {
         $this->boundVariables[str_replace('$', '', $name)] = $value;
 

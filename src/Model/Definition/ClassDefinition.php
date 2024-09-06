@@ -42,6 +42,11 @@ final class ClassDefinition implements DefinitionInterface
 
     private object $instance;
 
+    /**
+     * @var class-string[]
+     */
+    private array $instanceOf = [];
+
     private bool $isSingleton = true;
 
     /**
@@ -169,7 +174,7 @@ final class ClassDefinition implements DefinitionInterface
      */
     public function setImplements(array $interfaces): self
     {
-        $this->implements = array_values(array_unique($interfaces));
+        $this->implements = $interfaces;
 
         return $this;
     }
@@ -182,6 +187,24 @@ final class ClassDefinition implements DefinitionInterface
     public function setInstance(object $instance): self
     {
         $this->instance = $instance;
+
+        return $this;
+    }
+
+    /**
+     * @return class-string[]
+     */
+    public function getInstanceOf(): array
+    {
+        return $this->instanceOf;
+    }
+
+    /**
+     * @param class-string[] $instanceOf
+     */
+    public function setInstanceOf(array $instanceOf): self
+    {
+        $this->instanceOf = $instanceOf;
 
         return $this;
     }

@@ -340,7 +340,7 @@ final class SelfReferenceInjectionTest extends AbstractContainerTestCase
                     ->setName($className1)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'container_tag'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'container_tag'),
                         'public readonly iterable $tagged,',
                         sprintf('public readonly %s $inner,', '\\'.ContainerInterface::class),
                     ])

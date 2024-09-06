@@ -84,7 +84,7 @@ final class DecoratorTest extends AbstractContainerTestCase
                             'public readonly %s $inner,',
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1,
                         ),
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'Interface2'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'Interface2'),
                         'public readonly iterable $dependency,',
                     ])
                     ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1]),

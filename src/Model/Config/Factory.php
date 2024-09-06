@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model\Config;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
 use UnitEnum;
 
 /**
@@ -13,9 +14,9 @@ use UnitEnum;
 final readonly class Factory
 {
     /**
-     * @param class-string                          $id
-     * @param string                                $method
-     * @param array<string, string|Tagged|UnitEnum> $boundedVariables
+     * @param class-string                                                     $id
+     * @param string                                                           $method
+     * @param array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum> $boundedVariables
      */
     public function __construct(
         private string $id,
@@ -25,7 +26,7 @@ final readonly class Factory
     }
 
     /**
-     * @return array<string, string|Tagged|UnitEnum>
+     * @return array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum>
      */
     public function getBoundedVariables(): array
     {
