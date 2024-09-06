@@ -1,3 +1,8 @@
+### v0.1.4
+##### Features:
+- Renamed `Tagged` attribute to `TaggedIterator`;
+- Added `InstanceOfIterator` attribute to allow binding array of object which are subclasses of given class.
+
 ### v0.1.3
 ##### Features:
 - Reworked binding tagged iterator from config from `->bindValue('variable', '!tagged tag')` to just `new Tagged()`.

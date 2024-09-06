@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Example\AttributeTaggedIterator;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
 
 final readonly class Collector
 {
     public function __construct(
-        #[Tagged('tag')]
+        #[TaggedIterator('tag')]
         public array $objects,
     ) {
     }

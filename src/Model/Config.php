@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Model;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use UnitEnum;
 
 final readonly class Config
 {
     /**
-     * @param array<class-string, ClassConfig>      $boundedClasses
-     * @param array<class-string, class-string>     $boundedInterfaces
-     * @param array<string, string|Tagged|UnitEnum> $boundedVariables
-     * @param string[]                              $excludedPaths
-     * @param string[]                              $includedPaths
+     * @param array<class-string, ClassConfig>                                 $boundedClasses
+     * @param array<class-string, class-string>                                $boundedInterfaces
+     * @param array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum> $boundedVariables
+     * @param string[]                                                         $excludedPaths
+     * @param string[]                                                         $includedPaths
      */
     public function __construct(
         private array $boundedClasses,
@@ -65,7 +66,7 @@ final readonly class Config
     }
 
     /**
-     * @return array<string, string|Tagged|UnitEnum>
+     * @return array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum>
      */
     public function getBoundedVariables(): array
     {

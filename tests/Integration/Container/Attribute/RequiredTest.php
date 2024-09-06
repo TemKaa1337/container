@@ -776,6 +776,9 @@ final class RequiredTest extends AbstractContainerTestCase
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
         $className3 = ClassGenerator::getClassName();
+        $className4 = ClassGenerator::getClassName();
+        $className5 = ClassGenerator::getClassName();
+        $interface = ClassGenerator::getClassName();
         $enum = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(
@@ -786,6 +789,7 @@ final class RequiredTest extends AbstractContainerTestCase
                         'public readonly string $arg1;',
                         'public readonly array $arg2;',
                         sprintf('public readonly %s $arg3;', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$enum),
+                        'public readonly array $arg4;',
                         self::ATTRIBUTE_REQUIRED_SIGNATURE,
                         sprintf(
                             <<<'METHOD'
@@ -808,7 +812,7 @@ final class RequiredTest extends AbstractContainerTestCase
                             }
                             METHOD,
                             sprintf(
-                                self::ATTRIBUTE_TAGGED_SIGNATURE,
+                                self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE,
                                 'tag',
                             ),
                         ),
@@ -825,6 +829,19 @@ final class RequiredTest extends AbstractContainerTestCase
                                 self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$enum.'::EnumCaseOne',
                             ),
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$enum,
+                        ),
+                        self::ATTRIBUTE_REQUIRED_SIGNATURE,
+                        sprintf(
+                            <<<'METHOD'
+                            public function setArg4(%s array $arg4): void
+                            {
+                                $this->arg4 = $arg4;
+                            }
+                            METHOD,
+                            sprintf(
+                                self::ATTRIBUTE_INSTANCE_OF_ITERATOR_SIGNATURE,
+                                self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
+                            ),
                         ),
                     ]),
             )
@@ -846,6 +863,24 @@ final class RequiredTest extends AbstractContainerTestCase
             )
             ->addBuilder(
                 (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className4.php")
+                    ->setName($className4)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className5.php")
+                    ->setName($className5)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface.php")
+                    ->setName($interface)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$enum.php")
                     ->setName($enum)
                     ->setPrefix('enum')
@@ -859,6 +894,8 @@ final class RequiredTest extends AbstractContainerTestCase
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
             __DIR__.self::GENERATED_CLASS_STUB_PATH."$className3.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className4.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className5.php",
         ];
         $config = $this->generateConfig(includedPaths: $files);
 
@@ -869,6 +906,7 @@ final class RequiredTest extends AbstractContainerTestCase
         $this->assertInitialized($object, 'arg1');
         $this->assertInitialized($object, 'arg2');
         $this->assertInitialized($object, 'arg3');
+        $this->assertInitialized($object, 'arg4');
 
         self::assertEquals('bound_variable_value', $object->arg1);
         self::assertSame(
@@ -879,6 +917,14 @@ final class RequiredTest extends AbstractContainerTestCase
             $object->arg2,
         );
         self::assertSame(constant(self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$enum.'::EnumCaseOne'), $object->arg3);
+
+        self::assertSame(
+            [
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className4),
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className5),
+            ],
+            $object->arg4,
+        );
     }
 
     /**

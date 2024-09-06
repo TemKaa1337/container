@@ -9,8 +9,8 @@ use Attribute;
 /**
  * @psalm-api
  */
-#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_METHOD)]
-final readonly class Tagged
+#[Attribute(Attribute::TARGET_PARAMETER)]
+final readonly class TaggedIterator
 {
     public function __construct(
         public string $tag,

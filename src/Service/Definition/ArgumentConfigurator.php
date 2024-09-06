@@ -12,12 +12,12 @@ use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Temkaa\SimpleContainer\Model\Config\Factory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InstanceOfIteratorConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InterfaceConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\OtherConfigurator;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\TaggedConfigurator;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\TaggedIteratorConfigurator;
 use Temkaa\SimpleContainer\Validator\Definition\Argument\DecoratorValidator;
 use Temkaa\SimpleContainer\Validator\Definition\ArgumentValidator;
 
@@ -30,18 +30,21 @@ final readonly class ArgumentConfigurator
 {
     private Configurator $definitionConfigurator;
 
+    private InstanceOfIteratorConfigurator $instanceOfIteratorConfigurator;
+
     private InterfaceConfigurator $interfaceConfigurator;
 
     private OtherConfigurator $otherConfigurator;
 
-    private TaggedConfigurator $taggedConfigurator;
+    private TaggedIteratorConfigurator $taggedIteratorConfigurator;
 
     public function __construct(Configurator $definitionConfigurator)
     {
         $this->definitionConfigurator = $definitionConfigurator;
+        $this->instanceOfIteratorConfigurator = new InstanceOfIteratorConfigurator();
         $this->interfaceConfigurator = new InterfaceConfigurator($definitionConfigurator);
         $this->otherConfigurator = new OtherConfigurator();
-        $this->taggedConfigurator = new TaggedConfigurator();
+        $this->taggedIteratorConfigurator = new TaggedIteratorConfigurator();
     }
 
     /**
@@ -117,7 +120,11 @@ final readonly class ArgumentConfigurator
             return new DecoratorReference($decorates->getId(), $decorates->getPriority(), $decorates->getSignature());
         }
 
-        if ($configuredArgument = $this->taggedConfigurator->configure($config, $argument, $id, $factory)) {
+        if ($configuredArgument = $this->taggedIteratorConfigurator->configure($config, $argument, $id, $factory)) {
+            return $configuredArgument;
+        }
+
+        if ($configuredArgument = $this->instanceOfIteratorConfigurator->configure($config, $argument, $id, $factory)) {
             return $configuredArgument;
         }
 

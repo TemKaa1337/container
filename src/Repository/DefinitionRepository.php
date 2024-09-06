@@ -38,6 +38,31 @@ final readonly class DefinitionRepository
     }
 
     /**
+     * @param class-string $id
+     *
+     * @return DefinitionInterface[]
+     */
+    public function findAllByInstanceOf(string $id): array
+    {
+        $instanceOfDefinitions = [];
+        foreach ($this->definitions as $definition) {
+            if ($definition instanceof InterfaceDefinition) {
+                continue;
+            }
+
+            /** @var ClassDefinition $definition */
+            if (
+                in_array($id, $definition->getInstanceOf(), strict: true)
+                || in_array($id, $definition->getImplements(), strict: true)
+            ) {
+                $instanceOfDefinitions[] = $definition;
+            }
+        }
+
+        return $instanceOfDefinitions;
+    }
+
+    /**
      * @return DefinitionInterface[]
      */
     public function findAllByTag(string $tag): array

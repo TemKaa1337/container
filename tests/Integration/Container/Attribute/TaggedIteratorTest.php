@@ -61,7 +61,7 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
                     ->setName($collectorClassName)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'Interface1'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'Interface1'),
                         'public readonly iterable $dependency,',
                     ])
                     ->setAttributes([sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false')]),
@@ -133,7 +133,7 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
                     ->setName($collectorClassName)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'Interface1'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'Interface1'),
                         'public readonly iterable $dependency,',
                     ]),
             )
@@ -189,9 +189,9 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
                     ->setName($collectorClassName)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'tag_1'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'tag_1'),
                         'public readonly array $dependency1,',
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'tag_1'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'tag_1'),
                         'public readonly iterable $dependency2,',
                     ]),
             )

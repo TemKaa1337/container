@@ -75,13 +75,18 @@
                 "Temkaa\\SimpleContainer\\Util\\Flag"
             ]
         },
+        "LogicalAnd": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::updateInterfaceReferences"
+            ]
+        },
         "UnwrapArrayValues": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Repository\\DefinitionRepository::__construct",
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::addTags",
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setAliases",
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements",
-                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::addInterfaceDefinitions"
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::addMissingInterfaceDefinitions",
             ]
         },
         "UnwrapArrayUnique": {

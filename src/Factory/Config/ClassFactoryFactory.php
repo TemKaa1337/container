@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Factory\Config;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
 use Temkaa\SimpleContainer\Attribute\Factory as FactoryAttribute;
 use Temkaa\SimpleContainer\Model\Config\Factory;
 use UnitEnum;
@@ -15,9 +16,9 @@ use UnitEnum;
 final class ClassFactoryFactory
 {
     /**
-     * @param class-string                   $id
-     * @param string                         $method
-     * @param array<string, string|Tagged|UnitEnum> $boundVariables
+     * @param class-string                                                     $id
+     * @param string                                                           $method
+     * @param array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum> $boundVariables
      *
      * @return Factory
      */

@@ -1,10 +1,9 @@
-# Using tagged iterators
+# Using instance of iterators
 
-Sometimes you need to inject a collection of objects which are somehow related with each other or have something similar.
-For example, you have a set of operations on data and each operation can support given data set or not. In this case you
-want to have a general entrypoint for any data processing.
+This works pretty much the same as `TaggedIterator` but with all classes which are instances of specific class/interface.
+You can pass abstract classes there, interfaces and regular classes.
 
-Example tagging classes using config:
+Example binding instance of classes using config:
 ```php
 <?php
 
@@ -13,7 +12,7 @@ declare(strict_types=1);
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
+use \Temkaa\SimpleContainer\Model\Bind\Instance;
 use Generator;
 use LogicException;
 
@@ -77,19 +76,9 @@ final readonly class Processor
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
     ->bindClass(
-        ClassBuilder::make(ArrayProcessor::class)
-            ->tag('data.processor')
-            ->build(),
-    )
-    ->bindClass(
-        ClassBuilder::make(GeneratorProcessor::class)
-            ->tag('data.processor')
-            ->build(),
-    )
-    ->bindClass(
         ClassBuilder::make(Processor::class)
-            // here you say that this argument is tagged iterator of classes with `data.processor` tag
-            ->bindVariable('$processors', new TaggedIterator('data.processor'))
+            // here you say that this argument is array of classes which implement `DataProcessor` interface
+            ->bindVariable('$processors', new Instance(DataProcessor::class))
             ->build(),
     )
     ->build();
@@ -111,13 +100,10 @@ declare(strict_types=1);
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Temkaa\SimpleContainer\Attribute\Tag;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
+use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
 use Generator;
 use LogicException;
 
-// here you specify the tag name for `DataProcessor` interface
-// all implementing classes will inherit this tag
-#[Tag('data.processor')]
 interface DataProcessor
 {
     public function process(iterable $data): void;
@@ -157,7 +143,7 @@ final readonly class Processor
        /**
         * @var ProcessorInterface[] $processors
         */
-        #[TaggedIterator('data.processor')]
+        #[InstanceOfIterator(DataProcessor::class)]
         public array $processors,
     ) {
     }
@@ -187,7 +173,8 @@ $data = [/* some data here */];
 $processor = $container->get(Processor::class);
 $processor->process($data);
 ```
-Example tagging classes using attributes:
+
+Example with abstract classes:
 ```php
 <?php
 
@@ -196,21 +183,18 @@ declare(strict_types=1);
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Attribute\Tag;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
+use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
 use Generator;
 use LogicException;
 
-interface DataProcessor
+abstract class AbstractDataProcessor
 {
-    public function process(iterable $data): void;
+    abstract public function process(iterable $data): void;
     
-    public function supports(iterable $data): bool;
+    abstract public function supports(iterable $data): bool;
 }
 
-#[Tag('data.processor')]
-final readonly class ArrayProcessor implements DataProcessor
+final readonly class ArrayProcessor extends AbstractDataProcessor
 {
     public function process(iterable $data): void
     {
@@ -223,8 +207,7 @@ final readonly class ArrayProcessor implements DataProcessor
     }
 }
 
-#[Tag('data.processor')]
-final readonly class GeneratorProcessor implements DataProcessor
+final readonly class GeneratorProcessor extends AbstractDataProcessor
 {
     public function process(iterable $data): void
     {
@@ -241,9 +224,9 @@ final readonly class Processor
 {
     public function __construct(
        /**
-        * @var ProcessorInterface[] $processors
+        * @var AbstractDataProcessor[] $processors
         */
-        #[TaggedIterator('data.processor')]
+        #[InstanceOfIterator(AbstractDataProcessor::class)]
         public array $processors,
     ) {
     }
@@ -274,5 +257,73 @@ $processor = $container->get(Processor::class);
 $processor->process($data);
 ```
 
-Please note that if you want to tag an interface, currently you can do it only using tag attributes, tag binding using 
-config is not supported yet.
+Example with regular classes:
+```php
+<?php
+
+declare(strict_types=1);
+
+use Temkaa\SimpleContainer\Builder\ConfigBuilder;
+use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
+use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Generator;
+use LogicException;
+
+class DataProcessor
+{
+    public function process(iterable $data): void
+    {
+    
+    }
+    
+    public function supports(iterable $data): bool
+    {
+    
+    }
+}
+
+final readonly class ArrayProcessor extends DataProcessor
+{
+}
+
+final readonly class GeneratorProcessor extends DataProcessor
+{
+}
+
+final readonly class Processor
+{
+    public function __construct(
+       /**
+        * @var DataProcessor[] $processors
+        */
+        #[InstanceOfIterator(DataProcessor::class)]
+        public array $processors,
+    ) {
+    }
+    
+    public function process(iterable $data): void
+    {
+        foreach ($this->processors as $processor) {
+            if ($processor->supports($data)) {
+                $processor->process($data);
+                
+                return;
+            }
+        }
+        
+        throw new LogicException('Cannot find suitable processor.');
+    }
+}
+
+$config = ConfigBuilder::make()
+    ->include(__DIR__.'../../some/path/with/classes/')
+    ->build();
+
+$container = ContainerBuilder::make()->add($config)->build();
+
+$data = [/* some data here */];
+
+$processor = $container->get(Processor::class);
+$processor->process($data);
+```

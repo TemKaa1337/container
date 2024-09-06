@@ -10,7 +10,9 @@ use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
 use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
 use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedReference;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\InstanceOfIteratorReference;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\InterfaceReference;
+use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedIteratorReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
 use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 use Temkaa\SimpleContainer\Repository\DefinitionRepository;
@@ -99,10 +101,22 @@ final readonly class Instantiator
                 continue;
             }
 
-            /** @var DecoratorReference|Reference|TaggedReference $argument */
-            $resolvedArgument = $argument instanceof TaggedReference
-                ? array_map($this->instantiate(...), $this->definitionRepository->findAllByTag($argument->getTag()))
-                : $this->instantiate($this->definitionRepository->find($argument->getId()));
+            /**
+             * @var TaggedIteratorReference|InstanceOfIteratorReference|DecoratorReference|Reference|InterfaceReference $argument
+             */
+            $resolvedArgument = match (true) {
+                $argument instanceof TaggedIteratorReference     => array_map(
+                    $this->instantiate(...),
+                    $this->definitionRepository->findAllByTag($argument->getTag()),
+                ),
+                $argument instanceof InstanceOfIteratorReference => array_map(
+                    $this->instantiate(...),
+                    $this->definitionRepository->findAllByInstanceOf($argument->getId()),
+                ),
+                default                                          => $this->instantiate(
+                    $this->definitionRepository->find($argument->getId()),
+                ),
+            };
 
             $resolvedArguments[] = $resolvedArgument;
         }

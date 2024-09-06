@@ -9,7 +9,7 @@ use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
 /**
  * @internal
  */
-final readonly class TaggedReference implements ReferenceInterface
+final readonly class TaggedIteratorReference implements ReferenceInterface
 {
     public function __construct(
         private string $tag,

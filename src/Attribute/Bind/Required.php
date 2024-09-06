@@ -10,6 +10,6 @@ use Attribute;
  * @psalm-api
  */
 #[Attribute(Attribute::TARGET_METHOD)]
-final class Required
+final readonly class Required
 {
 }

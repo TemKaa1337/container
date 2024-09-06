@@ -9,7 +9,7 @@ require __DIR__.'/../vendor/autoload.php';
 use Example\ConfigTaggedIterator\Class1;
 use Example\ConfigTaggedIterator\Class2;
 use Example\ConfigTaggedIterator\Collector;
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
 use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
 use Temkaa\SimpleContainer\Builder\ConfigBuilder;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
@@ -28,7 +28,7 @@ $config = ConfigBuilder::make()
     )
     ->bindClass(
         ClassBuilder::make(Collector::class)
-            ->bindVariable('objects', new Tagged('tag'))
+            ->bindVariable('objects', new TaggedIterator('tag'))
             ->build(),
     )
     ->build();

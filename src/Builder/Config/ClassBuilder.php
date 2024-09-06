@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\SimpleContainer\Builder\Config;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
 use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
 use Temkaa\SimpleContainer\Model\Config\ClassConfig;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
@@ -22,7 +23,7 @@ final class ClassBuilder
     private array $aliases = [];
 
     /**
-     * @var array<string, string|Tagged|UnitEnum>
+     * @var array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum>
      */
     private array $boundedVariables = [];
 
@@ -65,8 +66,10 @@ final class ClassBuilder
         return $this;
     }
 
-    public function bindVariable(string $variableName, string|Tagged|UnitEnum $expression): self
-    {
+    public function bindVariable(
+        string $variableName,
+        string|InstanceOfIterator|TaggedIterator|UnitEnum $expression,
+    ): self {
         $this->boundedVariables[str_replace('$', '', $variableName)] = $expression;
 
         return $this;

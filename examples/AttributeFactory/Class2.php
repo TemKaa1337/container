@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Example\AttributeFactory;
 
 use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Attribute\Bind\Tagged;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
 
 final readonly class Class2
 {
@@ -16,7 +16,7 @@ final readonly class Class2
     ) {
     }
 
-    public function create(#[Parameter(expression: '1')] int $intVar, #[Tagged(tag: 'tag')] array $tagged): Class1
+    public function create(#[Parameter(expression: '1')] int $intVar, #[TaggedIterator(tag: 'tag')] array $tagged): Class1
     {
         return new Class1($this->class, $this->stringVar, $intVar, $tagged);
     }
