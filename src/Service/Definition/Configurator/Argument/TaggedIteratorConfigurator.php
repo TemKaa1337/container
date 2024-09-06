@@ -39,7 +39,6 @@ final readonly class TaggedIteratorConfigurator
 
         $attribute = $argument->getAttributes(TaggedIterator::class);
 
-        // TODO: extract same methods
         $configExpression = BoundVariableProvider::provide($config, $argumentName, $id, $factory);
         $argumentExpression = $attribute ? AttributeExtractor::extract($attribute, index: 0) : null;
 
@@ -51,6 +50,7 @@ final readonly class TaggedIteratorConfigurator
             return null;
         }
 
+        /** @var TaggedIterator $expression */
         $expression = $configExpression ?? $argumentExpression;
         $this->validateArgumentType($argumentType, $argumentName, $id);
 

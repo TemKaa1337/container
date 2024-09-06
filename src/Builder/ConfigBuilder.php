@@ -64,8 +64,10 @@ final class ConfigBuilder
         return $this;
     }
 
-    public function bindVariable(string $variableName, string|InstanceOfIterator|TaggedIterator|UnitEnum $expression): self
-    {
+    public function bindVariable(
+        string $variableName,
+        string|InstanceOfIterator|TaggedIterator|UnitEnum $expression,
+    ): self {
         $this->boundedVariables[str_replace('$', '', $variableName)] = $expression;
 
         return $this;

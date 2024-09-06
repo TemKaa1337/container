@@ -12,6 +12,9 @@ use Attribute;
 #[Attribute(Attribute::TARGET_PARAMETER)]
 final readonly class InstanceOfIterator
 {
+    /**
+     * @param class-string $id
+     */
     public function __construct(
         public string $id,
     ) {

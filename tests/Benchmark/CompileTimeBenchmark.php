@@ -27,7 +27,7 @@ final class CompileTimeBenchmark
     private const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
     private const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s, signature: \'%s\')]';
     private const string ATTRIBUTE_PARAMETER_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
-    private const string ATTRIBUTE_TAGGED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Tagged(tag: \'%s\')]';
+    private const string ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator(tag: \'%s\')]';
     private const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Tag(name: \'%s\')]';
     private const string GENERATED_CLASS_ABSOLUTE_NAMESPACE = '\Tests\Fixture\Stub\Class\\';
     private const string GENERATED_CLASS_NAMESPACE = 'Tests\Fixture\Stub\Class\\';
@@ -109,7 +109,7 @@ final class CompileTimeBenchmark
                             'public readonly %s $inner,',
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1,
                         ),
-                        sprintf(self::ATTRIBUTE_TAGGED_SIGNATURE, 'Interface2'),
+                        sprintf(self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE, 'Interface2'),
                         'public readonly iterable $dependency,',
                     ])
                     ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1]),

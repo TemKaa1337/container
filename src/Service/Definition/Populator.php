@@ -43,8 +43,6 @@ final class Populator
         );
 
         // TODO: add tests on tag inheritance from abstract classes
-        // TODO: write tests on abstract classes which extend each other, will they be also written here
-        // TODO: update doc and examples with instanceofiterator
         $instanceOf = $this->getParentClasses($reflection);
 
         /** @var string[] $tags */
@@ -55,7 +53,6 @@ final class Populator
             ->setAliases($aliases)
             ->setInstanceOf($instanceOf);
 
-        // TODO: write tests on interfaces which extend each other, will they be also written here
         $interfaces = $reflection->getInterfaceNames();
 
         $definition->setImplements($interfaces);

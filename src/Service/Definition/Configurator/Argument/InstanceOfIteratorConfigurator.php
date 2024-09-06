@@ -50,6 +50,7 @@ final readonly class InstanceOfIteratorConfigurator
             return null;
         }
 
+        /** @var InstanceOfIterator $expression */
         $expression = $configExpression ?? $argumentExpression;
 
         $this->validateArgumentType($argumentType, $argumentName, $id);
