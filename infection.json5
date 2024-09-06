@@ -75,6 +75,11 @@
                 "Temkaa\\SimpleContainer\\Util\\Flag"
             ]
         },
+        "LogicalAnd": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::updateInterfaceReferences"
+            ]
+        },
         "UnwrapArrayValues": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Repository\\DefinitionRepository::__construct",
