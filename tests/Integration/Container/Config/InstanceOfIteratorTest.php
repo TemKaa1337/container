@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Container\Config;
 
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use ReflectionException;
 use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
 use Tests\Helper\Service\ClassBuilder;
@@ -17,6 +20,107 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
      */
     protected const string GENERATED_CLASS_STUB_PATH = '/../../../Fixture/Stub/Class/';
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithConfigPrecedence(): void
+    {
+        $collectorClassName = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $interfaceName1 = ClassGenerator::getClassName();
+        $interfaceName2 = ClassGenerator::getClassName();
+        $interfaceName3 = ClassGenerator::getClassName();
+
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName2,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName2,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName2.php")
+                    ->setName($interfaceName2)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName1.php")
+                    ->setName($interfaceName1)
+                    ->setPrefix('interface')
+                    ->setExtends([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName2]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName3.php")
+                    ->setName($interfaceName3)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            self::ATTRIBUTE_INSTANCE_OF_ITERATOR_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName3.'::class',
+                        ),
+                        'public readonly iterable $dependency,',
+                    ]),
+            )
+            ->generate();
+
+        $classes = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+        ];
+
+        $config = $this->generateConfig(
+            includedPaths: $classes,
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$collectorClassName,
+                    variableBindings: [
+                        '$dependency' => new InstanceOfIterator(self::GENERATED_CLASS_NAMESPACE.$interfaceName2),
+                    ],
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
+
+        self::assertEquals(
+            [
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
+            ],
+            $collector->dependency,
+        );
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithInstanceOfAbstractClassIteratorAsNonSingleton(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
