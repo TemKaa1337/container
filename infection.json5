@@ -41,7 +41,8 @@
         },
         "NullSafeMethodCall": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::collectUnboundInterfaces"
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::collectUnboundInterfaces",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::updateInterfaceReferences",
             ]
         },
         "IncrementInteger": {
