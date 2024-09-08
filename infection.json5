@@ -100,7 +100,8 @@
         "UnwrapArrayUnique": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::addTags",
-                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements"
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements",
+                "Temkaa\\SimpleContainer\\Builder\\Config\\ClassBuilder::build"
             ]
         }
     },
