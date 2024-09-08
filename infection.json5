@@ -41,7 +41,8 @@
         },
         "NullSafeMethodCall": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::collectUnboundInterfaces"
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::collectUnboundInterfaces",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::updateInterfaceReferences",
             ]
         },
         "IncrementInteger": {
@@ -57,11 +58,13 @@
         },
         "NewObject": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\ArgumentConfigurator::configureInterfaceArgument"
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\Argument\\InterfaceConfigurator::configure"
             ]
         },
         "PublicVisibility": {
-            ignore: ["*"]
+            ignore: [
+                "*"
+            ]
         },
         "Throw_": {
             ignore: [
@@ -80,6 +83,11 @@
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::updateInterfaceReferences"
             ]
         },
+        "LogicalNot": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\Argument\\InterfaceConfigurator::configure"
+            ]
+        },
         "UnwrapArrayValues": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Repository\\DefinitionRepository::__construct",
@@ -92,7 +100,8 @@
         "UnwrapArrayUnique": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::addTags",
-                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements"
+                "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements",
+                "Temkaa\\SimpleContainer\\Builder\\Config\\ClassBuilder::build"
             ]
         }
     },

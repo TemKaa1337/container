@@ -41,7 +41,9 @@ final class GeneralRequiredTest extends AbstractContainerTestCase
         $config = $this->generateConfig(
             includedPaths: $files,
             classBindings: [
-                $this->generateClassConfig(self::GENERATED_CLASS_NAMESPACE.$className1, requiredMethodCalls: ['create'],
+                $this->generateClassConfig(
+                    self::GENERATED_CLASS_NAMESPACE.$className1,
+                    requiredMethodCalls: ['create'],
                 ),
             ],
         );

@@ -7,9 +7,13 @@
 - If you want to create a tagged iterator of all classes which implement specific interface, you can tag an interface
   with specific `#[Tag]` attribute as all classes which implement any tagged interface, also inherit tags from this interface.
   Then implement this interface with classes you want to create iterator with and simply bind
-  tagged iterator from config or from `#[Tagged]` attribute;
+  tagged iterator from config or from `#[TaggedIterator]` attribute, OR the second way (and more preferable) you can use
+  `InstanceOfIterator` attribute which will automatically find all classes which implement interface/extend provided class/interface;
+- This package supports default class/factory/required arguments. It means that if your class has a dependency with default
+  parameter, first of all container will try to instantiate type-hinted argument (if argument type is not built-in),
+  and if container cant instantiate it, container will use the default value you provided;
 - This package provides auto discover of bounded interfaces and interface decorators.
-For example, let's say you have one interface and one class, which implements this interface:
+  For example, let's say you have one interface and one class, which implements this interface:
 ```php
 <?php
 

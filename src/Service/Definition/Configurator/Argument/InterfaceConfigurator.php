@@ -7,6 +7,7 @@ namespace Temkaa\SimpleContainer\Service\Definition\Configurator\Argument;
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionParameter;
 use Temkaa\SimpleContainer\Exception\ClassNotFoundException;
 use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
 use Temkaa\SimpleContainer\Model\Config;
@@ -27,17 +28,22 @@ final readonly class InterfaceConfigurator
     }
 
     /**
-     * @param Config       $config
-     * @param Bag          $definitions
-     * @param class-string $entryId
+     * @param Config              $config
+     * @param ReflectionParameter $argument
+     * @param Bag                 $definitions
+     * @param class-string        $entryId
      *
      * @return ReferenceInterface|null
      *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    public function configure(Config $config, Bag $definitions, string $entryId): ?ReferenceInterface
-    {
+    public function configure(
+        Config $config,
+        ReflectionParameter $argument,
+        Bag $definitions,
+        string $entryId,
+    ): ?ReferenceInterface {
         try {
             $dependencyReflection = new ReflectionClass($entryId);
         } catch (ReflectionException) {
@@ -50,16 +56,22 @@ final readonly class InterfaceConfigurator
 
         $interfaceName = $dependencyReflection->getName();
         if (!$config->hasBoundInterface($interfaceName)) {
-            return new InterfaceReference($interfaceName);
+            $hasDefaultValue = $argument->isDefaultValueAvailable();
+            /** @var object|null $defaultValue */
+            $defaultValue = $hasDefaultValue ? $argument->getDefaultValue() : null;
+
+            return new InterfaceReference($interfaceName, $hasDefaultValue, $defaultValue);
         }
 
         $interfaceImplementation = $config->getBoundInterfaceImplementation($interfaceName);
-        $definitions->add(
-            InterfaceFactory::create(
-                $interfaceName,
-                $interfaceImplementation,
-            ),
-        );
+        if (!$definitions->has($interfaceName)) {
+            $definitions->add(
+                InterfaceFactory::create(
+                    $interfaceName,
+                    $interfaceImplementation,
+                ),
+            );
+        }
 
         $this->definitionConfigurator->configureDefinition($interfaceImplementation);
 

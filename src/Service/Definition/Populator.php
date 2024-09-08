@@ -42,7 +42,6 @@ final class Populator
             $config->getBoundedClass($definition->getId())?->getAliases() ?? [],
         );
 
-        // TODO: add tests on tag inheritance from abstract classes
         $instanceOf = $this->getParentClasses($reflection);
 
         /** @var string[] $tags */

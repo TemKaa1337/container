@@ -115,9 +115,9 @@ final class FactoryTest extends AbstractContainerTestCase
                         id: self::GENERATED_CLASS_NAMESPACE.$className4,
                         method: 'create',
                         boundedVariables: [
-                            'varOne'   => 'env(APP_BOUND_VAR)',
-                            'varTwo'   => 'env(ENV_VAR_2)',
-                            'varThree' => constant(self::GENERATED_CLASS_NAMESPACE.$enum.'::FirstCase'),
+                            '$varOne'   => 'env(APP_BOUND_VAR)',
+                            'varTwo'    => 'env(ENV_VAR_2)',
+                            '$varThree' => constant(self::GENERATED_CLASS_NAMESPACE.$enum.'::FirstCase'),
                         ],
                     ),
                 ),

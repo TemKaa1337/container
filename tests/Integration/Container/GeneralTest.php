@@ -1403,6 +1403,136 @@ final class GeneralTest extends AbstractContainerTestCase
     }
 
     /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileWithoutInterfaceDefaultArgumentInFactoryMethodWhichIsNotLoaded(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $interface = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $arg,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                        ),
+                    ])
+                    ->setBody([
+                        sprintf(
+                            <<<'METHOD'
+                            public static function create(%s $arg): self
+                            {
+                                return new self($arg);
+                            }
+                            METHOD,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                        ),
+                    ])
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1,
+                            'create',
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface.php")
+                    ->setName($interface)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            ],
+        );
+
+        $this->expectException(ConfigEntryNotFoundException::class);
+        $this->expectExceptionMessage(
+            sprintf('Could not find interface implementation for "%s".', self::GENERATED_CLASS_NAMESPACE.$interface),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileWithoutInterfaceDefaultArgumentInRequiredMethodWhichIsNotLoaded(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $interface = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setHasConstructor(true)
+                    ->setBody([
+                        self::ATTRIBUTE_REQUIRED_SIGNATURE,
+                        sprintf(
+                            <<<'METHOD'
+                            public function create(%s $arg): void
+                            {
+                                
+                            }
+                            METHOD,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                        ),
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interface.php")
+                    ->setName($interface)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            ],
+        );
+
+        $this->expectException(ConfigEntryNotFoundException::class);
+        $this->expectExceptionMessage(
+            sprintf('Could not find interface implementation for "%s".', self::GENERATED_CLASS_NAMESPACE.$interface),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
+    }
+
+    /**
      * @throws ReflectionException
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface

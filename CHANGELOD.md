@@ -1,3 +1,7 @@
+### v0.1.5
+##### Features:
+- Add container option to resolve classes with default value parameters when container itself cannot resolve dependency. 
+
 ### v0.1.4
 ##### Features:
 - Renamed `Tagged` attribute to `TaggedIterator`;

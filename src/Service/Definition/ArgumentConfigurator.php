@@ -8,16 +8,19 @@ use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionParameter;
+use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
+use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
 use Temkaa\SimpleContainer\Model\Config;
 use Temkaa\SimpleContainer\Model\Config\Decorator;
 use Temkaa\SimpleContainer\Model\Config\Factory;
 use Temkaa\SimpleContainer\Model\Definition\Bag;
 use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\SimpleContainer\Model\Reference\Reference;
+use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\BoundVariableConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InstanceOfIteratorConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InterfaceConfigurator;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\OtherConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\TaggedIteratorConfigurator;
+use Temkaa\SimpleContainer\Util\Flag;
 use Temkaa\SimpleContainer\Validator\Definition\Argument\DecoratorValidator;
 use Temkaa\SimpleContainer\Validator\Definition\ArgumentValidator;
 
@@ -28,22 +31,22 @@ use Temkaa\SimpleContainer\Validator\Definition\ArgumentValidator;
  */
 final readonly class ArgumentConfigurator
 {
+    private BoundVariableConfigurator $boundVariableConfigurator;
+
     private Configurator $definitionConfigurator;
 
     private InstanceOfIteratorConfigurator $instanceOfIteratorConfigurator;
 
     private InterfaceConfigurator $interfaceConfigurator;
 
-    private OtherConfigurator $otherConfigurator;
-
     private TaggedIteratorConfigurator $taggedIteratorConfigurator;
 
     public function __construct(Configurator $definitionConfigurator)
     {
+        $this->boundVariableConfigurator = new BoundVariableConfigurator();
         $this->definitionConfigurator = $definitionConfigurator;
         $this->instanceOfIteratorConfigurator = new InstanceOfIteratorConfigurator();
         $this->interfaceConfigurator = new InterfaceConfigurator($definitionConfigurator);
-        $this->otherConfigurator = new OtherConfigurator();
         $this->taggedIteratorConfigurator = new TaggedIteratorConfigurator();
     }
 
@@ -96,6 +99,9 @@ final readonly class ArgumentConfigurator
     }
 
     /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
      * @param Config              $config
      * @param Bag                 $definitions
      * @param ReflectionParameter $argument
@@ -131,7 +137,7 @@ final readonly class ArgumentConfigurator
         [
             'value'    => $configuredArgument,
             'resolved' => $resolved,
-        ] = $this->otherConfigurator->configure($config, $argument, $id, $factory);
+        ] = $this->boundVariableConfigurator->configure($config, $argument, $id, $factory);
 
         if ($resolved) {
             return $configuredArgument;
@@ -142,14 +148,26 @@ final readonly class ArgumentConfigurator
         /** @var class-string $entryId */
         $entryId = $argumentType->getName();
 
-        if ($configuredArgument = $this->interfaceConfigurator->configure($config, $definitions, $entryId)) {
+        if ($configuredArgument = $this->interfaceConfigurator->configure($config, $argument, $definitions, $entryId)) {
             return $configuredArgument;
         }
 
-        if (!$definitions->has($entryId)) {
-            $this->definitionConfigurator->configureDefinition($entryId);
+        if ($definitions->has($entryId)) {
+            return new Reference($entryId);
         }
 
-        return new Reference($entryId);
+        try {
+            $this->definitionConfigurator->configureDefinition($entryId);
+
+            return new Reference($entryId);
+        } catch (UninstantiableEntryException|NonAutowirableClassException $exception) {
+            if (!$argument->isDefaultValueAvailable()) {
+                throw $exception;
+            }
+
+            Flag::untoggle($entryId, group: 'definition');
+
+            return $argument->getDefaultValue();
+        }
     }
 }
