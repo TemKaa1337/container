@@ -21,7 +21,7 @@ use UnitEnum;
 /**
  * @internal
  */
-final readonly class OtherConfigurator
+final readonly class BoundVariableConfigurator
 {
     private ExpressionParser $expressionParser;
 
@@ -64,6 +64,10 @@ final readonly class OtherConfigurator
                 return ['value' => null, 'resolved' => false];
             }
 
+            if ($argument->isDefaultValueAvailable()) {
+                return ['value' => $argument->getDefaultValue(), 'resolved' => true];
+            }
+
             if ($argumentType->allowsNull()) {
                 return ['value' => null, 'resolved' => true];
             }
@@ -83,11 +87,11 @@ final readonly class OtherConfigurator
 
         (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
 
-        return [
-            'value'    => $expression instanceof UnitEnum
-                ? $expression
-                : TypeCaster::cast($this->expressionParser->parse($expression), $argumentTypeName),
-            'resolved' => true,
-        ];
+        /** @psalm-suppress MixedAssignment */
+        $value = $expression instanceof UnitEnum
+            ? $expression
+            : TypeCaster::cast($this->expressionParser->parse($expression), $argumentTypeName);
+
+        return ['value' => $value, 'resolved' => true];
     }
 }

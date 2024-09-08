@@ -104,7 +104,7 @@ final class SelfReferenceInjectionTest extends AbstractContainerTestCase
                     ->setName($className1)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf('public readonly %s $container,', '\\'.ContainerInterface::class),
+                        sprintf('public readonly ?%s $container = null,', '\\'.ContainerInterface::class),
                     ]),
             )
             ->addBuilder(
@@ -113,7 +113,7 @@ final class SelfReferenceInjectionTest extends AbstractContainerTestCase
                     ->setName($className2)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf('public readonly %s $container,', '\\'.ContainerInterface::class),
+                        sprintf('public readonly ?%s $container = null,', '\\'.ContainerInterface::class),
                     ]),
             )
             ->addBuilder(
@@ -122,7 +122,7 @@ final class SelfReferenceInjectionTest extends AbstractContainerTestCase
                     ->setName($className3)
                     ->setHasConstructor(true)
                     ->setConstructorArguments([
-                        sprintf('public readonly %s $container,', '\\'.ContainerInterface::class),
+                        sprintf('public readonly ?%s $container = null,', '\\'.ContainerInterface::class),
                     ]),
             )
             ->generate();
@@ -147,6 +147,14 @@ final class SelfReferenceInjectionTest extends AbstractContainerTestCase
         self::assertSame($container, $class1->container);
         self::assertSame($container, $class2->container);
         self::assertSame($container, $class3->container);
+
+        self::assertNotNull($class1->container);
+        self::assertNotNull($class2->container);
+        self::assertNotNull($class3->container);
+
+        self::assertInstanceOf(ContainerInterface::class, $class1->container);
+        self::assertInstanceOf(ContainerInterface::class, $class2->container);
+        self::assertInstanceOf(ContainerInterface::class, $class3->container);
     }
 
     /**

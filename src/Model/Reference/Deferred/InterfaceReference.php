@@ -16,7 +16,14 @@ final readonly class InterfaceReference implements ReferenceInterface
      */
     public function __construct(
         private string $id,
+        private bool $hasDefaultValue,
+        private ?object $defaultValue,
     ) {
+    }
+
+    public function getDefaultValue(): ?object
+    {
+        return $this->defaultValue;
     }
 
     /**
@@ -25,5 +32,10 @@ final readonly class InterfaceReference implements ReferenceInterface
     public function getId(): string
     {
         return $this->id;
+    }
+
+    public function hasDefaultValue(): bool
+    {
+        return $this->hasDefaultValue;
     }
 }

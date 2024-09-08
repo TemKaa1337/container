@@ -159,12 +159,13 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
     }
 
     /**
+     * @param Bag          $definitions
      * @param array        $arguments
      * @param class-string $interface
      *
      * @return array
      */
-    private function updateArgumentInterfaceReferences(array $arguments, string $interface): array
+    private function updateArgumentInterfaceReferences(Bag $definitions, array $arguments, string $interface): array
     {
         /** @psalm-suppress MixedAssignment */
         foreach ($arguments as $index => $argument) {
@@ -172,7 +173,9 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                 $argument instanceof InterfaceReference
                 && $argument->getId() === $interface
             ) {
-                $arguments[$index] = new Reference($interface);
+                $arguments[$index] = $definitions->has($interface)
+                    ? new Reference($interface)
+                    : $argument->getDefaultValue();
             }
         }
 
@@ -192,25 +195,27 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
             $resolvedFactoryArguments = $factory?->getMethod()?->getArguments();
 
             foreach ($unboundInterfaceIds as $unboundInterfaceId) {
-                if (!$definitions->has($unboundInterfaceId)) {
-                    throw new EntryNotFoundException(
-                        sprintf('Could not find interface implementation for "%s".', $unboundInterfaceId),
-                    );
-                }
+                $this->validateArgumentDefaultValue($definitions, $resolvedDefinitionArguments, $unboundInterfaceId);
+                $this->validateArgumentDefaultValue($definitions, $resolvedFactoryArguments ?? [], $unboundInterfaceId);
 
                 $resolvedDefinitionArguments = $this->updateArgumentInterfaceReferences(
+                    $definitions,
                     $resolvedDefinitionArguments,
                     $unboundInterfaceId,
                 );
 
                 $resolvedFactoryArguments = $this->updateArgumentInterfaceReferences(
+                    $definitions,
                     $resolvedFactoryArguments ?? [],
                     $unboundInterfaceId,
                 );
 
                 $requiredMethodCallsInfo = $definition->getRequiredMethodCalls();
                 foreach ($requiredMethodCallsInfo as $method => $requiredMethodArguments) {
+                    $this->validateArgumentDefaultValue($definitions, $requiredMethodArguments, $unboundInterfaceId);
+
                     $requiredMethodCallsInfo[$method] = $this->updateArgumentInterfaceReferences(
+                        $definitions,
                         $requiredMethodArguments,
                         $unboundInterfaceId,
                     );
@@ -230,6 +235,23 @@ final readonly class InterfaceConfigurator implements ConfiguratorInterface
                         $resolvedFactoryArguments,
                         $factory->getMethod()->isStatic(),
                     ),
+                );
+            }
+        }
+    }
+
+    private function validateArgumentDefaultValue(Bag $definitions, array $arguments, string $interface): void
+    {
+        /** @psalm-suppress MixedAssignment */
+        foreach ($arguments as $argument) {
+            if (
+                $argument instanceof InterfaceReference
+                && $argument->getId() === $interface
+                && !$definitions->has($interface)
+                && !$argument->hasDefaultValue()
+            ) {
+                throw new EntryNotFoundException(
+                    sprintf('Could not find interface implementation for "%s".', $interface),
                 );
             }
         }
