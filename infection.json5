@@ -58,7 +58,7 @@
         },
         "NewObject": {
             ignore: [
-                "Temkaa\\SimpleContainer\\Service\\Definition\\ArgumentConfigurator::configureInterfaceArgument"
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\Argument\\InterfaceConfigurator::configure"
             ]
         },
         "PublicVisibility": {
