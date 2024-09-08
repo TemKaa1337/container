@@ -61,7 +61,9 @@
             ]
         },
         "PublicVisibility": {
-            ignore: ["*"]
+            ignore: [
+                "*"
+            ]
         },
         "Throw_": {
             ignore: [
@@ -78,6 +80,11 @@
         "LogicalAnd": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::updateInterfaceReferences"
+            ]
+        },
+        "LogicalNot": {
+            ignore: [
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\Argument\\InterfaceConfigurator::configure"
             ]
         },
         "UnwrapArrayValues": {

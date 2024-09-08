@@ -28,9 +28,10 @@ final readonly class InterfaceConfigurator
     }
 
     /**
-     * @param Config $config
-     * @param Bag $definitions
-     * @param class-string $entryId
+     * @param Config              $config
+     * @param ReflectionParameter $argument
+     * @param Bag                 $definitions
+     * @param class-string        $entryId
      *
      * @return ReferenceInterface|null
      *

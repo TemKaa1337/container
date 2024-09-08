@@ -29,6 +29,88 @@ final class TaggedIteratorTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
+    public function testCompilesWithConfigPrecedence(): void
+    {
+        $collectorClassName = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $interfaceName1 = ClassGenerator::getClassName();
+
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName1.php")
+                    ->setName($interfaceName1)
+                    ->setAttributes([sprintf(self::ATTRIBUTE_TAG_SIGNATURE, 'interface_tag')])
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$collectorClassName.php")
+                    ->setName($collectorClassName)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            self::ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE,
+                            'non_interface_tag',
+                        ),
+                        'public readonly iterable $dependency,',
+                    ]),
+            )
+            ->generate();
+
+        $classes = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$collectorClassName.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+        ];
+
+        $config = $this->generateConfig(
+            includedPaths: $classes,
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$collectorClassName,
+                    variableBindings: [
+                        '$dependency' => new TaggedIterator('interface_tag'),
+                    ],
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $collector = $container->get(self::GENERATED_CLASS_NAMESPACE.$collectorClassName);
+
+        self::assertEquals(
+            [
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
+            ],
+            $collector->dependency,
+        );
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithTaggedIterator(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
