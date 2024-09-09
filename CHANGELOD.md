@@ -1,3 +1,7 @@
+### v0.1.7
+##### Features:
+- Allow adding tags to interfaces and abstract classes using config. 
+
 ### v0.1.6
 ##### Features:
 - Reworked `Decorates` attribute and config binding by deleting `signature` attribute. 
@@ -30,7 +34,7 @@
 
 ### v0.1.0
 ##### Features:
-- First beta release!
+- Beta release.
 
 ### v0.0.17
 ##### Features:

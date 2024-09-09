@@ -205,7 +205,7 @@ use LogicException;
 interface DataProcessor
 {
     public function process(iterable $data): void;
-    
+
     public function supports(iterable $data): bool;
 }
 
@@ -274,5 +274,92 @@ $processor = $container->get(Processor::class);
 $processor->process($data);
 ```
 
-Please note that if you want to tag an interface, currently you can do it only using tag attributes, tag binding using 
-config is not supported yet.
+Example tagging interface using attributes:
+```php
+<?php
+
+declare(strict_types=1);
+
+use Temkaa\SimpleContainer\Builder\ConfigBuilder;
+use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
+use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
+use Temkaa\SimpleContainer\Attribute\Tag;
+use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
+use Generator;
+use LogicException;
+
+interface DataProcessor
+{
+    public function process(iterable $data): void;
+
+    public function supports(iterable $data): bool;
+}
+
+final readonly class ArrayProcessor implements DataProcessor
+{
+    public function process(iterable $data): void
+    {
+        // some data processing here
+    }
+    
+    public function supports(iterable $data): bool
+    {
+        return is_array($data);
+    }
+}
+
+final readonly class GeneratorProcessor implements DataProcessor
+{
+    public function process(iterable $data): void
+    {
+        // some data processing here
+    }
+    
+    public function supports(iterable $data): bool
+    {
+        return $data instanceof Generator;
+    }
+}
+
+final readonly class Processor
+{
+    public function __construct(
+       /**
+        * @var ProcessorInterface[] $processors
+        */
+        #[TaggedIterator('data.processor')]
+        public array $processors,
+    ) {
+    }
+    
+    public function process(iterable $data): void
+    {
+        foreach ($this->processors as $processor) {
+            if ($processor->supports($data)) {
+                $processor->process($data);
+                
+                return;
+            }
+        }
+        
+        throw new LogicException('Cannot find suitable processor.');
+    }
+}
+
+$config = ConfigBuilder::make()
+    ->include(__DIR__.'../../some/path/with/classes/')
+    ->bindClass(
+        ClassBuilder::make(DataProcessor::class)
+            ->tag('data.processor')
+            ->build()
+    )
+    ->build();
+
+$container = ContainerBuilder::make()->add($config)->build();
+
+$data = [/* some data here */];
+
+$processor = $container->get(Processor::class);
+$processor->process($data);
+```

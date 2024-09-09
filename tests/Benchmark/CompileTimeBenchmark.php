@@ -50,6 +50,9 @@ final class CompileTimeBenchmark
         (new ContainerBuilder())->add($this->config)->build();
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+     */
     public function setUp(): void
     {
         $interfaceName1 = ClassGenerator::getClassName();

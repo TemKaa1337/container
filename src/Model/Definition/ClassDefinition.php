@@ -60,18 +60,6 @@ final class ClassDefinition implements DefinitionInterface
     private array $tags = [];
 
     /**
-     * @param string[] $tags
-     */
-    public function addTags(array $tags): self
-    {
-        $tags = [...$this->getTags(), ...$tags];
-
-        $this->setTags(array_values(array_unique($tags)));
-
-        return $this;
-    }
-
-    /**
      * @return string[]
      */
     public function getAliases(): array
