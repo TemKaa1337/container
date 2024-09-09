@@ -19,7 +19,6 @@ final readonly class Decorates
     public function __construct(
         public string $id,
         public int $priority = Decorator::DEFAULT_PRIORITY,
-        public string $signature = Decorator::DEFAULT_SIGNATURE,
     ) {
     }
 }

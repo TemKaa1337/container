@@ -25,7 +25,7 @@ use Tests\Helper\Service\ClassGenerator;
 final class CompileTimeBenchmark
 {
     private const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
-    private const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s, signature: \'%s\')]';
+    private const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s)]';
     private const string ATTRIBUTE_PARAMETER_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
     private const string ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator(tag: \'%s\')]';
     private const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Tag(name: \'%s\')]';
@@ -96,7 +96,6 @@ final class CompileTimeBenchmark
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1.'::class',
                             0,
-                            '$inner',
                         ),
                     ])
                     ->setConstructorArguments([

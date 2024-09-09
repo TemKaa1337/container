@@ -1,9 +1,9 @@
 # Important notes:
 - If you type hinted some class in class arguments of class, which is in `include` section
   and which argument is neither in `include` and `exclude` sections, it will also be autowired;
-- When you decorate any class (doesn't matter with config or with attribute) and in decorator class you have only one
-  constructor argument, then you can omit `signature` parameter and name this argument as you want, in this case container
-  will understand that your decorator have only one constructor argument which is decorated class;
+- When you are using decorator feature, please note that container searches for decorated type hint in argument list,
+  e.g. if you decorate `ExampleInterface` you should type-hint argument with this type to let container know where it
+  should pass decorated class;
 - If you want to create a tagged iterator of all classes which implement specific interface, you can tag an interface
   with specific `#[Tag]` attribute as all classes which implement any tagged interface, also inherit tags from this interface.
   Then implement this interface with classes you want to create iterator with and simply bind

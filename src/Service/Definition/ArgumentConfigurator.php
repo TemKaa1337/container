@@ -21,7 +21,6 @@ use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InstanceOfIt
 use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InterfaceConfigurator;
 use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\TaggedIteratorConfigurator;
 use Temkaa\SimpleContainer\Util\Flag;
-use Temkaa\SimpleContainer\Validator\Definition\Argument\DecoratorValidator;
 use Temkaa\SimpleContainer\Validator\Definition\ArgumentValidator;
 
 /**
@@ -71,18 +70,6 @@ final readonly class ArgumentConfigurator
         ?Factory $factory,
         ?Decorator $decorates,
     ): array {
-        (new DecoratorValidator())->validate($decorates, $arguments, $id);
-
-        if ($decorates && count($arguments) === 1) {
-            return [
-                new DecoratorReference(
-                    $decorates->getId(),
-                    $decorates->getPriority(),
-                    $decorates->getSignature(),
-                ),
-            ];
-        }
-
         (new ArgumentValidator())->validate($arguments, $id);
 
         return array_map(
@@ -122,8 +109,13 @@ final readonly class ArgumentConfigurator
         ?Factory $factory,
         ?Decorator $decorates,
     ): mixed {
-        if ($decorates && $decorates->getSignature() === $argument->getName()) {
-            return new DecoratorReference($decorates->getId(), $decorates->getPriority(), $decorates->getSignature());
+        /** @var ReflectionNamedType $argumentType */
+        $argumentType = $argument->getType();
+        /** @var class-string $entryId */
+        $entryId = $argumentType->getName();
+
+        if ($decorates && $decorates->getId() === $entryId) {
+            return new DecoratorReference($decorates->getId(), $decorates->getPriority());
         }
 
         if ($configuredArgument = $this->taggedIteratorConfigurator->configure($config, $argument, $id, $factory)) {
@@ -142,11 +134,6 @@ final readonly class ArgumentConfigurator
         if ($resolved) {
             return $configuredArgument;
         }
-
-        /** @var ReflectionNamedType $argumentType */
-        $argumentType = $argument->getType();
-        /** @var class-string $entryId */
-        $entryId = $argumentType->getName();
 
         if ($configuredArgument = $this->interfaceConfigurator->configure($config, $argument, $definitions, $entryId)) {
             return $configuredArgument;

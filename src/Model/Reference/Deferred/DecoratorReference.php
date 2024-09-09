@@ -17,7 +17,6 @@ final readonly class DecoratorReference implements ReferenceInterface
     public function __construct(
         private string $id,
         private int $priority,
-        private string $signature,
     ) {
     }
 
@@ -32,10 +31,5 @@ final readonly class DecoratorReference implements ReferenceInterface
     public function getPriority(): int
     {
         return $this->priority;
-    }
-
-    public function getSignature(): string
-    {
-        return $this->signature;
     }
 }

@@ -13,13 +13,6 @@ use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
 /**
- * TODO:
- * 1. ADD TEST WHEN EXCLUDED CLASS AND EXCLUDED INTERFACE
- * 1. add to docs
- * 2. add to examples
- */
-
-/**
  * @psalm-suppress MixedAssignment, MixedPropertyFetch
  */
 final class BoundVariableWithDefaultValueTest extends AbstractContainerTestCase

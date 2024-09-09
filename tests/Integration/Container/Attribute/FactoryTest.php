@@ -118,7 +118,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'dependency',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -154,7 +153,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -172,7 +170,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'dependency',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -244,7 +241,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'decorated',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -284,7 +280,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -302,7 +297,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'dependency',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -376,7 +370,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'dependency',
                         ),
                         sprintf(
                             self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
@@ -417,7 +410,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             2,
-                            'dependency',
                         ),
                         sprintf(
                             self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
@@ -440,7 +432,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'dependency',
                         ),
                         sprintf(
                             self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
@@ -793,7 +784,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'property',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -822,7 +812,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'property',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -903,7 +892,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'property',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -932,7 +920,6 @@ final class FactoryTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'property',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -1051,6 +1038,11 @@ final class FactoryTest extends AbstractContainerTestCase
         self::assertInstanceOf($class2::class, $class1->arg1);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithDynamicFactoryMethodAndNonSingletonClass(): void
     {
         $className1 = ClassGenerator::getClassName();

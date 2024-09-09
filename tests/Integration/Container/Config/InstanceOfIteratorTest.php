@@ -207,6 +207,11 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $collectorInstance2->dependency[1]);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithInstanceOfAbstractClassIteratorAsSingleton(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -283,6 +288,11 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
         );
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithInstanceOfDefaultClassIteratorAsNonSingleton(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -369,6 +379,11 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $collectorInstance2->dependency[1]);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithInstanceOfDefaultClassIteratorAsSingleton(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -446,6 +461,11 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
         );
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithInstanceOfInterfaceIteratorAsNonSingleton(): void
     {
         $collectorClassName = ClassGenerator::getClassName();
@@ -536,6 +556,11 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $collectorInstance2->dependency[1]);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithInstanceOfInterfaceIteratorAsSingleton(): void
     {
         $collectorClassName = ClassGenerator::getClassName();

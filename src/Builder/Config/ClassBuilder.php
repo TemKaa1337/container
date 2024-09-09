@@ -102,9 +102,8 @@ final class ClassBuilder
     public function decorates(
         string $id,
         int $priority = Decorator::DEFAULT_PRIORITY,
-        string $signature = Decorator::DEFAULT_SIGNATURE,
     ): self {
-        $this->decorates = DecoratorFactory::create($id, $priority, $signature);
+        $this->decorates = DecoratorFactory::create($id, $priority);
 
         return $this;
     }
