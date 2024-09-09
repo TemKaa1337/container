@@ -1,3 +1,7 @@
+### v0.2.0
+##### Features:
+- Beta release.
+
 ### v0.1.7
 ##### Features:
 - Allow adding tags to interfaces and abstract classes using config. 
