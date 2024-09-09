@@ -1,10 +1,10 @@
-### v0.2.1
-##### Features:
-- Moved all scripts from Makefile to composer.
-
 ### v0.2.0
 ##### Features:
 - Beta release.
+
+### v0.1.8
+##### Features:
+- Moved all scripts from Makefile to composer.
 
 ### v0.1.7
 ##### Features:
