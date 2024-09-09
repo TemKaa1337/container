@@ -23,7 +23,7 @@ abstract class AbstractTestCase extends TestCase
     protected const string ATTRIBUTE_ALIAS_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Alias(name: \'%s\')]';
     protected const string ATTRIBUTE_AUTOWIRE_DEFAULT_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire]';
     protected const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
-    protected const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s, signature: \'%s\')]';
+    protected const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s)]';
     protected const string ATTRIBUTE_FACTORY_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Factory(id: \'%s\', method: \'%s\')]';
     protected const string ATTRIBUTE_INSTANCE_OF_ITERATOR_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator(id: %s)]';
     protected const string ATTRIBUTE_PARAMETER_RAW_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: %s)]';
@@ -81,7 +81,7 @@ abstract class AbstractTestCase extends TestCase
 
         if ($decorates) {
             /** @psalm-suppress InternalMethod */
-            $builder->decorates($decorates->getId(), $decorates->getPriority(), $decorates->getSignature());
+            $builder->decorates($decorates->getId(), $decorates->getPriority());
         }
 
         foreach ($tags as $tag) {

@@ -10,7 +10,6 @@ namespace Temkaa\SimpleContainer\Model\Config;
 final readonly class Decorator
 {
     public const int DEFAULT_PRIORITY = 0;
-    public const string DEFAULT_SIGNATURE = 'inner';
 
     /**
      * @param class-string $id
@@ -18,7 +17,6 @@ final readonly class Decorator
     public function __construct(
         private string $id,
         private int $priority = self::DEFAULT_PRIORITY,
-        private string $signature = self::DEFAULT_SIGNATURE,
     ) {
     }
 
@@ -33,10 +31,5 @@ final readonly class Decorator
     public function getPriority(): int
     {
         return $this->priority;
-    }
-
-    public function getSignature(): string
-    {
-        return $this->signature;
     }
 }

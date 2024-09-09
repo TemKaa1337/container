@@ -90,7 +90,6 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                         DecoratorFactory::create(
                             $previousDecorator->getId(),
                             $decorates->getPriority(),
-                            $decorates->getSignature(),
                         ),
                     );
                 }
@@ -169,13 +168,11 @@ final readonly class DecoratorConfigurator implements ConfiguratorInterface
                 $arguments[$index] = new DecoratorReference(
                     $previousDecorator->getId(),
                     $argument->getPriority(),
-                    $argument->getSignature(),
                 );
             } else if (!$previousDecorator && $rootDecoratedDefinition instanceof InterfaceDefinition) {
                 $arguments[$index] = new DecoratorReference(
                     $definitions->get($rootDecoratedDefinition->getImplementedById())->getId(),
                     $argument->getPriority(),
-                    $argument->getSignature(),
                 );
             }
         }

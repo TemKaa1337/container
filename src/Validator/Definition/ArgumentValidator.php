@@ -25,7 +25,6 @@ final readonly class ArgumentValidator
     public function validate(array $arguments, string $id): void
     {
         foreach ($arguments as $argument) {
-
             $argumentType = $argument->getType();
             if (!$argumentType) {
                 throw new UninstantiableEntryException(

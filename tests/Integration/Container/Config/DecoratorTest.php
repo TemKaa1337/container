@@ -61,10 +61,7 @@ final class DecoratorTest extends AbstractContainerTestCase
             classBindings: [
                 $this->generateClassConfig(
                     className: self::GENERATED_CLASS_NAMESPACE.$className2,
-                    decorates: new Decorator(
-                        self::GENERATED_CLASS_NAMESPACE.$className1,
-                        signature: '$dependency',
-                    ),
+                    decorates: new Decorator(self::GENERATED_CLASS_NAMESPACE.$className1),
                 ),
             ],
         );
@@ -228,7 +225,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
                             3,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -248,7 +244,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([

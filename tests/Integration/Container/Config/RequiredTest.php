@@ -16,7 +16,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment
+ * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment, MixedArgument, InternalClass,
+ *                 InternalMethod
  */
 final class RequiredTest extends AbstractContainerTestCase
 {
@@ -26,6 +27,8 @@ final class RequiredTest extends AbstractContainerTestCase
     protected const string GENERATED_CLASS_STUB_PATH = '/../../../Fixture/Stub/Class/';
 
     /**
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
@@ -44,10 +47,20 @@ final class RequiredTest extends AbstractContainerTestCase
                     ->setName($className1)
                     ->setBody([
                         sprintf('public readonly %s $arg1;', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                        <<<'METHOD'
+                        public function set(string $nonBoundString): void
+                        {
+                            throw new \Exception($nonBoundString);
+                        }
+                        METHOD,
                         sprintf(
                             <<<'METHOD'
                             public function setArg1(%s $arg1): void
                             {
+                                if (isset($this->arg1)) {
+                                    throw new \Exception();
+                                }
+                                
                                 $this->arg1 = $arg1;
                             }
                             METHOD,
@@ -106,14 +119,13 @@ final class RequiredTest extends AbstractContainerTestCase
             classBindings: [
                 $this->generateClassConfig(
                     className: self::GENERATED_CLASS_NAMESPACE.$className1,
-                    requiredMethodCalls: ['setArg1'],
+                    requiredMethodCalls: ['setArg1', 'setArg1'],
                 ),
                 $this->generateClassConfig(
                     className: self::GENERATED_CLASS_NAMESPACE.$className2,
                     decorates: new Decorator(
                         self::GENERATED_CLASS_NAMESPACE.$interface,
                         0,
-                        'signature',
                     ),
                 ),
                 $this->generateClassConfig(
@@ -121,7 +133,6 @@ final class RequiredTest extends AbstractContainerTestCase
                     decorates: new Decorator(
                         self::GENERATED_CLASS_NAMESPACE.$interface,
                         1,
-                        'signature',
                     ),
                 ),
             ],
@@ -246,7 +257,7 @@ final class RequiredTest extends AbstractContainerTestCase
                             {
                                 $this->arg1 = $arg1;
                             }
-                            METHOD,
+                        METHOD,
                         <<<'METHOD'
                             public function setArg2(array $arg2): void
                             {

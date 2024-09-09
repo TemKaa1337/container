@@ -217,14 +217,6 @@ final class Configurator implements ConfiguratorInterface
         if (!$methodReflection->isStatic()) {
             $this->configureDefinition($factory->getId());
         }
-        // if (!$methodReflection->isStatic()) {
-        //     $this->configureDefinition($factory->getId());
-        //
-        //     /** @var ClassDefinition $factoryDefinition */
-        //     $factoryDefinition = $this->definitions->get($factory->getId());
-        // } else {
-        //     $factoryDefinition = null;
-        // }
 
         $factoryArguments = $this->argumentConfigurator->configure(
             $this->resolvingConfig,
@@ -267,9 +259,10 @@ final class Configurator implements ConfiguratorInterface
             $requiredMethodCalls[] = $method->getName();
         }
 
+        $requiredMethodCalls = array_values(array_unique($requiredMethodCalls));
+
         $resolvedMethodCalls = [];
-        foreach (array_unique($requiredMethodCalls) as $requiredMethodCall) {
-            // TODO: add decorator validator (because there might be a lot of required methods and we dont know what method can accept decorator)
+        foreach ($requiredMethodCalls as $requiredMethodCall) {
             $resolvedMethodCalls[$requiredMethodCall] = $this->argumentConfigurator->configure(
                 $this->resolvingConfig,
                 $this->definitions,

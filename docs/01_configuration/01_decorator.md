@@ -49,11 +49,9 @@ $config = ConfigBuilder::make()
         ClassBuilder::make(Decorator1::class)
             // here you need to specify what you want to decorate: interface or abstract class
             // the second parameter contains priority of nested decorators, the higher priority - the closer to original 
-            // decorated class decorator is wrapped
-            // third parameter is class signature where decorated class will be passed. If your class contains only
-            // constructor argument, you can pass the signature attribute as it will be ignored, but if your class
-            // has 2 or more arguments, you need to specify what property expects decorated class
-            ->decorates(id: SomeInterface::class, priority: 1, signature: 'decorated')
+            // the algorithm of how decorator works is it searches for argument type which is equal to that you provided
+            // as `id` argument in `decorates` method, e.g. in this example it will search for `SomeInterface` argument type   
+            ->decorates(id: SomeInterface::class, priority: 1)
             ->bindVariable('someValue', 'someValue')
             ->build()
     )
@@ -93,7 +91,8 @@ interface SomeInterface
 {
 }
 
-#[Decorates(id: SomeInterface::class, priority: 1, signature: 'decorated')]
+// the same logic applies to attributes, container will search for `SomeInterface` type in constructor argument list
+#[Decorates(id: SomeInterface::class, priority: 1)]
 final readonly class Decorator1 implements SomeInterface
 {
     public function __construct(
@@ -155,7 +154,7 @@ interface SomeInterface
 {
 }
 
-#[Decorates(id: SomeInterface::class, priority: 1, signature: 'decorated')]
+#[Decorates(id: SomeInterface::class, priority: 1)]
 final readonly class Decorator1 implements SomeInterface
 {
     private SomeInterface $decorated;
@@ -219,7 +218,7 @@ interface SomeInterface
 {
 }
 
-#[Decorates(id: SomeInterface::class, priority: 1, signature: 'decorator2')]
+#[Decorates(id: SomeInterface::class, priority: 1)]
 #[Factory(id: Decorator1Factory::class, method: 'create')]
 final readonly class Decorator1 implements SomeInterface
 {

@@ -8,6 +8,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
 use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
@@ -47,7 +48,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
                             0,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -125,7 +125,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1.'::class',
                             0,
-                            '$inner',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -211,55 +210,6 @@ final class DecoratorTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
-    public function testCompilesWithDecoratorTypeHintedAsObject(): void
-    {
-        $className1 = ClassGenerator::getClassName();
-        $className2 = ClassGenerator::getClassName();
-        (new ClassGenerator())
-            ->addBuilder(
-                (new ClassBuilder())
-                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
-                    ->setName($className1),
-            )
-            ->addBuilder(
-                (new ClassBuilder())
-                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
-                    ->setName($className2)
-                    ->setHasConstructor(true)
-                    ->setAttributes([
-                        sprintf(
-                            self::ATTRIBUTE_DECORATES_SIGNATURE,
-                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
-                            0,
-                            'dependency',
-                        ),
-                    ])
-                    ->setConstructorArguments(['public readonly object $dependency']),
-            )
-            ->generate();
-
-        $files = [
-            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
-            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
-        ];
-        $config = $this->generateConfig(includedPaths: $files);
-
-        $container = (new ContainerBuilder())->add($config)->build();
-
-        $decorated = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
-        $decorator = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
-
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorator);
-        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $decorated->dependency);
-        self::assertSame($decorated, $decorator);
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
-     */
     public function testCompilesWithDecoratorWithoutDecoratedServiceInjected(): void
     {
         $className1 = ClassGenerator::getClassName();
@@ -279,7 +229,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
                             0,
-                            'dependency',
                         ),
                     ]),
             )
@@ -327,7 +276,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
                             3,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -347,7 +295,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -367,7 +314,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
                             1,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -517,7 +463,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1.'::class',
                             3,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -538,7 +483,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -559,7 +503,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName1.'::class',
                             1,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -586,7 +529,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName2.'::class',
                             3,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -607,7 +549,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName2.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -628,7 +569,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName2.'::class',
                             1,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -864,7 +804,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             3,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -885,7 +824,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -906,7 +844,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             1,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -1092,7 +1029,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             3,
-                            'dependency',
                         ),
                         sprintf(
                             self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
@@ -1118,7 +1054,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             2,
-                            'dependency',
                         ),
                         sprintf(
                             self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
@@ -1144,7 +1079,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             1,
-                            'dependency',
                         ),
                         sprintf(
                             self::ATTRIBUTE_AUTOWIRE_SIGNATURE,
@@ -1313,7 +1247,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             3,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -1334,7 +1267,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -1355,7 +1287,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             1,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -1485,7 +1416,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             0,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -1506,7 +1436,6 @@ final class DecoratorTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             0,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -1533,5 +1462,53 @@ final class DecoratorTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $decorated);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $decorated->dep);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $decorated->dep->dep);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileWithDecoratorTypeHintedAsObject(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setHasConstructor(true)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_DECORATES_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$className1.'::class',
+                            0,
+                        ),
+                    ])
+                    ->setConstructorArguments(['public readonly object $dependency']),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className2.php",
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+        ];
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $this->expectException(UnresolvableArgumentException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Cannot instantiate entry "%s" with argument "dependency::object".',
+                self::GENERATED_CLASS_NAMESPACE.$className2,
+            ),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
     }
 }

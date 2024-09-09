@@ -94,14 +94,17 @@
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::addTags",
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setAliases",
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements",
+                "Temkaa\\SimpleContainer\\Builder\\Config\\ClassBuilder::build",
                 "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator\\InterfaceConfigurator::addMissingInterfaceDefinitions",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator::configureRequiredMethodCalls"
             ]
         },
         "UnwrapArrayUnique": {
             ignore: [
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::addTags",
                 "Temkaa\\SimpleContainer\\Model\\Definition\\ClassDefinition::setImplements",
-                "Temkaa\\SimpleContainer\\Builder\\Config\\ClassBuilder::build"
+                "Temkaa\\SimpleContainer\\Builder\\Config\\ClassBuilder::build",
+                "Temkaa\\SimpleContainer\\Service\\Definition\\Configurator::configureRequiredMethodCalls"
             ]
         }
     },

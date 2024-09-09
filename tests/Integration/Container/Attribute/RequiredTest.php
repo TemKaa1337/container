@@ -14,7 +14,9 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ *
+ * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment, MixedArgument
  */
 final class RequiredTest extends AbstractContainerTestCase
 {
@@ -46,7 +48,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'argument',
                         ),
                     ])
                     ->setBody([
@@ -73,7 +74,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'signature',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -94,7 +94,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             2,
-                            'signature',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -163,7 +162,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'argument',
                         ),
                         sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false'),
                     ])
@@ -191,7 +189,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'signature',
                         ),
                         sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false'),
                     ])
@@ -213,7 +210,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             2,
-                            'signature',
                         ),
                         sprintf(self::ATTRIBUTE_AUTOWIRE_SIGNATURE, 'true', 'false'),
                     ])
@@ -317,7 +313,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'signature',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -338,7 +333,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'signature',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -412,7 +406,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'inner',
                         ),
                     ])
                     ->setBody([
@@ -479,7 +472,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'signature',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -500,7 +492,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             2,
-                            'signature',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -567,8 +558,6 @@ final class RequiredTest extends AbstractContainerTestCase
      */
     public function testCompilesWithDecoratorWithMultipleRequiredMethods(): void
     {
-        $this->markTestSkipped('fix later');
-
         $className1 = ClassGenerator::getClassName();
         $className2 = ClassGenerator::getClassName();
         $className3 = ClassGenerator::getClassName();
@@ -585,11 +574,11 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             1,
-                            'decorator',
                         ),
                     ])
                     ->setBody([
                         sprintf('public readonly %s $arg1;', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
+                        sprintf('public readonly %s $arg2;', self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface),
                         self::ATTRIBUTE_REQUIRED_SIGNATURE,
                         <<<'METHOD'
                             public function empty(): void
@@ -609,9 +598,19 @@ final class RequiredTest extends AbstractContainerTestCase
                         self::ATTRIBUTE_REQUIRED_SIGNATURE,
                         sprintf(
                             <<<'METHOD'
-                            public function setDecorator(%s $decorator): void
+                            public function setDecorator1(%s $asd): void
                             {
-                                $this->arg1 = $arg1;
+                                $this->arg1 = $asd;
+                            }
+                            METHOD,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
+                        ),
+                        self::ATTRIBUTE_REQUIRED_SIGNATURE,
+                        sprintf(
+                            <<<'METHOD'
+                            public function setDecorator2(%s $decorator, string $asd = 'asd'): void
+                            {
+                                $this->arg2 = $decorator;
                             }
                             METHOD,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface,
@@ -628,7 +627,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             0,
-                            'signature',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -649,7 +647,6 @@ final class RequiredTest extends AbstractContainerTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interface.'::class',
                             2,
-                            'signature',
                         ),
                     ])
                     ->setHasConstructor(true)
@@ -691,8 +688,11 @@ final class RequiredTest extends AbstractContainerTestCase
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className2, $object);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $object->arg1);
         $this->assertInitialized($object->arg1, 'arg1');
+        $this->assertInitialized($object->arg1, 'arg2');
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $object->arg1->arg1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $object->arg1->arg2);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $object->arg1->arg1->arg1);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $object->arg1->arg2->arg1);
     }
 
     /**

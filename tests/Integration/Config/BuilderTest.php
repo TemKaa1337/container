@@ -383,7 +383,6 @@ final class BuilderTest extends AbstractTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             3,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -404,7 +403,6 @@ final class BuilderTest extends AbstractTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             2,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([
@@ -425,7 +423,6 @@ final class BuilderTest extends AbstractTestCase
                             self::ATTRIBUTE_DECORATES_SIGNATURE,
                             self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
                             1,
-                            'dependency',
                         ),
                     ])
                     ->setConstructorArguments([

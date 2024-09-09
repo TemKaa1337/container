@@ -1,3 +1,7 @@
+### v0.1.6
+##### Features:
+- Reworked `Decorates` attribute and config binding by deleting `signature` attribute. 
+
 ### v0.1.5
 ##### Features:
 - Add container option to resolve classes with default value parameters when container itself cannot resolve dependency. 
@@ -26,7 +30,7 @@
 
 ### v0.1.0
 ##### Features:
-- First release!
+- First beta release!
 
 ### v0.0.17
 ##### Features:
