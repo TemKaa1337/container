@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temkaa\SimpleContainer\Service\Definition;
 
 use ReflectionClass;
-use ReflectionException;
 use Temkaa\SimpleContainer\Attribute\Alias;
 use Temkaa\SimpleContainer\Attribute\Decorates;
 use Temkaa\SimpleContainer\Attribute\Tag;
@@ -22,19 +21,24 @@ use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
  */
 final class Populator
 {
-    /**
-     * @throws ReflectionException
-     */
     public function populate(
         ClassDefinition $definition,
         ReflectionClass $reflection,
         Config $config,
         Bag $definitions,
     ): void {
-        $classTags = $reflection->getAttributes(Tag::class);
         $classAliases = $reflection->getAttributes(Alias::class);
 
         $boundClassInfo = $config->getBoundedClass($reflection->getName());
+
+        $parentClasses = $this->getParentClasses($reflection);
+        $interfaces = $reflection->getInterfaceNames();
+
+        $tags = array_merge(
+            $this->getTags($config, $parentClasses),
+            $this->getTags($config, $interfaces),
+            $this->getTags($config, [$definition->getId()]),
+        );
 
         /** @var string[] $aliases */
         $aliases = array_merge(
@@ -42,22 +46,13 @@ final class Populator
             $config->getBoundedClass($definition->getId())?->getAliases() ?? [],
         );
 
-        $instanceOf = $this->getParentClasses($reflection);
-
-        /** @var string[] $tags */
-        $tags = AttributeExtractor::extractParameters($classTags, parameter: 'name');
         $definition
-            ->addTags($boundClassInfo?->getTags() ?? [])
-            ->addTags($tags)
+            ->setTags(array_unique($tags))
             ->setAliases($aliases)
-            ->setInstanceOf($instanceOf);
+            ->setInstanceOf($parentClasses)
+            ->setImplements($interfaces);
 
-        $interfaces = $reflection->getInterfaceNames();
-
-        $definition->setImplements($interfaces);
         foreach ($interfaces as $interface) {
-            $interfaceReflection = new ReflectionClass($interface);
-
             if (
                 $config->hasBoundInterface($interface)
                 && $config->getBoundInterfaceImplementation($interface) === $reflection->getName()
@@ -69,14 +64,6 @@ final class Populator
                     ),
                 );
             }
-
-            /** @var string[] $tags */
-            $tags = AttributeExtractor::extractParameters(
-                $interfaceReflection->getAttributes(Tag::class),
-                parameter: 'name',
-            );
-
-            $definition->addTags($tags);
         }
 
         $this->addDecorator($reflection, $boundClassInfo, $definition);
@@ -108,5 +95,34 @@ final class Populator
         }
 
         return $parentClasses;
+    }
+
+    /**
+     * @param Config         $config
+     * @param class-string[] $ids
+     *
+     * @return list<string>
+     */
+    private function getTags(Config $config, array $ids): array
+    {
+        /** @var list<list<string>> $tags */
+        $tags = [];
+        foreach ($ids as $id) {
+            $reflection = new ReflectionClass($id);
+
+            /** @var list<string> $entryTags */
+            $entryTags = AttributeExtractor::extractParameters(
+                $reflection->getAttributes(Tag::class),
+                parameter: 'name',
+            );
+
+            /** @var list<string> $configTags */
+            $configTags = $config->getBoundedClass($id)?->getTags() ?? [];
+
+            $tags[] = $entryTags;
+            $tags[] = $configTags;
+        }
+
+        return array_merge(...$tags);
     }
 }
