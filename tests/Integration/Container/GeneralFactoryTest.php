@@ -7,10 +7,10 @@ namespace Tests\Integration\Container;
 use Generator;
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Exception\ClassFactoryException;
-use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
-use Temkaa\SimpleContainer\Model\Config\Factory;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Exception\ClassFactoryException;
+use Temkaa\Container\Exception\Config\EntryNotFoundException;
+use Temkaa\Container\Model\Config\Factory;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 

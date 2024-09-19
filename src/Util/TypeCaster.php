@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Util;
+namespace Temkaa\Container\Util;
 
 use Psr\Container\ContainerExceptionInterface;
-use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
+use Temkaa\Container\Exception\UnsupportedCastTypeException;
 
 /**
  * @internal

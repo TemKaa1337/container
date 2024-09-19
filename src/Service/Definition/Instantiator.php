@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition;
+namespace Temkaa\Container\Service\Definition;
 
 use ReflectionClass;
 use ReflectionException;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
-use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\InstanceOfIteratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\InterfaceReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedIteratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Reference;
-use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
-use Temkaa\SimpleContainer\Repository\DefinitionRepository;
+use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Model\Definition\DefinitionInterface;
+use Temkaa\Container\Model\Definition\InterfaceDefinition;
+use Temkaa\Container\Model\Reference\Deferred\DecoratorReference;
+use Temkaa\Container\Model\Reference\Deferred\InstanceOfIteratorReference;
+use Temkaa\Container\Model\Reference\Deferred\InterfaceReference;
+use Temkaa\Container\Model\Reference\Deferred\TaggedIteratorReference;
+use Temkaa\Container\Model\Reference\Reference;
+use Temkaa\Container\Model\Reference\ReferenceInterface;
+use Temkaa\Container\Repository\DefinitionRepository;
 
 /**
  * @internal

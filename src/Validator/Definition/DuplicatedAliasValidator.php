@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator\Definition;
+namespace Temkaa\Container\Validator\Definition;
 
-use Temkaa\SimpleContainer\Exception\DuplicatedEntryAliasException;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
+use Temkaa\Container\Exception\DuplicatedEntryAliasException;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Model\Definition\ClassDefinition;
 
 /**
  * @internal

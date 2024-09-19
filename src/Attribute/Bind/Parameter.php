@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Attribute\Bind;
+namespace Temkaa\Container\Attribute\Bind;
 
 use Attribute;
 use UnitEnum;

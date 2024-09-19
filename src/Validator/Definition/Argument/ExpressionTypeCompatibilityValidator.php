@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator\Definition\Argument;
+namespace Temkaa\Container\Validator\Definition\Argument;
 
 use ReflectionNamedType;
 use ReflectionParameter;
-use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
+use Temkaa\Container\Exception\UnresolvableArgumentException;
 use UnitEnum;
 
 /**

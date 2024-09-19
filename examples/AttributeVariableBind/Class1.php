@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Example\AttributeVariableBind;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
+use Temkaa\Container\Attribute\Bind\Parameter;
 
 final readonly class Class1
 {

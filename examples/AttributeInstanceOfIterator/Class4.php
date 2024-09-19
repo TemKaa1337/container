@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Example\AttributeInstanceOfIterator;
 
-use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
 
 final class Class4
 {

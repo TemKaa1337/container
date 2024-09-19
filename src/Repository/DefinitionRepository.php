@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Repository;
+namespace Temkaa\Container\Repository;
 
-use Temkaa\SimpleContainer\Attribute\Autowire;
-use Temkaa\SimpleContainer\Exception\EntryNotFoundException;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
-use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
+use Temkaa\Container\Attribute\Autowire;
+use Temkaa\Container\Exception\EntryNotFoundException;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Model\Definition\DefinitionInterface;
+use Temkaa\Container\Model\Definition\InterfaceDefinition;
 
 /**
  * @internal

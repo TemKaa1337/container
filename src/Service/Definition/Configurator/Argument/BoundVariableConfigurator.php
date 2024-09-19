@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition\Configurator\Argument;
+namespace Temkaa\Container\Service\Definition\Configurator\Argument;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionNamedType;
 use ReflectionParameter;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
-use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Model\Config\Factory;
-use Temkaa\SimpleContainer\Util\BoundVariableProvider;
-use Temkaa\SimpleContainer\Util\ExpressionParser;
-use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
-use Temkaa\SimpleContainer\Util\TypeCaster;
-use Temkaa\SimpleContainer\Validator\Definition\Argument\ExpressionTypeCompatibilityValidator;
+use Temkaa\Container\Attribute\Bind\Parameter;
+use Temkaa\Container\Exception\UnresolvableArgumentException;
+use Temkaa\Container\Model\Config;
+use Temkaa\Container\Model\Config\Factory;
+use Temkaa\Container\Util\BoundVariableProvider;
+use Temkaa\Container\Util\ExpressionParser;
+use Temkaa\Container\Util\Extractor\AttributeExtractor;
+use Temkaa\Container\Util\TypeCaster;
+use Temkaa\Container\Validator\Definition\Argument\ExpressionTypeCompatibilityValidator;
 use UnitEnum;
 
 /**

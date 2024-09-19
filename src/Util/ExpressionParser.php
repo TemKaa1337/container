@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Util;
+namespace Temkaa\Container\Util;
 
-use Temkaa\SimpleContainer\Exception\Config\EnvVariableCircularException;
-use Temkaa\SimpleContainer\Exception\Config\EnvVariableNotFoundException;
+use Temkaa\Container\Exception\Config\EnvVariableCircularException;
+use Temkaa\Container\Exception\Config\EnvVariableNotFoundException;
 
 /**
  * @internal

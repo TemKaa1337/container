@@ -11,9 +11,9 @@ use Example\ConfigDecorator\Class2;
 use Example\ConfigDecorator\Class3;
 use Example\ConfigDecorator\Collector;
 use Example\ConfigDecorator\Interface1;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigDecorator/')

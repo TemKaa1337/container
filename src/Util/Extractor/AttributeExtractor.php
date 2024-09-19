@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Util\Extractor;
+namespace Temkaa\Container\Util\Extractor;
 
 use ReflectionAttribute;
 use UnitEnum;

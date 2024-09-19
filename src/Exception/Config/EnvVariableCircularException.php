@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Exception\Config;
+namespace Temkaa\Container\Exception\Config;
 
 use LogicException;
 

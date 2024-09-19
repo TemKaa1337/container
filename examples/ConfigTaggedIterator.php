@@ -9,10 +9,10 @@ require __DIR__.'/../vendor/autoload.php';
 use Example\ConfigTaggedIterator\Class1;
 use Example\ConfigTaggedIterator\Class2;
 use Example\ConfigTaggedIterator\Collector;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\TaggedIterator;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigTaggedIterator/')

@@ -8,8 +8,8 @@ require __DIR__.'/../vendor/autoload.php';
 
 use Example\AttributeTaggedIterator\Collector;
 use Example\AttributeTaggedIterator\InterfaceCollector;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/AttributeTaggedIterator/')

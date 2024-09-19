@@ -1,3 +1,7 @@
+### v0.2.2
+##### Features:
+- Change namespaces, package name, etc from `Temkaa\SimpleContainer` to `Temkaa\Container`.
+
 ### v0.2.1
 ##### Fixes:
 - Fixed bug when container cannot be compiled, when including folder and excluding file inside included folder.
@@ -50,7 +54,7 @@
 
 ### v0.0.17
 ##### Features:
-- Added option to inject `Temkaa\SimpleContainer\Container` and `Psr\Container\ContainerInterface` into class constructors.
+- Added option to inject `Temkaa\Container\Container` and `Psr\Container\ContainerInterface` into class constructors.
 
 ### v0.0.16
 ##### Features:

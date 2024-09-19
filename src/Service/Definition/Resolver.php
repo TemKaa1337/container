@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition;
+namespace Temkaa\Container\Service\Definition;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
-use Temkaa\SimpleContainer\Exception\CircularReferenceException;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
-use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\InstanceOfIteratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedIteratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Reference;
-use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
-use Temkaa\SimpleContainer\Repository\DefinitionRepository;
-use Temkaa\SimpleContainer\Util\Flag;
+use Temkaa\Container\Exception\CircularReferenceException;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Model\Definition\DefinitionInterface;
+use Temkaa\Container\Model\Definition\InterfaceDefinition;
+use Temkaa\Container\Model\Reference\Deferred\DecoratorReference;
+use Temkaa\Container\Model\Reference\Deferred\InstanceOfIteratorReference;
+use Temkaa\Container\Model\Reference\Deferred\TaggedIteratorReference;
+use Temkaa\Container\Model\Reference\Reference;
+use Temkaa\Container\Model\Reference\ReferenceInterface;
+use Temkaa\Container\Repository\DefinitionRepository;
+use Temkaa\Container\Util\Flag;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)

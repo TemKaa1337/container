@@ -2,26 +2,26 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition;
+namespace Temkaa\Container\Service\Definition;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionParameter;
-use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
-use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
-use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Model\Config\Decorator;
-use Temkaa\SimpleContainer\Model\Config\Factory;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Model\Reference\Reference;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\BoundVariableConfigurator;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InstanceOfIteratorConfigurator;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\InterfaceConfigurator;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\Argument\TaggedIteratorConfigurator;
-use Temkaa\SimpleContainer\Util\Flag;
-use Temkaa\SimpleContainer\Validator\Definition\ArgumentValidator;
+use Temkaa\Container\Exception\NonAutowirableClassException;
+use Temkaa\Container\Exception\UninstantiableEntryException;
+use Temkaa\Container\Model\Config;
+use Temkaa\Container\Model\Config\Decorator;
+use Temkaa\Container\Model\Config\Factory;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Model\Reference\Deferred\DecoratorReference;
+use Temkaa\Container\Model\Reference\Reference;
+use Temkaa\Container\Service\Definition\Configurator\Argument\BoundVariableConfigurator;
+use Temkaa\Container\Service\Definition\Configurator\Argument\InstanceOfIteratorConfigurator;
+use Temkaa\Container\Service\Definition\Configurator\Argument\InterfaceConfigurator;
+use Temkaa\Container\Service\Definition\Configurator\Argument\TaggedIteratorConfigurator;
+use Temkaa\Container\Util\Flag;
+use Temkaa\Container\Validator\Definition\ArgumentValidator;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)

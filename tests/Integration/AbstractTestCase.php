@@ -6,31 +6,31 @@ namespace Tests\Integration;
 
 use DirectoryIterator;
 use PHPUnit\Framework\TestCase;
-use Temkaa\SimpleContainer\Builder\Config\Class\FactoryBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder as ClassConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Model\Config\ClassConfig;
-use Temkaa\SimpleContainer\Model\Config\Decorator;
-use Temkaa\SimpleContainer\Model\Config\Factory;
-use Temkaa\SimpleContainer\Util\Flag;
+use Temkaa\Container\Builder\Config\Class\FactoryBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder as ClassConfigBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Model\Config;
+use Temkaa\Container\Model\Config\ClassConfig;
+use Temkaa\Container\Model\Config\Decorator;
+use Temkaa\Container\Model\Config\Factory;
+use Temkaa\Container\Util\Flag;
 
 /**
  * @psalm-suppress MixedAssignment, MixedArgumentTypeCoercion, MixedArgument, InternalClass, InternalMethod
  */
 abstract class AbstractTestCase extends TestCase
 {
-    protected const string ATTRIBUTE_ALIAS_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Alias(name: \'%s\')]';
-    protected const string ATTRIBUTE_AUTOWIRE_DEFAULT_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire]';
-    protected const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
-    protected const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s)]';
-    protected const string ATTRIBUTE_FACTORY_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Factory(id: \'%s\', method: \'%s\')]';
-    protected const string ATTRIBUTE_INSTANCE_OF_ITERATOR_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator(id: %s)]';
-    protected const string ATTRIBUTE_PARAMETER_RAW_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: %s)]';
-    protected const string ATTRIBUTE_PARAMETER_STRING_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
-    protected const string ATTRIBUTE_REQUIRED_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Required()]';
-    protected const string ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator(tag: \'%s\')]';
-    protected const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Tag(name: \'%s\')]';
+    protected const string ATTRIBUTE_ALIAS_SIGNATURE = '#[\Temkaa\Container\Attribute\Alias(name: \'%s\')]';
+    protected const string ATTRIBUTE_AUTOWIRE_DEFAULT_SIGNATURE = '#[\Temkaa\Container\Attribute\Autowire]';
+    protected const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\Container\Attribute\Autowire(load: %s, singleton: %s)]';
+    protected const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\Container\Attribute\Decorates(id: %s, priority: %s)]';
+    protected const string ATTRIBUTE_FACTORY_SIGNATURE = '#[\Temkaa\Container\Attribute\Factory(id: \'%s\', method: \'%s\')]';
+    protected const string ATTRIBUTE_INSTANCE_OF_ITERATOR_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\InstanceOfIterator(id: %s)]';
+    protected const string ATTRIBUTE_PARAMETER_RAW_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Parameter(expression: %s)]';
+    protected const string ATTRIBUTE_PARAMETER_STRING_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Parameter(expression: \'%s\')]';
+    protected const string ATTRIBUTE_REQUIRED_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Required()]';
+    protected const string ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\TaggedIterator(tag: \'%s\')]';
+    protected const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\Container\Attribute\Tag(name: \'%s\')]';
     protected const string GENERATED_CLASS_ABSOLUTE_NAMESPACE = '\Tests\Fixture\Stub\Class\\';
     protected const string GENERATED_CLASS_NAMESPACE = 'Tests\Fixture\Stub\Class\\';
     protected const string GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';

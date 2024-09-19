@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition;
+namespace Temkaa\Container\Service\Definition;
 
 use ReflectionClass;
-use Temkaa\SimpleContainer\Attribute\Alias;
-use Temkaa\SimpleContainer\Attribute\Decorates;
-use Temkaa\SimpleContainer\Attribute\Tag;
-use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
-use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
-use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Model\Config\ClassConfig;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
+use Temkaa\Container\Attribute\Alias;
+use Temkaa\Container\Attribute\Decorates;
+use Temkaa\Container\Attribute\Tag;
+use Temkaa\Container\Factory\Definition\DecoratorFactory;
+use Temkaa\Container\Factory\Definition\InterfaceFactory;
+use Temkaa\Container\Model\Config;
+use Temkaa\Container\Model\Config\ClassConfig;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Util\Extractor\AttributeExtractor;
 
 /**
  * @internal

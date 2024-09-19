@@ -7,9 +7,9 @@ Example using config:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 enum BackedEnum: string
 {
@@ -80,10 +80,10 @@ Example using attributes:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\Parameter;
 
 enum BackedEnum: string
 {
@@ -141,9 +141,9 @@ Also, config allows you to bind variables not in a single class scope, but globa
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 enum BackedEnum: string
 {

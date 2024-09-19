@@ -13,9 +13,9 @@ use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Warmup;
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Model\Config;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Model\Config;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
@@ -24,11 +24,11 @@ use Tests\Helper\Service\ClassGenerator;
  */
 final class CompileTimeBenchmark
 {
-    private const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Autowire(load: %s, singleton: %s)]';
-    private const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Decorates(id: %s, priority: %s)]';
-    private const string ATTRIBUTE_PARAMETER_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\Parameter(expression: \'%s\')]';
-    private const string ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator(tag: \'%s\')]';
-    private const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\SimpleContainer\Attribute\Tag(name: \'%s\')]';
+    private const string ATTRIBUTE_AUTOWIRE_SIGNATURE = '#[\Temkaa\Container\Attribute\Autowire(load: %s, singleton: %s)]';
+    private const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\Container\Attribute\Decorates(id: %s, priority: %s)]';
+    private const string ATTRIBUTE_PARAMETER_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Parameter(expression: \'%s\')]';
+    private const string ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\TaggedIterator(tag: \'%s\')]';
+    private const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\Container\Attribute\Tag(name: \'%s\')]';
     private const string GENERATED_CLASS_ABSOLUTE_NAMESPACE = '\Tests\Fixture\Stub\Class\\';
     private const string GENERATED_CLASS_NAMESPACE = 'Tests\Fixture\Stub\Class\\';
     private const string GENERATED_CLASS_STUB_PATH = '/../Fixture/Stub/Class/';

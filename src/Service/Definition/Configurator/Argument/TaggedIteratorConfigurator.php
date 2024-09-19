@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition\Configurator\Argument;
+namespace Temkaa\Container\Service\Definition\Configurator\Argument;
 
 use ReflectionNamedType;
 use ReflectionParameter;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
-use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
-use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Model\Config\Factory;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\TaggedIteratorReference;
-use Temkaa\SimpleContainer\Util\BoundVariableProvider;
-use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
+use Temkaa\Container\Attribute\Bind\TaggedIterator;
+use Temkaa\Container\Exception\UnresolvableArgumentException;
+use Temkaa\Container\Model\Config;
+use Temkaa\Container\Model\Config\Factory;
+use Temkaa\Container\Model\Reference\Deferred\TaggedIteratorReference;
+use Temkaa\Container\Util\BoundVariableProvider;
+use Temkaa\Container\Util\Extractor\AttributeExtractor;
 
 /**
  * @internal

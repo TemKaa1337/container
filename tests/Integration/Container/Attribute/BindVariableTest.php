@@ -7,7 +7,7 @@ namespace Container\Attribute;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;

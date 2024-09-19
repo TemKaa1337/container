@@ -1,12 +1,12 @@
 {
-    "name": "temkaa/simple-container",
+    "name": "temkaa/container",
     "description": "A simple implementation of DI Container",
     "type": "library",
     "license": "MIT",
     "keywords": ["dependency injection", "di", "container", "di container", "ioc", "ioc container"],
     "autoload": {
         "psr-4": {
-            "Temkaa\\SimpleContainer\\": "src/",
+            "Temkaa\\Container\\": "src/",
             "Example\\": "examples/",
             "Tests\\": "tests/"
         }

@@ -7,8 +7,8 @@ namespace Example;
 require __DIR__.'/../vendor/autoload.php';
 
 use Example\AttributeRequired\Class1;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/AttributeRequired/')

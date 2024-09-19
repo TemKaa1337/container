@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Attribute;
+namespace Temkaa\Container\Attribute;
 
 use Attribute;
-use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\Container\Model\Config\Decorator;
 
 /**
  * @psalm-api

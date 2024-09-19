@@ -10,9 +10,9 @@ Example using config:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 final class Class1
 {
@@ -62,10 +62,10 @@ Example using attributes:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Attribute\Bind\Required;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\Parameter;
+use Temkaa\Container\Attribute\Bind\Required;
 
 final class Class1
 {

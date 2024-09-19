@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator\Definition\Method;
+namespace Temkaa\Container\Validator\Definition\Method;
 
 use ReflectionClass;
-use Temkaa\SimpleContainer\Attribute\Bind\Required;
-use Temkaa\SimpleContainer\Exception\RequiredMethodCallException;
-use Temkaa\SimpleContainer\Model\Config\ClassConfig;
+use Temkaa\Container\Attribute\Bind\Required;
+use Temkaa\Container\Exception\RequiredMethodCallException;
+use Temkaa\Container\Model\Config\ClassConfig;
 
 /**
  * @internal

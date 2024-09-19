@@ -2,28 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition;
+namespace Temkaa\Container\Service\Definition;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
-use Temkaa\SimpleContainer\Attribute\Autowire;
-use Temkaa\SimpleContainer\Attribute\Bind\Required;
-use Temkaa\SimpleContainer\Attribute\Factory;
-use Temkaa\SimpleContainer\Exception\CircularReferenceException;
-use Temkaa\SimpleContainer\Exception\NonAutowirableClassException;
-use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
-use Temkaa\SimpleContainer\Factory\Config\ClassFactoryFactory as ConfigClassFactoryFactory;
-use Temkaa\SimpleContainer\Factory\Definition\ClassFactoryFactory as DefinitionClassFactoryFactory;
-use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Model\Config\Factory as ConfigFactory;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Util\Extractor\AttributeExtractor;
-use Temkaa\SimpleContainer\Util\Extractor\ClassExtractor;
-use Temkaa\SimpleContainer\Util\Flag;
-use Temkaa\SimpleContainer\Validator\Definition\FactoryValidator;
-use Temkaa\SimpleContainer\Validator\Definition\Method\RequiredMethodCallValidator;
+use Temkaa\Container\Attribute\Autowire;
+use Temkaa\Container\Attribute\Bind\Required;
+use Temkaa\Container\Attribute\Factory;
+use Temkaa\Container\Exception\CircularReferenceException;
+use Temkaa\Container\Exception\NonAutowirableClassException;
+use Temkaa\Container\Exception\UninstantiableEntryException;
+use Temkaa\Container\Factory\Config\ClassFactoryFactory as ConfigClassFactoryFactory;
+use Temkaa\Container\Factory\Definition\ClassFactoryFactory as DefinitionClassFactoryFactory;
+use Temkaa\Container\Model\Config;
+use Temkaa\Container\Model\Config\Factory as ConfigFactory;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Util\Extractor\AttributeExtractor;
+use Temkaa\Container\Util\Extractor\ClassExtractor;
+use Temkaa\Container\Util\Flag;
+use Temkaa\Container\Validator\Definition\FactoryValidator;
+use Temkaa\Container\Validator\Definition\Method\RequiredMethodCallValidator;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)

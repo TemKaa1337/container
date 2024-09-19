@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Attribute;
+namespace Temkaa\Container\Attribute;
 
 use Attribute;
 

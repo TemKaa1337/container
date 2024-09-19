@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Example\AttributeFactory;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
+use Temkaa\Container\Attribute\Bind\Parameter;
+use Temkaa\Container\Attribute\Bind\TaggedIterator;
 
 final readonly class Class2
 {

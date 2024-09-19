@@ -8,8 +8,8 @@ container will inject itself into you class constructor, you don't need to confi
 declare(strict_types=1);
 
 use Psr\Container\ContainerInterface;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Container;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Container;
 
 class ClassWithInjectedConstructor
 {

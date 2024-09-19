@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition;
+namespace Temkaa\Container\Service\Definition;
 
-use Temkaa\SimpleContainer\Model\Definition\Bag;
+use Temkaa\Container\Model\Definition\Bag;
 
 interface ConfiguratorInterface
 {
