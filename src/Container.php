@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer;
+namespace Temkaa\Container;
 
 use Psr\Container\ContainerInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Repository\DefinitionRepository;
-use Temkaa\SimpleContainer\Service\Definition\Instantiator;
+use Temkaa\Container\Repository\DefinitionRepository;
+use Temkaa\Container\Service\Definition\Instantiator;
 
 final readonly class Container implements ContainerInterface
 {

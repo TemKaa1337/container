@@ -10,9 +10,9 @@ use Example\ConfigAndAttributeSingleton\Class1;
 use Example\ConfigAndAttributeSingleton\Class2;
 use Example\ConfigAndAttributeSingleton\Class3;
 use Example\ConfigAndAttributeSingleton\Class4;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigAndAttributeSingleton/')
@@ -59,6 +59,6 @@ $class = $container->get(Class4::class);
 $class = $container->get(Class4::class);
 
 /**
- * Fatal error: Uncaught Temkaa\SimpleContainer\Exception\EntryNotFoundException: Entry "Could not find entry "Example\Example10\Class3".
+ * Fatal error: Uncaught Temkaa\Container\Exception\EntryNotFoundException: Entry "Could not find entry "Example\Example10\Class3".
  */
 $container->get(Class3::class);

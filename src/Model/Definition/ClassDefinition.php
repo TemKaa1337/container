@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Model\Definition;
+namespace Temkaa\Container\Model\Definition;
 
-use Temkaa\SimpleContainer\Model\Config\Decorator;
-use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
+use Temkaa\Container\Model\Config\Decorator;
+use Temkaa\Container\Model\Definition\Class\Factory;
 
 /**
  * @psalm-suppress MissingConstructor

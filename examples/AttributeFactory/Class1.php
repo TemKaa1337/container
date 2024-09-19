@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Example\AttributeFactory;
 
-use Temkaa\SimpleContainer\Attribute\Factory;
+use Temkaa\Container\Attribute\Factory;
 
 #[Factory(id: Class2::class, method: 'create')]
 final readonly class Class1

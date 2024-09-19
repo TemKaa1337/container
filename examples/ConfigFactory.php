@@ -6,11 +6,11 @@ namespace Example;
 
 use Example\ConfigFactory\Class1;
 use Example\ConfigFactory\Class2;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
-use Temkaa\SimpleContainer\Builder\Config\Class\FactoryBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\TaggedIterator;
+use Temkaa\Container\Builder\Config\Class\FactoryBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 require __DIR__.'/../vendor/autoload.php';
 

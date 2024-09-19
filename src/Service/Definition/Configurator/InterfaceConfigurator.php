@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition\Configurator;
+namespace Temkaa\Container\Service\Definition\Configurator;
 
-use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
-use Temkaa\SimpleContainer\Factory\Definition\ClassFactoryFactory;
-use Temkaa\SimpleContainer\Factory\Definition\InterfaceFactory;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\InterfaceReference;
-use Temkaa\SimpleContainer\Model\Reference\Reference;
-use Temkaa\SimpleContainer\Service\Definition\ConfiguratorInterface;
+use Temkaa\Container\Exception\Config\EntryNotFoundException;
+use Temkaa\Container\Factory\Definition\ClassFactoryFactory;
+use Temkaa\Container\Factory\Definition\InterfaceFactory;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Model\Reference\Deferred\InterfaceReference;
+use Temkaa\Container\Model\Reference\Reference;
+use Temkaa\Container\Service\Definition\ConfiguratorInterface;
 
 /**
  * @internal

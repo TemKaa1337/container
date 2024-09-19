@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Model\Reference\Deferred;
+namespace Temkaa\Container\Model\Reference\Deferred;
 
-use Temkaa\SimpleContainer\Model\Reference\ReferenceInterface;
+use Temkaa\Container\Model\Reference\ReferenceInterface;
 
 /**
  * @internal

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Builder\Config;
+namespace Temkaa\Container\Builder\Config;
 
-use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
-use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
-use Temkaa\SimpleContainer\Model\Config\ClassConfig;
-use Temkaa\SimpleContainer\Model\Config\Decorator;
-use Temkaa\SimpleContainer\Model\Config\Factory;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
+use Temkaa\Container\Attribute\Bind\TaggedIterator;
+use Temkaa\Container\Factory\Definition\DecoratorFactory;
+use Temkaa\Container\Model\Config\ClassConfig;
+use Temkaa\Container\Model\Config\Decorator;
+use Temkaa\Container\Model\Config\Factory;
 use UnitEnum;
 
 /**

@@ -8,7 +8,7 @@ use Closure;
 use Generator;
 use ReflectionAttribute;
 use ReflectionClass;
-use Temkaa\SimpleContainer\Exception\UnsupportedCastTypeException;
+use Temkaa\Container\Exception\UnsupportedCastTypeException;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\AbstractTestCase;
 

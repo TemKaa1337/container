@@ -8,9 +8,9 @@ Example using config:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
 
 interface SomeInterface
 {
@@ -81,11 +81,11 @@ Example using attributes:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Attribute\Decorates;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Attribute\Decorates;
+use Temkaa\Container\Attribute\Bind\Parameter;
 
 interface SomeInterface
 {
@@ -143,12 +143,12 @@ Example with required method calls:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Attribute\Decorates;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Attribute\Bind\Required;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Attribute\Decorates;
+use Temkaa\Container\Attribute\Bind\Parameter;
+use Temkaa\Container\Attribute\Bind\Required;
 
 interface SomeInterface
 {
@@ -206,13 +206,13 @@ Example with factories:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Attribute\Decorates;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Attribute\Bind\Required;
-use Temkaa\SimpleContainer\Attribute\Factory;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Attribute\Decorates;
+use Temkaa\Container\Attribute\Bind\Parameter;
+use Temkaa\Container\Attribute\Bind\Required;
+use Temkaa\Container\Attribute\Factory;
 
 interface SomeInterface
 {

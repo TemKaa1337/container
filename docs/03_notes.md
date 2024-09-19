@@ -19,8 +19,8 @@
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder
 
 interface TestInterface
 {
@@ -44,14 +44,14 @@ $container = ContainerBuilder::make()->add($config)->build();
 $class = $container->get(TestInterface::class);
 ```
 But if you have more than 1 implementation and do not bound specific class to this interface, you will receive
-`Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException`, example:
+`Temkaa\Container\Exception\Config\EntryNotFoundException`, example:
 ```php
 <?php
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder
 
 interface TestInterface
 {
@@ -70,7 +70,7 @@ $config = ConfigBuilder::make()->include(__DIR__.'some_path_with_above_classes')
 $container = ContainerBuilder::make()->add($config)->build();
 
 /**
- * Fatal error: Uncaught Temkaa\SimpleContainer\Exception\EntryNotFoundException: Class "TestInterface" is not found.
+ * Fatal error: Uncaught Temkaa\Container\Exception\EntryNotFoundException: Class "TestInterface" is not found.
  */
 $class = $container->get(TestInterface::class);
 ```
@@ -80,9 +80,9 @@ The same story about decorators, lets say you have the following code:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder
-use Temkaa\SimpleContainer\Attribute\Decorates;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder
+use Temkaa\Container\Attribute\Decorates;
 
 interface TestInterface
 {
@@ -129,16 +129,16 @@ $container = ContainerBuilder::make()->add($config)->build();
 $class = $container->get(TestInterface::class);
 ```
 But if you have more than 1 interface implementation which does not decorate the implemented interface, you will receive
-`Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException`, example:
+`Temkaa\Container\Exception\Config\EntryNotFoundException`, example:
 ```php
 
 <?php
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder
-use Temkaa\SimpleContainer\Attribute\Decorates;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder
+use Temkaa\Container\Attribute\Decorates;
 
 interface TestInterface
 {
@@ -175,7 +175,7 @@ $container = ContainerBuilder::make()->add($config)->build();
 // in this case `TestInterface` has 2 implementations: `TestClass1` and `TestClass2` which implement interface and do
 // not decorate it
 /**
- * Fatal error: Uncaught Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException: Could not find interface 
+ * Fatal error: Uncaught Temkaa\Container\Exception\Config\EntryNotFoundException: Could not find interface 
  * implementation for "TestInterface".
  */
 $class = $container->get(TestInterface::class);

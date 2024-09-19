@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service\Definition\Configurator;
+namespace Temkaa\Container\Service\Definition\Configurator;
 
-use Temkaa\SimpleContainer\Factory\Definition\ClassFactoryFactory;
-use Temkaa\SimpleContainer\Factory\Definition\DecoratorFactory;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Model\Definition\ClassDefinition;
-use Temkaa\SimpleContainer\Model\Definition\DefinitionInterface;
-use Temkaa\SimpleContainer\Model\Definition\InterfaceDefinition;
-use Temkaa\SimpleContainer\Model\Reference\Deferred\DecoratorReference;
-use Temkaa\SimpleContainer\Service\Definition\ConfiguratorInterface;
+use Temkaa\Container\Factory\Definition\ClassFactoryFactory;
+use Temkaa\Container\Factory\Definition\DecoratorFactory;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Model\Definition\DefinitionInterface;
+use Temkaa\Container\Model\Definition\InterfaceDefinition;
+use Temkaa\Container\Model\Reference\Deferred\DecoratorReference;
+use Temkaa\Container\Service\Definition\ConfiguratorInterface;
 
 /**
  * @internal

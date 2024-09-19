@@ -9,10 +9,10 @@ Example binding instance of classes using config:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use \Temkaa\SimpleContainer\Model\Bind\Instance;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use \Temkaa\Container\Model\Bind\Instance;
 use Generator;
 use LogicException;
 
@@ -97,10 +97,10 @@ Example tagging interfaces using attributes:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Attribute\Tag;
-use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Tag;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
 use Generator;
 use LogicException;
 
@@ -180,10 +180,10 @@ Example with abstract classes:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
 use Generator;
 use LogicException;
 
@@ -263,10 +263,10 @@ Example with regular classes:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
 use Generator;
 use LogicException;
 

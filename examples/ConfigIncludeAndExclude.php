@@ -8,8 +8,8 @@ require __DIR__.'/../vendor/autoload.php';
 
 use Example\ConfigIncludeAndExclude\Class1;
 use Example\ConfigIncludeAndExclude\Class3;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigIncludeAndExclude/')
@@ -28,7 +28,7 @@ $container = ContainerBuilder::make()->add($config)->build();
 $class = $container->get(Class1::class);
 
 /**
- * Fatal error: Uncaught Temkaa\SimpleContainer\Exception\NonAutowirableClassException: Cannot autowire class
+ * Fatal error: Uncaught Temkaa\Container\Exception\NonAutowirableClassException: Cannot autowire class
  * "Example\Example1\Class3" as it is in "exclude" config parameter.
  */
 $container->get(Class3::class);

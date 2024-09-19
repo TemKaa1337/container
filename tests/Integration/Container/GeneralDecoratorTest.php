@@ -6,9 +6,9 @@ namespace Container;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
-use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Exception\Config\EntryNotFoundException;
+use Temkaa\Container\Model\Config\Decorator;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;

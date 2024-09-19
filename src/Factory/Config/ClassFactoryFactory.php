@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Factory\Config;
+namespace Temkaa\Container\Factory\Config;
 
-use Temkaa\SimpleContainer\Attribute\Bind\InstanceOfIterator;
-use Temkaa\SimpleContainer\Attribute\Bind\TaggedIterator;
-use Temkaa\SimpleContainer\Attribute\Factory as FactoryAttribute;
-use Temkaa\SimpleContainer\Model\Config\Factory;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
+use Temkaa\Container\Attribute\Bind\TaggedIterator;
+use Temkaa\Container\Attribute\Factory as FactoryAttribute;
+use Temkaa\Container\Model\Config\Factory;
 use UnitEnum;
 
 /**

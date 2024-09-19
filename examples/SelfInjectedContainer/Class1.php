@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Example\SelfInjectedContainer;
 
 use Psr\Container\ContainerInterface;
-use Temkaa\SimpleContainer\Container;
+use Temkaa\Container\Container;
 
 final readonly class Class1
 {

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator\Definition;
+namespace Temkaa\Container\Validator\Definition;
 
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionUnionType;
-use Temkaa\SimpleContainer\Exception\UninstantiableEntryException;
-use Temkaa\SimpleContainer\Exception\UnresolvableArgumentException;
+use Temkaa\Container\Exception\UninstantiableEntryException;
+use Temkaa\Container\Exception\UnresolvableArgumentException;
 
 /**
  * @internal

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Factory\Definition;
+namespace Temkaa\Container\Factory\Definition;
 
-use Temkaa\SimpleContainer\Model\Definition\Class\Factory;
-use Temkaa\SimpleContainer\Model\Definition\Class\Method;
+use Temkaa\Container\Model\Definition\Class\Factory;
+use Temkaa\Container\Model\Definition\Class\Method;
 
 /**
  * @internal

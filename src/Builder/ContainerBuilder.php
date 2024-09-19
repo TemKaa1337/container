@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Builder;
+namespace Temkaa\Container\Builder;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Provider\Config\ValidatorProvider;
-use Temkaa\SimpleContainer\Service\Compiler;
-use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
+use Temkaa\Container\Model\Config;
+use Temkaa\Container\Provider\Config\ValidatorProvider;
+use Temkaa\Container\Service\Compiler;
+use Temkaa\Container\Validator\Config\ValidatorInterface;
 
 /**
  * @psalm-api

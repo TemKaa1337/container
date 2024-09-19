@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Factory\Definition;
+namespace Temkaa\Container\Factory\Definition;
 
-use Temkaa\SimpleContainer\Attribute\Decorates;
-use Temkaa\SimpleContainer\Model\Config\Decorator;
+use Temkaa\Container\Attribute\Decorates;
+use Temkaa\Container\Model\Config\Decorator;
 
 /**
  * @internal

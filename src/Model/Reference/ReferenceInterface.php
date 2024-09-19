@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Model\Reference;
+namespace Temkaa\Container\Model\Reference;
 
 /**
  * @internal

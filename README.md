@@ -2,7 +2,7 @@
 
 ##### Installation:
 ```composer
-composer require temkaa/simple-container
+composer require temkaa/container
 ```
 
 ##### Docs:

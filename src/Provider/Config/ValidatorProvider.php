@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Provider\Config;
+namespace Temkaa\Container\Provider\Config;
 
-use Temkaa\SimpleContainer\Validator\Config\ClassBindingValidator;
-use Temkaa\SimpleContainer\Validator\Config\InterfaceBindingValidator;
-use Temkaa\SimpleContainer\Validator\Config\PathValidator;
-use Temkaa\SimpleContainer\Validator\Config\ValidatorInterface;
-use Temkaa\SimpleContainer\Validator\Config\VariableBindingValidator;
+use Temkaa\Container\Validator\Config\ClassBindingValidator;
+use Temkaa\Container\Validator\Config\InterfaceBindingValidator;
+use Temkaa\Container\Validator\Config\PathValidator;
+use Temkaa\Container\Validator\Config\ValidatorInterface;
+use Temkaa\Container\Validator\Config\VariableBindingValidator;
 
 /**
  * @internal

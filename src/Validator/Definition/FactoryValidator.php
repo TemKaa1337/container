@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Validator\Definition;
+namespace Temkaa\Container\Validator\Definition;
 
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
-use Temkaa\SimpleContainer\Exception\ClassFactoryException;
-use Temkaa\SimpleContainer\Exception\Config\EntryNotFoundException;
-use Temkaa\SimpleContainer\Model\Config\Factory;
+use Temkaa\Container\Exception\ClassFactoryException;
+use Temkaa\Container\Exception\Config\EntryNotFoundException;
+use Temkaa\Container\Model\Config\Factory;
 
 /**
  * @internal

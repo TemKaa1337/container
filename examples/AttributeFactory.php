@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Example;
 
 use Example\AttributeFactory\Class1;
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
 
 require __DIR__.'/../vendor/autoload.php';
 

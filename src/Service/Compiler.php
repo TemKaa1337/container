@@ -2,22 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Service;
+namespace Temkaa\Container\Service;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use ReflectionException;
-use Temkaa\SimpleContainer\Container;
-use Temkaa\SimpleContainer\Model\Config;
-use Temkaa\SimpleContainer\Model\Definition\Bag;
-use Temkaa\SimpleContainer\Repository\DefinitionRepository;
-use Temkaa\SimpleContainer\Service\Definition\Configurator;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\BaseConfigurator;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\DecoratorConfigurator;
-use Temkaa\SimpleContainer\Service\Definition\Configurator\InterfaceConfigurator;
-use Temkaa\SimpleContainer\Service\Definition\Resolver;
-use Temkaa\SimpleContainer\Util\Flag;
-use Temkaa\SimpleContainer\Validator\Definition\DuplicatedAliasValidator;
+use Temkaa\Container\Container;
+use Temkaa\Container\Model\Config;
+use Temkaa\Container\Model\Definition\Bag;
+use Temkaa\Container\Repository\DefinitionRepository;
+use Temkaa\Container\Service\Definition\Configurator;
+use Temkaa\Container\Service\Definition\Configurator\BaseConfigurator;
+use Temkaa\Container\Service\Definition\Configurator\DecoratorConfigurator;
+use Temkaa\Container\Service\Definition\Configurator\InterfaceConfigurator;
+use Temkaa\Container\Service\Definition\Resolver;
+use Temkaa\Container\Util\Flag;
+use Temkaa\Container\Validator\Definition\DuplicatedAliasValidator;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)

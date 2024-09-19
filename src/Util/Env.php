@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Util;
+namespace Temkaa\Container\Util;
 
 /**
  * @internal

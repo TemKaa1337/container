@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Example\ConfigRequired;
 
-use Temkaa\SimpleContainer\Attribute\Bind\Required;
+use Temkaa\Container\Attribute\Bind\Required;
 
 final readonly class Class1
 {

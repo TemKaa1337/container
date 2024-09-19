@@ -9,10 +9,10 @@ Example using config:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Builder\Config\Class\FactoryBuilder;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Builder\Config\Class\FactoryBuilder;
 
 final readonly class Class1
 {
@@ -100,12 +100,12 @@ Example using attributes:
 
 declare(strict_types=1);
 
-use Temkaa\SimpleContainer\Builder\ConfigBuilder;
-use Temkaa\SimpleContainer\Builder\Config\ClassBuilder;
-use Temkaa\SimpleContainer\Builder\ContainerBuilder;
-use Temkaa\SimpleContainer\Attribute\Bind\Parameter;
-use Temkaa\SimpleContainer\Builder\Config\Class\FactoryBuilder;
-use Temkaa\SimpleContainer\Attribute\Factory;
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\Parameter;
+use Temkaa\Container\Builder\Config\Class\FactoryBuilder;
+use Temkaa\Container\Attribute\Factory;
 
 #[Factory(id: Factory::class, method: 'createClass1')]
 final readonly class Class1

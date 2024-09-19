@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\SimpleContainer\Exception;
+namespace Temkaa\Container\Exception;
 
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
