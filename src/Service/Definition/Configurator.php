@@ -142,6 +142,10 @@ final class Configurator implements ConfiguratorInterface
         if (in_array($id, $this->excludedClasses, strict: true)) {
             Flag::untoggle($id, group: 'definition');
 
+            if (!$failIfUninstantiable) {
+                return;
+            }
+
             throw new NonAutowirableClassException(
                 sprintf('Cannot autowire class "%s" as it is in "exclude" config parameter.', $id),
             );

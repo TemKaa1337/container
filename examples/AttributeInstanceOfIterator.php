@@ -30,4 +30,3 @@ $container = ContainerBuilder::make()->add($config)->build();
  * }
  */
 $class = $container->get(Class4::class);
-var_dump($class);

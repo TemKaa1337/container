@@ -71,6 +71,44 @@ final class GeneralTest extends AbstractContainerTestCase
 
     /**
      * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithClassInExcludeSection(): void
+    {
+        self::clearClassFixtures();
+
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH,
+            ],
+            excludedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$className1));
+        self::assertFalse($container->has(self::GENERATED_CLASS_NAMESPACE.$className2));
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
