@@ -1,3 +1,7 @@
+### v0.2.1
+##### Fixes:
+- Fixed bug when container cannot be compiled, when including folder and excluding file inside included folder.
+
 ### v0.2.0
 ##### Features:
 - Beta release.
