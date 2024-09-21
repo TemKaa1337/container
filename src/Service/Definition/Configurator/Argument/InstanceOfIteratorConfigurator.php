@@ -56,7 +56,7 @@ final readonly class InstanceOfIteratorConfigurator
         $this->validateArgumentType($argumentType, $argumentName, $id);
         $this->validateClassExistence($argumentType, $argumentName, $id, $expression->id);
 
-        return new InstanceOfIteratorReference($expression->id);
+        return new InstanceOfIteratorReference($expression->id, $expression->exclude);
     }
 
     private function validateArgumentType(ReflectionNamedType $argumentType, string $argumentName, string $id): void

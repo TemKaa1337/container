@@ -1,6 +1,11 @@
+### v0.2.3
+##### Features:
+- Allowed passing `exclude` classes to `InstanceOfIterator` and `TaggedIterator` to allow implementing interfaces
+on some kind of `composite` classes.
+
 ### v0.2.2
 ##### Features:
-- Change namespaces, package name, etc from `Temkaa\SimpleContainer` to `Temkaa\Container`.
+- Changed namespaces, package name, etc from `Temkaa\SimpleContainer` to `Temkaa\Container`.
 
 ### v0.2.1
 ##### Fixes:

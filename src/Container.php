@@ -11,9 +11,12 @@ use Temkaa\Container\Service\Definition\Instantiator;
 
 final readonly class Container implements ContainerInterface
 {
+    private Instantiator $instantiator;
+
     public function __construct(
         private DefinitionRepository $definitionRepository,
     ) {
+        $this->instantiator = new Instantiator($this->definitionRepository);
     }
 
     /**
@@ -23,9 +26,7 @@ final readonly class Container implements ContainerInterface
     {
         $definition = $this->definitionRepository->find($id);
 
-        $instantiator = new Instantiator($this->definitionRepository);
-
-        return $instantiator->instantiate($definition);
+        return $this->instantiator->instantiate($definition);
     }
 
     public function has(string $id): bool

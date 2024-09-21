@@ -489,4 +489,142 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
             $collector->dependency,
         );
     }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithInstanceOfInterfaceWithExcludedClass(): void
+    {
+        $interfaceName = ClassGenerator::getClassName();
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $composite = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $classWithInjectedComposite = ClassGenerator::getClassName();
+
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$composite.php")
+                    ->setName($composite)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            self::ATTRIBUTE_INSTANCE_OF_ITERATOR_WITH_EXCLUDE_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
+                            'self::class',
+                        ),
+                        'public readonly array $handlers,',
+                    ])
+                    ->setInterfaceImplementations([self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            self::ATTRIBUTE_INSTANCE_OF_ITERATOR_WITH_EXCLUDE_SIGNATURE,
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName.'::class',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$composite.'::class',
+                        ),
+                        'public readonly array $handlers,',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(
+                        realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$classWithInjectedComposite.php",
+                    )
+                    ->setName($classWithInjectedComposite)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(
+                            'public readonly %s $composite,',
+                            self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $classes = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$composite.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$classWithInjectedComposite.'.php',
+        ];
+
+        $config = $this->generateConfig(
+            includedPaths: $classes,
+            interfaceBindings: [
+                self::GENERATED_CLASS_NAMESPACE.$interfaceName => self::GENERATED_CLASS_NAMESPACE.$composite,
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $compositeObject = $container->get(self::GENERATED_CLASS_NAMESPACE.$composite);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$composite, $compositeObject);
+        self::assertSame(
+            [
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
+            ],
+            $compositeObject->handlers,
+        );
+
+        $compositeObject = $container->get(self::GENERATED_CLASS_NAMESPACE.$interfaceName);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$composite, $compositeObject);
+        self::assertSame(
+            [
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
+            ],
+            $compositeObject->handlers,
+        );
+
+        $classWithHandlers = $container->get(self::GENERATED_CLASS_NAMESPACE.$className3);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $classWithHandlers);
+        self::assertSame(
+            [
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
+            ],
+            $classWithHandlers->handlers,
+        );
+
+        $classWithComposite = $container->get(self::GENERATED_CLASS_NAMESPACE.$classWithInjectedComposite);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$classWithInjectedComposite, $classWithComposite);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$composite, $classWithComposite->composite);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$interfaceName, $classWithComposite->composite);
+        self::assertSame(
+            [
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className1),
+                $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
+            ],
+            $classWithComposite->composite->handlers,
+        );
+    }
 }
