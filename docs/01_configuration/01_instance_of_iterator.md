@@ -327,3 +327,101 @@ $data = [/* some data here */];
 $processor = $container->get(Processor::class);
 $processor->process($data);
 ```
+This package also allows to create some kind of `composite` classes with `InstanceOfIterator`:
+```php
+<?php
+
+declare(strict_types=1);
+
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Tag;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
+use Generator;
+use LogicException;
+
+interface DataProcessor
+{
+    public function process(iterable $data): void;
+    
+    public function supports(iterable $data): bool;
+}
+
+final readonly class ArrayProcessor implements DataProcessor
+{
+    public function process(iterable $data): void
+    {
+        // some data processing here
+    }
+    
+    public function supports(iterable $data): bool
+    {
+        return is_array($data);
+    }
+}
+
+final readonly class GeneratorProcessor implements DataProcessor
+{
+    public function process(iterable $data): void
+    {
+        // some data processing here
+    }
+    
+    public function supports(iterable $data): bool
+    {
+        return $data instanceof Generator;
+    }
+}
+
+final readonly class Processor implements DataProcessor
+{
+    public function __construct(
+       /**
+        * @var ProcessorInterface[] $processors
+        */
+        // here we say we want to receive all classes which implement `DataProcessor` interface except this one
+        #[InstanceOfIterator(DataProcessor::class, exclude: [self::class])]
+        public array $processors,
+    ) {
+    }
+    
+    public function process(iterable $data): void
+    {
+        foreach ($this->processors as $processor) {
+            if ($processor->supports($data)) {
+                $processor->process($data);
+                
+                return;
+            }
+        }
+        
+        throw new LogicException('Cannot find suitable processor.');
+    }
+}
+
+final readonly class Entrypoint
+{
+    public function __construct(
+       private DataProcessor $processor,
+    ) {
+    }
+    
+    public function run(iterable $data): void
+    {
+        $this->processor->process($data);
+    }
+}
+
+
+$config = ConfigBuilder::make()
+    ->include(__DIR__.'../../some/path/with/classes/')
+    ->bindClass(DataProcessor::class, Processor::class)
+    ->build();
+
+$container = ContainerBuilder::make()->add($config)->build();
+
+$data = [/* some data here */];
+
+$processor = $container->get(Processor::class);
+$processor->process($data);
+```

@@ -54,7 +54,7 @@ final readonly class TaggedIteratorConfigurator
         $expression = $configExpression ?? $argumentExpression;
         $this->validateArgumentType($argumentType, $argumentName, $id);
 
-        return new TaggedIteratorReference($expression->tag);
+        return new TaggedIteratorReference($expression->tag, $expression->exclude);
     }
 
     private function validateArgumentType(ReflectionNamedType $argumentType, string $argumentName, string $id): void

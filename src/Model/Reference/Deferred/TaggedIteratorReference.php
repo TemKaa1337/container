@@ -11,9 +11,22 @@ use Temkaa\Container\Model\Reference\ReferenceInterface;
  */
 final readonly class TaggedIteratorReference implements ReferenceInterface
 {
+    /**
+     * @param string         $tag
+     * @param class-string[] $exclude
+     */
     public function __construct(
         private string $tag,
+        private array $exclude,
     ) {
+    }
+
+    /**
+     * @return class-string[]
+     */
+    public function getExclude(): array
+    {
+        return $this->exclude;
     }
 
     public function getTag(): string

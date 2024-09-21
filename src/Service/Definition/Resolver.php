@@ -189,7 +189,10 @@ final readonly class Resolver
     private function resolveTaggedArgument(InstanceOfIteratorReference $argument): array
     {
         $definitionRepository = new DefinitionRepository($this->definitions);
-        $instanceOfDefinitions = $definitionRepository->findAllByInstanceOf($argument->getId());
+        $instanceOfDefinitions = $definitionRepository->findAllByInstanceOf(
+            $argument->getId(),
+            $argument->getExclude(),
+        );
 
         $resolvedArguments = [];
         foreach ($instanceOfDefinitions as $instanceOfDefinition) {
@@ -210,7 +213,7 @@ final readonly class Resolver
     private function resolveTaggedIteratorArgument(TaggedIteratorReference $argument): array
     {
         $definitionRepository = new DefinitionRepository($this->definitions);
-        $taggedDefinitions = $definitionRepository->findAllByTag($argument->getTag());
+        $taggedDefinitions = $definitionRepository->findAllByTag($argument->getTag(), $argument->getExclude());
 
         $resolvedArguments = [];
         foreach ($taggedDefinitions as $taggedDefinition) {

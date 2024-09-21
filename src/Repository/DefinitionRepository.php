@@ -38,11 +38,12 @@ final readonly class DefinitionRepository
     }
 
     /**
-     * @param class-string $id
+     * @param class-string   $id
+     * @param class-string[] $exclude
      *
      * @return DefinitionInterface[]
      */
-    public function findAllByInstanceOf(string $id): array
+    public function findAllByInstanceOf(string $id, array $exclude = []): array
     {
         $instanceOfDefinitions = [];
         foreach ($this->definitions as $definition) {
@@ -52,9 +53,13 @@ final readonly class DefinitionRepository
 
             /** @var ClassDefinition $definition */
             if (
-                in_array($id, $definition->getInstanceOf(), strict: true)
-                || in_array($id, $definition->getImplements(), strict: true)
+                !in_array($definition->getId(), $exclude, strict: true)
+                && (
+                    in_array($id, $definition->getInstanceOf(), strict: true)
+                    || in_array($id, $definition->getImplements(), strict: true)
+                )
             ) {
+
                 $instanceOfDefinitions[] = $definition;
             }
         }
@@ -63,9 +68,12 @@ final readonly class DefinitionRepository
     }
 
     /**
+     * @param string         $tag
+     * @param class-string[] $exclude
+     *
      * @return DefinitionInterface[]
      */
-    public function findAllByTag(string $tag): array
+    public function findAllByTag(string $tag, array $exclude = []): array
     {
         $taggedDefinitions = [];
         foreach ($this->definitions as $definition) {
@@ -74,7 +82,10 @@ final readonly class DefinitionRepository
             }
 
             /** @var ClassDefinition $definition */
-            if (in_array($tag, $definition->getTags(), strict: true)) {
+            if (
+                in_array($tag, $definition->getTags(), strict: true)
+                && !in_array($definition->getId(), $exclude, strict: true)
+            ) {
                 $taggedDefinitions[] = $definition;
             }
         }

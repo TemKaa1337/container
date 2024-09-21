@@ -65,6 +65,7 @@ final readonly class Instantiator
             $factoryMethodResolvedArguments = $this->resolveArguments($factory->getMethod()->getArguments());
 
             /**
+             * @noinspection   PhpUndefinedVariableInspection
              * @psalm-suppress MixedMethodCall, PossiblyUndefinedVariable
              * @var object $instance
              */
@@ -107,11 +108,11 @@ final readonly class Instantiator
             $resolvedArgument = match (true) {
                 $argument instanceof TaggedIteratorReference     => array_map(
                     $this->instantiate(...),
-                    $this->definitionRepository->findAllByTag($argument->getTag()),
+                    $this->definitionRepository->findAllByTag($argument->getTag(), $argument->getExclude()),
                 ),
                 $argument instanceof InstanceOfIteratorReference => array_map(
                     $this->instantiate(...),
-                    $this->definitionRepository->findAllByInstanceOf($argument->getId()),
+                    $this->definitionRepository->findAllByInstanceOf($argument->getId(), $argument->getExclude()),
                 ),
                 default                                          => $this->instantiate(
                     $this->definitionRepository->find($argument->getId()),

@@ -26,10 +26,12 @@ abstract class AbstractTestCase extends TestCase
     protected const string ATTRIBUTE_DECORATES_SIGNATURE = '#[\Temkaa\Container\Attribute\Decorates(id: %s, priority: %s)]';
     protected const string ATTRIBUTE_FACTORY_SIGNATURE = '#[\Temkaa\Container\Attribute\Factory(id: \'%s\', method: \'%s\')]';
     protected const string ATTRIBUTE_INSTANCE_OF_ITERATOR_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\InstanceOfIterator(id: %s)]';
+    protected const string ATTRIBUTE_INSTANCE_OF_ITERATOR_WITH_EXCLUDE_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\InstanceOfIterator(id: %s, exclude: [%s])]';
     protected const string ATTRIBUTE_PARAMETER_RAW_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Parameter(expression: %s)]';
     protected const string ATTRIBUTE_PARAMETER_STRING_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Parameter(expression: \'%s\')]';
     protected const string ATTRIBUTE_REQUIRED_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Required()]';
     protected const string ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\TaggedIterator(tag: \'%s\')]';
+    protected const string ATTRIBUTE_TAGGED_ITERATOR_WITH_EXCLUDE_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\TaggedIterator(tag: \'%s\', exclude: [%s])]';
     protected const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\Container\Attribute\Tag(name: \'%s\')]';
     protected const string GENERATED_CLASS_ABSOLUTE_NAMESPACE = '\Tests\Fixture\Stub\Class\\';
     protected const string GENERATED_CLASS_NAMESPACE = 'Tests\Fixture\Stub\Class\\';
