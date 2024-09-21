@@ -8,6 +8,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use ReflectionException;
 use Temkaa\Container\Model\Config;
+use Temkaa\Container\Provider\Config\ProviderInterface;
 use Temkaa\Container\Provider\Config\ValidatorProvider;
 use Temkaa\Container\Service\Compiler;
 use Temkaa\Container\Validator\Config\ValidatorInterface;
@@ -38,8 +39,12 @@ final class ContainerBuilder
         $this->validators = (new ValidatorProvider())->provide();
     }
 
-    public function add(Config $config): self
+    public function add(Config|ProviderInterface $config): self
     {
+        if ($config instanceof ProviderInterface) {
+            $config = $config->provide();
+        }
+
         foreach ($this->validators as $validator) {
             $validator->validate($config);
         }

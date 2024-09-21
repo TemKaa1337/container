@@ -20,6 +20,14 @@ final readonly class Container implements ContainerInterface
     }
 
     /**
+     * @psalm-suppress InvalidReturnStatement, InvalidReturnType, MoreSpecificImplementedParamType
+     *
+     * @template T of object
+     *
+     * @param class-string<T> $id
+     *
+     * @return T
+     *
      * @throws ReflectionException
      */
     public function get(string $id): object

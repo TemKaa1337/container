@@ -9,6 +9,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
+use Temkaa\Container\Builder\ConfigBuilder;
 use Temkaa\Container\Builder\ContainerBuilder;
 use Temkaa\Container\Exception\CircularReferenceException;
 use Temkaa\Container\Exception\ClassNotFoundException;
@@ -18,8 +19,10 @@ use Temkaa\Container\Exception\EntryNotFoundException;
 use Temkaa\Container\Exception\NonAutowirableClassException;
 use Temkaa\Container\Exception\UninstantiableEntryException;
 use Temkaa\Container\Exception\UnresolvableArgumentException;
+use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Provider\Config\ProviderInterface;
 use Temkaa\Container\Repository\DefinitionRepository;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
@@ -105,6 +108,48 @@ final class GeneralTest extends AbstractContainerTestCase
 
         self::assertTrue($container->has(self::GENERATED_CLASS_NAMESPACE.$className1));
         self::assertFalse($container->has(self::GENERATED_CLASS_NAMESPACE.$className2));
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithConfigProvider(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className),
+            )
+            ->generate();
+
+        $includedPath = __DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php";
+
+        $configProvider = new readonly class($includedPath) implements ProviderInterface {
+            public function __construct(
+                private string $includePath,
+            ) {
+            }
+
+            public function provide(): Config
+            {
+                return ConfigBuilder::make()->include($this->includePath)->build();
+            }
+        };
+
+        $container = (new ContainerBuilder())->add($configProvider)->build();
+
+        $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
+
+        self::assertSame(
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
+            $container->get(self::GENERATED_CLASS_NAMESPACE.$className),
+        );
+        self::assertIsObject($object);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $object);
     }
 
     /**
