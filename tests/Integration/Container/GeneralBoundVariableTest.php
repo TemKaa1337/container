@@ -6,6 +6,7 @@ namespace Container;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
 use Temkaa\Container\Builder\ContainerBuilder;
 use Temkaa\Container\Exception\Config\EnvVariableCircularException;
@@ -22,6 +23,45 @@ use Tests\Integration\Container\AbstractContainerTestCase;
  */
 final class GeneralBoundVariableTest extends AbstractContainerTestCase
 {
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithConfigPrecedence(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'attribute_string'),
+                        'public readonly string $arg,',
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            ],
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className1,
+                    variableBindings: ['$arg' => 'config_string'],
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class1 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        self::assertSame('config_string', $class1->arg);
+    }
+
     /**
      * @throws ContainerExceptionInterface
      * @throws ReflectionException

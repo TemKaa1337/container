@@ -1,3 +1,10 @@
+### v0.2.6
+##### Features:
+- Added more classes to benchmark test.
+##### Fixes:
+- Set consistent behaviour where there are 2 ways to do something: with config and by attribute. Now config always
+takes precedence over attributes.
+
 ### v0.2.5
 ##### Fixes:
 - Fixed container compilation failing when property has bound value from env variable, but env variable does not exist
