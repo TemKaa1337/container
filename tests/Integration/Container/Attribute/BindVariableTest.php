@@ -316,8 +316,6 @@ final class BindVariableTest extends AbstractContainerTestCase
      */
     public function testCompilesWithMissingEnvVariableAndDefaultValue(): void
     {
-        // TODO: add the same logic and tests to required attributes
-        // TODO: update docs and examples
         $className = ClassGenerator::getClassName();
         (new ClassGenerator())
             ->addBuilder(
