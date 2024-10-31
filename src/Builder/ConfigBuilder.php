@@ -75,14 +75,12 @@ final class ConfigBuilder
 
     public function build(): Config
     {
-        $includedPaths = array_diff($this->include, $this->exclude);
-
         return new Config(
             $this->boundedClasses,
             $this->boundedInterfaces,
             $this->boundedVariables,
             $this->exclude,
-            $includedPaths,
+            $this->include,
         );
     }
 
