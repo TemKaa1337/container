@@ -6,6 +6,7 @@ namespace Tests\Integration\Container;
 
 use Generator;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
 use Temkaa\Container\Builder\ContainerBuilder;
 use Temkaa\Container\Exception\ClassFactoryException;
@@ -21,6 +22,11 @@ use Tests\Helper\Service\ClassGenerator;
  */
 final class GeneralFactoryTest extends AbstractContainerTestCase
 {
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     * @throws NotFoundExceptionInterface
+     */
     public function testCompilesWithConfigPrecedence(): void
     {
         $className1 = ClassGenerator::getClassName();
