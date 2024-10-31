@@ -349,6 +349,54 @@ final class RequiredTest extends AbstractContainerTestCase
     }
 
     /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithNonExistingVariableBindWithDefaultValue(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setBody([
+                        'public float $argument;',
+                        <<<'METHOD'
+                        public function setArgument(float $arg1 = 10.1): void
+                        {
+                            $this->argument = $arg1;
+                        }
+                        METHOD,
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+        ];
+        $config = $this->generateConfig(
+            includedPaths: $files,
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className1,
+                    variableBindings: ['arg1' => 'env(SOME_NON_EXISTING_VARIABLE)'],
+                    requiredMethodCalls: ['setArgument'],
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $object = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+
+        $this->assertInitialized($object, 'argument');
+
+        self::assertSame(10.1, $object->argument);
+    }
+
+    /**
      * @throws ReflectionException
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface

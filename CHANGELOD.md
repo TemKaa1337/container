@@ -1,3 +1,13 @@
+### v0.2.5
+##### Fixes:
+- Fixed container compilation failing when property has bound value from env variable, but env variable does not exist
+and property has default value.
+
+### v0.2.4
+##### Features:
+- Added [ConfigProvider.php](src/Provider/Config/ProviderInterface.php), which is now can be added to config builder
+instead of config itself.
+
 ### v0.2.3
 ##### Features:
 - Allowed passing `exclude` classes to `InstanceOfIterator` and `TaggedIterator` to allow implementing interfaces

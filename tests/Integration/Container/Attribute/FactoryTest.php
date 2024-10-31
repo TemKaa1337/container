@@ -1500,6 +1500,57 @@ final class FactoryTest extends AbstractContainerTestCase
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
+    public function testCompilesWithNonExistingEnvVariableWithDefaultValue(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            self::GENERATED_CLASS_NAMESPACE.$className1,
+                            'create',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorVisibility('private')
+                    ->setConstructorArguments([
+                        'public readonly ?string $argument,',
+                    ])
+                    ->setBody([
+                        sprintf(
+                            <<<'METHOD'
+                            public static function create(%s string $arg1 = null): self
+                            {
+                                return new self($arg1);
+                            }
+                            METHOD,
+                            sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'env(SOME_NON_EXISTING_ENV_VARIABLE)'),
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+        ];
+        $config = $this->generateConfig(includedPaths: $files);
+
+        $container = (new ContainerBuilder())->add($config)->build();
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class);
+        self::assertSame(null, $class->argument);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     public function testCompilesWithNonSingletonClassesInjectedIntoFactoryMethod(): void
     {
         $className1 = ClassGenerator::getClassName();

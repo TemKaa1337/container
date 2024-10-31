@@ -387,6 +387,44 @@ final class BindVariableTest extends AbstractContainerTestCase
 
     /**
      * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithMissingEnvVariableAndDefaultValue(): void
+    {
+        $className = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly int $variable = 5,',
+                    ]),
+            )
+            ->generate();
+
+        $config = $this->generateConfig(
+            includedPaths: [__DIR__.self::GENERATED_CLASS_STUB_PATH.$className.'.php'],
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className,
+                    variableBindings: ['$variable' => 'env(ENV_SOME_NON_EXISTING_VARIABLE)'],
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className);
+
+        self::assertIsObject($class);
+        self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className, $class);
+        self::assertSame(5, $class->variable);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */

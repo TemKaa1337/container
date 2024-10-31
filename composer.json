@@ -50,12 +50,12 @@
         "bench": "./vendor/bin/phpbench run --config=phpbench.json",
         "infection": "./vendor/bin/infection --threads=4",
         "test-all": [
-            "composer phpmd",
-            "composer psalm",
-            "composer tests",
-            "composer infection",
-            "composer bench",
-            "composer coverage"
+            "@phpmd",
+            "@psalm",
+            "@tests",
+            "@infection",
+            "@bench",
+            "@coverage"
         ]
     }
 }

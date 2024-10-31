@@ -234,7 +234,7 @@ final class BuilderTest extends AbstractTestCase
             .'it has circular references "CIRCULAR_ENV_VARIABLE_1 -> CIRCULAR_ENV_VARIABLE_2".',
         );
 
-        (new ContainerBuilder())->add($config);
+        (new ContainerBuilder())->add($config)->build();
     }
 
     public function testConfigDoesNotLoadsDueToCircularEnvVariableGlobalBinding(): void
@@ -263,7 +263,7 @@ final class BuilderTest extends AbstractTestCase
             .'it has circular references "CIRCULAR_ENV_VARIABLE_1 -> CIRCULAR_ENV_VARIABLE_2".',
         );
 
-        (new ContainerBuilder())->add($config);
+        (new ContainerBuilder())->add($config)->build();
     }
 
     public function testConfigHasEnvBoundVariables(): void
@@ -300,15 +300,22 @@ final class BuilderTest extends AbstractTestCase
             ->addBuilder(
                 (new ClassBuilder())
                     ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
-                    ->setName($className),
+                    ->setName($className)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'private readonly string $debug,',
+                    ]),
             )
             ->generate();
 
         $config = $this->generateConfig(
+            includedPaths: [
+                __DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php",
+            ],
             classBindings: [
                 $this->generateClassConfig(
                     className: self::GENERATED_CLASS_NAMESPACE.$className,
-                    variableBindings: ['string' => 'env(APP_DEBUG)'],
+                    variableBindings: ['$debug' => 'env(APP_DEBUG)'],
                 ),
             ],
         );
@@ -316,7 +323,7 @@ final class BuilderTest extends AbstractTestCase
         $this->expectException(EnvVariableNotFoundException::class);
         $this->expectExceptionMessage('Variable "APP_DEBUG" is not found in env variables.');
 
-        (new ContainerBuilder())->add($config);
+        (new ContainerBuilder())->add($config)->build();
     }
 
     /**
