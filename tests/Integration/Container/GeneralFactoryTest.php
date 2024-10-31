@@ -21,6 +21,64 @@ use Tests\Helper\Service\ClassGenerator;
  */
 final class GeneralFactoryTest extends AbstractContainerTestCase
 {
+    public function testCompilesWithConfigPrecedence(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setAttributes([
+                        sprintf(
+                            self::ATTRIBUTE_FACTORY_SIGNATURE,
+                            self::GENERATED_CLASS_NAMESPACE.$className1,
+                            'create',
+                        ),
+                    ])
+                    ->setHasConstructor(true)
+                    ->setConstructorVisibility('private')
+                    ->setConstructorArguments([
+                        sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'attribute_value'),
+                        'public readonly string $variable,',
+                    ])
+                    ->setBody([
+                        sprintf(
+                            <<<'METHOD'
+                            public static function create(%s string $variable): self
+                            {
+                                return new self($variable);
+                            }
+                            METHOD,
+                            sprintf(self::ATTRIBUTE_PARAMETER_STRING_SIGNATURE, 'attribute_value'),
+                        ),
+                    ]),
+            )
+            ->generate();
+
+        $files = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH."$className1.php",
+        ];
+        $config = $this->generateConfig(
+            includedPaths: $files,
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className1,
+                    factory: new Factory(
+                        id: self::GENERATED_CLASS_NAMESPACE.$className1,
+                        method: 'create',
+                        boundedVariables: ['variable' => 'config_value'],
+                    ),
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+        self::assertSame('config_value', $class->variable);
+    }
+
     /**
      * @throws ContainerExceptionInterface
      * @throws ReflectionException

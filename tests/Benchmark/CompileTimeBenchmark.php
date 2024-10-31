@@ -43,7 +43,7 @@ final class CompileTimeBenchmark
      * @throws ReflectionException
      */
     #[AfterMethods('tearDown')]
-    #[Assert(expression: 'mode(variant.time.avg) < 3 milliseconds')] // latest best local run - 2.73ms
+    #[Assert(expression: 'mode(variant.time.avg) < 4.5 milliseconds')] // latest best local run - 2.73ms (4.3ms in GHA)
     #[BeforeMethods('setUp')]
     #[Iterations(20)]
     #[Revs(1000)]
@@ -727,9 +727,6 @@ final class CompileTimeBenchmark
         foreach ($envVariables as $name => $value) {
             putenv("$name=$value");
         }
-
-        // TODO: add required
-        // TODO: add class with factory
     }
 
     public function tearDown(): void

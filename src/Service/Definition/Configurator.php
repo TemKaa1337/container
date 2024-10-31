@@ -118,10 +118,10 @@ final class Configurator implements ConfiguratorInterface
         $classConfigFactory = $this->resolvingConfig->getBoundedClass($id)?->getFactory();
 
         $factory = match (true) {
+            (bool) $classConfigFactory => $classConfigFactory,
             (bool) $factoryAttributes  => ConfigClassFactoryFactory::createFromAttribute(
                 AttributeExtractor::extract($factoryAttributes, index: 0),
             ),
-            (bool) $classConfigFactory => $classConfigFactory,
             default                    => null,
         };
 
