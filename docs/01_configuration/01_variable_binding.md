@@ -30,6 +30,7 @@ final readonly class ClassWithBoundedEnvVariables
         public BackedEnum $backedEnum,
         public UnitEnum $unitEnum,
         public string $expressionVar,
+        public string $someStringWithNonExistingEnvVar = 'some_string'
     ) {
     }
 }
@@ -56,6 +57,7 @@ $config = ConfigBuilder::make()
             ->bindVariable('backedEnum', BackedEnum::CaseOne)
             ->bindVariable('$unitEnum', UnitEnum::CaseOne)
             ->bindVariable('expressionVar', 'env(EXPRESSION_ENV_VAR)')
+            ->bindVariable('$someStringWithNonExistingEnvVar', 'env(SOME_NON_EXISTING_ENV_VARIABLE)')
             ->build(),
     )
     ->build();
@@ -70,6 +72,9 @@ $container = ContainerBuilder::make()->add($config)->build();
  * $backedEnum = BackedEnum::CaseOne
  * $unitEnum = UnitEnum::CaseOne
  * $expressionVar = 'string_10'
+ * except for $someStringWithNonExistingEnvVar variable, because it was bound a non-existing-variable,
+ * but the only reason container compilation did not fail is that it has default value ('some_string'), which was
+ * used instead of env variable value 
  */
 $classWithBoundedVariables = $container->get(ClassWithBoundedEnvVariables::class);
 ```

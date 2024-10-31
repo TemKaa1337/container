@@ -8,7 +8,6 @@ use Temkaa\Container\Validator\Config\ClassBindingValidator;
 use Temkaa\Container\Validator\Config\InterfaceBindingValidator;
 use Temkaa\Container\Validator\Config\PathValidator;
 use Temkaa\Container\Validator\Config\ValidatorInterface;
-use Temkaa\Container\Validator\Config\VariableBindingValidator;
 
 /**
  * @internal
@@ -22,7 +21,6 @@ final class ValidatorProvider
     {
         return [
             new PathValidator(),
-            new VariableBindingValidator(),
             new ClassBindingValidator(),
             new InterfaceBindingValidator(),
         ];
