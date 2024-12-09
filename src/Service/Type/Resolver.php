@@ -155,6 +155,10 @@ final readonly class Resolver
             return new Value((int) $value, resolved: true);
         }
 
+        if ($value instanceof BackedEnum && is_numeric($value->value)) {
+            return new Value((int) $value->value, resolved: true);
+        }
+
         return new Value(null, resolved: false);
     }
 

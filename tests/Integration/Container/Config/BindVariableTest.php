@@ -19,7 +19,8 @@ use Temkaa\Container\Exception\UnresolvableArgumentException;
 use Temkaa\Container\Model\Config\Factory;
 use Tests\Fixture\Stub\AbstractClass1;
 use Tests\Fixture\Stub\AbstractClass2;
-use Tests\Fixture\Stub\BackedEnum;
+use Tests\Fixture\Stub\IntBackedEnum;
+use Tests\Fixture\Stub\StringBackedEnum;
 use Tests\Fixture\Stub\ClassExtends1;
 use Tests\Fixture\Stub\ClassExtends2;
 use Tests\Fixture\Stub\ClassImplements1;
@@ -31,6 +32,11 @@ use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\AbstractTestCase;
 use Tests\Integration\Container\AbstractContainerTestCase;
+use function constant;
+use function fopen;
+use function get_debug_type;
+use function ltrim;
+use function realpath;
 use function sprintf;
 
 /**
@@ -69,7 +75,8 @@ final class BindVariableTest extends AbstractContainerTestCase
         yield ['string', 10.1, '10.1'];
         yield ['string', false, 'false'];
         yield ['string', true, 'true'];
-        yield ['string', BackedEnum::TestCase, 'TestCase'];
+        yield ['string', StringBackedEnum::TestCase, 'TestCase'];
+        yield ['string', IntBackedEnum::TestCase, '1'];
         yield [
             'string',
             new class implements Stringable {
@@ -82,6 +89,7 @@ final class BindVariableTest extends AbstractContainerTestCase
         ];
 
         yield ['int', 10, 10];
+        yield ['int', IntBackedEnum::TestCase, 1];
         yield ['int', '10', 10];
         yield ['int', 10.6, 10];
         yield ['int', 'env(ENV_CASTABLE_STRING_VAR)', 10];
@@ -114,7 +122,7 @@ final class BindVariableTest extends AbstractContainerTestCase
         yield ['array', ['a' => 'a'], ['a' => 'a']];
 
         $iterator = new class () implements Iterator {
-            public function current(): mixed
+            public function current(): string
             {
                 return '';
             }
@@ -123,7 +131,7 @@ final class BindVariableTest extends AbstractContainerTestCase
             {
             }
 
-            public function key(): mixed
+            public function key(): string
             {
                 return '';
             }
@@ -157,12 +165,12 @@ final class BindVariableTest extends AbstractContainerTestCase
         yield ['array', new TaggedIterator('tag'), []];
 
         yield ['\UnitEnum', IteratorFormat::List, IteratorFormat::List];
-        yield ['\UnitEnum', BackedEnum::TestCase, BackedEnum::TestCase];
+        yield ['\UnitEnum', StringBackedEnum::TestCase, StringBackedEnum::TestCase];
 
         yield ['\\'.IteratorFormat::class, IteratorFormat::List, IteratorFormat::List];
 
-        yield ['\BackedEnum', BackedEnum::TestCase, BackedEnum::TestCase];
-        yield ['\\'.BackedEnum::class, BackedEnum::TestCase, BackedEnum::TestCase];
+        yield ['\BackedEnum', StringBackedEnum::TestCase, StringBackedEnum::TestCase];
+        yield ['\\'.StringBackedEnum::class, StringBackedEnum::TestCase, StringBackedEnum::TestCase];
 
         // - mixed
         yield ['mixed', 'string', 'string'];
@@ -174,7 +182,7 @@ final class BindVariableTest extends AbstractContainerTestCase
         yield ['mixed', false, false];
         yield ['mixed', true, true];
         yield ['mixed', null, null];
-        yield ['mixed', BackedEnum::TestCase, BackedEnum::TestCase];
+        yield ['mixed', StringBackedEnum::TestCase, StringBackedEnum::TestCase];
         $stringable = new class implements Stringable {
             public function __toString(): string
             {
@@ -262,6 +270,7 @@ final class BindVariableTest extends AbstractContainerTestCase
         yield ['string', $callback];
 
         yield ['int', 'string'];
+        yield ['int', StringBackedEnum::TestCase];
         yield ['int', true];
         yield ['int', []];
         yield ['int', 'env(ENV_STRING_VAL)'];
@@ -352,11 +361,11 @@ final class BindVariableTest extends AbstractContainerTestCase
         yield ['\UnitEnum', $callback];
 
         yield ['\BackedEnum', IteratorFormat::List];
-        yield ['\\'.BackedEnum::class, IteratorFormat::List];
-        yield ['\\'.IteratorFormat::class, BackedEnum::TestCase];
-        yield ['\\'.BackedEnum::class, $object];
+        yield ['\\'.StringBackedEnum::class, IteratorFormat::List];
+        yield ['\\'.IteratorFormat::class, StringBackedEnum::TestCase];
+        yield ['\\'.StringBackedEnum::class, $object];
         yield ['\\'.IteratorFormat::class, $object];
-        yield ['\\'.BackedEnum::class, $callback];
+        yield ['\\'.StringBackedEnum::class, $callback];
         yield ['\\'.IteratorFormat::class, $callback];
 
         $classExtends1 = new ClassExtends1();
@@ -464,6 +473,11 @@ final class BindVariableTest extends AbstractContainerTestCase
         self::assertTrue($class->varThirteen);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     #[DataProvider('getDataForCompilableBoundVariable')]
     public function testCompilesWithClassBoundVariable(
         string $variableType,
@@ -592,6 +606,11 @@ final class BindVariableTest extends AbstractContainerTestCase
         self::assertEquals($backedEnumValue, $class->concreteBackedEnum);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     #[DataProvider('getCallableDataForCompilableBoundVariable')]
     #[DataProvider('getDataForCompilableBoundVariable')]
     public function testCompilesWithFactoryBoundVariable(
@@ -664,6 +683,11 @@ final class BindVariableTest extends AbstractContainerTestCase
         self::assertSame($expectedCompiledValue, $class->variable);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     #[DataProvider('getDataForCompilableBoundVariable')]
     public function testCompilesWithGlobalBoundVariable(
         string $variableType,
@@ -925,6 +949,11 @@ final class BindVariableTest extends AbstractContainerTestCase
         );
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
     #[DataProvider('getCallableDataForCompilableBoundVariable')]
     #[DataProvider('getDataForCompilableBoundVariable')]
     public function testCompilesWithRequiredMethodBoundVariable(
@@ -980,6 +1009,10 @@ final class BindVariableTest extends AbstractContainerTestCase
         self::assertSame($expectedCompiledValue, $class->variable);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     #[DataProvider('getDataForNonCompilableBoundVariable')]
     public function testDoesNotCompileWithClassBoundVariable(
         string $variableType,
@@ -1023,6 +1056,10 @@ final class BindVariableTest extends AbstractContainerTestCase
         (new ContainerBuilder())->add($config)->build();
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     #[DataProvider('getCallableDataForNonCompilableBoundVariable')]
     #[DataProvider('getDataForNonCompilableBoundVariable')]
     public function testDoesNotCompileWithFactoryBoundVariable(
@@ -1099,6 +1136,10 @@ final class BindVariableTest extends AbstractContainerTestCase
         (new ContainerBuilder())->add($config)->build();
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     #[DataProvider('getDataForNonCompilableBoundVariable')]
     public function testDoesNotCompileWithGlobalBoundVariable(
         string $variableType,
@@ -1137,6 +1178,10 @@ final class BindVariableTest extends AbstractContainerTestCase
         (new ContainerBuilder())->add($config)->build();
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
     #[DataProvider('getDataForNonCompilableBoundVariable')]
     public function testDoesNotCompileWithRequiredMethodBoundVariable(
         string $variableType,
