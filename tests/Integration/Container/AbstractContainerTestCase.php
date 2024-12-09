@@ -8,7 +8,6 @@ use Closure;
 use Generator;
 use ReflectionAttribute;
 use ReflectionClass;
-use Temkaa\Container\Exception\UnsupportedCastTypeException;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\AbstractTestCase;
 
@@ -95,44 +94,6 @@ abstract class AbstractContainerTestCase extends AbstractTestCase
                 'Cannot resolve argument "arg" with union type "(Generator&Iterator)|array" in class "%s".',
                 self::GENERATED_CLASS_NAMESPACE.$className,
             ),
-        ];
-    }
-
-    public static function getDataForDoesNotCompileDueToVariableBindingErrorsTest(): iterable
-    {
-        yield [
-            ClassGenerator::getClassName(),
-            ['public readonly object $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'object'),
-        ];
-
-        yield [
-            ClassGenerator::getClassName(),
-            ['public readonly array $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'array'),
-        ];
-
-        yield [
-            ClassGenerator::getClassName(),
-            ['public readonly iterable $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'iterable'),
-        ];
-
-        yield [
-            ClassGenerator::getClassName(),
-            ['public readonly int $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'int'),
-        ];
-
-        yield [
-            ClassGenerator::getClassName(),
-            ['public readonly float $arg'],
-            UnsupportedCastTypeException::class,
-            sprintf('Cannot cast value of type "%s" to "%s".', 'string', 'float'),
         ];
     }
 

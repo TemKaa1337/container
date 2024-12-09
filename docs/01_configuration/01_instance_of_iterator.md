@@ -12,7 +12,7 @@ declare(strict_types=1);
 use Temkaa\Container\Builder\ConfigBuilder;
 use Temkaa\Container\Builder\Config\ClassBuilder;
 use Temkaa\Container\Builder\ContainerBuilder;
-use \Temkaa\Container\Model\Bind\Instance;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
 use Generator;
 use LogicException;
 
@@ -51,10 +51,10 @@ final readonly class GeneratorProcessor implements DataProcessor
 
 final readonly class Processor
 {
+    /**
+     * @param list<ProcessorInterface> $processors
+     */
     public function __construct(
-       /**
-        * @var ProcessorInterface[] $processors
-        */
         public array $processors,
     ) {
     }
@@ -78,7 +78,7 @@ $config = ConfigBuilder::make()
     ->bindClass(
         ClassBuilder::make(Processor::class)
             // here you say that this argument is array of classes which implement `DataProcessor` interface
-            ->bindVariable('$processors', new Instance(DataProcessor::class))
+            ->bindVariable('$processors', new InstanceOfIterator(DataProcessor::class))
             ->build(),
     )
     ->build();
@@ -139,10 +139,10 @@ final readonly class GeneratorProcessor implements DataProcessor
 
 final readonly class Processor
 {
+    /**
+     * @param list<ProcessorInterface> $processors
+     */
     public function __construct(
-       /**
-        * @var ProcessorInterface[] $processors
-        */
         #[InstanceOfIterator(DataProcessor::class)]
         public array $processors,
     ) {
@@ -222,10 +222,10 @@ final readonly class GeneratorProcessor extends AbstractDataProcessor
 
 final readonly class Processor
 {
+    /**
+     * @param list<AbstractDataProcessor> $processors
+     */
     public function __construct(
-       /**
-        * @var AbstractDataProcessor[] $processors
-        */
         #[InstanceOfIterator(AbstractDataProcessor::class)]
         public array $processors,
     ) {
@@ -293,10 +293,10 @@ final readonly class GeneratorProcessor extends DataProcessor
 
 final readonly class Processor
 {
+    /**
+     * @param list<DataProcessor> $processors
+     */
     public function __construct(
-       /**
-        * @var DataProcessor[] $processors
-        */
         #[InstanceOfIterator(DataProcessor::class)]
         public array $processors,
     ) {
@@ -375,10 +375,10 @@ final readonly class GeneratorProcessor implements DataProcessor
 
 final readonly class Processor implements DataProcessor
 {
+    /**
+     * @param list<ProcessorInterface> $processors
+     */
     public function __construct(
-       /**
-        * @var ProcessorInterface[] $processors
-        */
         // here we say we want to receive all classes which implement `DataProcessor` interface except this one
         #[InstanceOfIterator(DataProcessor::class, exclude: [self::class])]
         public array $processors,
@@ -415,7 +415,129 @@ final readonly class Entrypoint
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(DataProcessor::class, Processor::class)
+    ->bindInterface(DataProcessor::class, Processor::class)
+    ->build();
+
+$container = ContainerBuilder::make()->add($config)->build();
+
+$data = [/* some data here */];
+
+$processor = $container->get(Processor::class);
+$processor->process($data);
+```
+You can also choose what format you want this array of objects to be:
+```php
+<?php
+
+declare(strict_types=1);
+
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
+use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
+use Generator;
+use LogicException;
+
+interface EventProcessorInterface
+{
+    public function process(array $event): void;
+}
+
+final readonly class UserCreatedEventProcessor implements EventProcessorInterface
+{
+    public function process(array $event): void
+    {
+        // some processing here
+    }
+}
+
+final readonly class UserDeletedEventProcessor implements EventProcessorInterface
+{
+    public function process(array $event): void
+    {
+        // some processing here
+    }
+}
+
+final readonly class Processor
+{
+    /**
+     * @param array<string, ProcessorInterface> $processors
+     */
+    public function __construct(
+        private array $processors,
+    ) {
+    }
+    
+    /**
+     * @param array{name: 'user.deleted'|'user.created', data: array} $event
+     * @return void
+     */
+    public function process(array $event): void
+    {
+        if (!$processor = $this->processors[$event['name']] ?? null) {
+            throw new LogicException('Cannot find suitable processor.');
+        }
+
+        $processor->process($event);
+    }
+}
+
+// the same functionality is available with InstanceOfIterator attribute
+$config = ConfigBuilder::make()
+    ->include(__DIR__.'../../some/path/with/classes/')
+    ->bindClass(
+        ClassBuilder::make(Processor::class)
+            // in example above this version of configuration is used
+            // in this case the result of this configuration is:
+            // ['user.created' => object(UserCreatedEventProcessor), 'user.deleted' => object(UserDeletedEventProcessor)]
+            ->bindVariable(
+                '$processors',
+                new InstanceOfIterator(
+                    EventProcessorInterface::class,
+                    format: IteratorFormat::ArrayWithCustomKey,
+                    exclude: [Processor::class]
+                    customFormatMapping: [
+                        UserCreatedEventProcessor::class => 'user.created',
+                        UserDeletedEventProcessor::class => 'user.deleted',
+                    ]
+                )
+            )
+            // or you can use this configuration
+            // in this case the result of this configuration is:
+            // [UserCreatedEventProcessor::class => object(UserCreatedEventProcessor), UserDeletedEventProcessor::class => object(UserDeletedEventProcessor)]
+            ->bindVariable(
+                '$processors',
+                new InstanceOfIterator(
+                    EventProcessorInterface::class,
+                    format: IteratorFormat::ArrayWithClassNamespaceKey,
+                    exclude: [Processor::class]
+                )
+            )
+            // or you can use this configuration
+            // in this case the result of this configuration is:
+            // ['UserCreatedEventProcessor' => object(UserCreatedEventProcessor), 'UserDeletedEventProcessor' => object(UserDeletedEventProcessor)]
+            ->bindVariable(
+                '$processors',
+                new InstanceOfIterator(
+                    EventProcessorInterface::class,
+                    format: IteratorFormat::ArrayWithClassNameKey,
+                    exclude: [Processor::class]
+                )
+            )
+            // or you can use this configuration (this is the default configuration)
+            // in this case the result of this configuration is:
+            // [object(UserCreatedEventProcessor), object(UserDeletedEventProcessor)]
+            ->bindVariable(
+                '$processors',
+                new InstanceOfIterator(
+                    EventProcessorInterface::class,
+                    format: IteratorFormat::List,
+                )
+            )
+            ->build(),
+    )
     ->build();
 
 $container = ContainerBuilder::make()->add($config)->build();

@@ -463,3 +463,127 @@ $data = [/* some data here */];
 $processor = $container->get(Processor::class);
 $processor->process($data);
 ```
+You can also choose what format you want this array of objects to be:
+```php
+<?php
+
+declare(strict_types=1);
+
+use Temkaa\Container\Builder\ConfigBuilder;
+use Temkaa\Container\Builder\Config\ClassBuilder;
+use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Attribute\Bind\TaggedIterator;
+use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
+use Temkaa\Container\Attribute\Tag;
+use Generator;
+use LogicException;
+
+#[Tag('event_processor_interface')]
+interface EventProcessorInterface
+{
+    public function process(array $event): void;
+}
+
+final readonly class UserCreatedEventProcessor implements EventProcessorInterface
+{
+    public function process(array $event): void
+    {
+        // some processing here
+    }
+}
+
+final readonly class UserDeletedEventProcessor implements EventProcessorInterface
+{
+    public function process(array $event): void
+    {
+        // some processing here
+    }
+}
+
+final readonly class Processor
+{
+    /**
+     * @param array<string, ProcessorInterface> $processors
+     */
+    public function __construct(
+        private array $processors,
+    ) {
+    }
+    
+    /**
+     * @param array{name: 'user.deleted'|'user.created', data: array} $event
+     * @return void
+     */
+    public function process(array $event): void
+    {
+        if (!$processor = $this->processors[$event['name']] ?? null) {
+            throw new LogicException('Cannot find suitable processor.');
+        }
+
+        $processor->process($event);
+    }
+}
+
+// the same functionality is available with InstanceOfIterator attribute
+$config = ConfigBuilder::make()
+    ->include(__DIR__.'../../some/path/with/classes/')
+    ->bindClass(
+        ClassBuilder::make(Processor::class)
+            // in example above this version of configuration is used
+            // in this case the result of this configuration is:
+            // ['user.created' => object(UserCreatedEventProcessor), 'user.deleted' => object(UserDeletedEventProcessor)]
+            ->bindVariable(
+                '$processors',
+                new TaggedIterator(
+                    'event_processor_interface',
+                    format: IteratorFormat::ArrayWithCustomKey,
+                    exclude: [Processor::class]
+                    customFormatMapping: [
+                        UserCreatedEventProcessor::class => 'user.created',
+                        UserDeletedEventProcessor::class => 'user.deleted',
+                    ]
+                )
+            )
+            // or you can use this configuration
+            // in this case the result of this configuration is:
+            // [UserCreatedEventProcessor::class => object(UserCreatedEventProcessor), UserDeletedEventProcessor::class => object(UserDeletedEventProcessor)]
+            ->bindVariable(
+                '$processors',
+                new TaggedIterator(
+                    'event_processor_interface',
+                    format: IteratorFormat::ArrayWithClassNamespaceKey,
+                    exclude: [Processor::class]
+                )
+            )
+            // or you can use this configuration
+            // in this case the result of this configuration is:
+            // ['UserCreatedEventProcessor' => object(UserCreatedEventProcessor), 'UserDeletedEventProcessor' => object(UserDeletedEventProcessor)]
+            ->bindVariable(
+                '$processors',
+                new TaggedIterator(
+                    'event_processor_interface',
+                    format: IteratorFormat::ArrayWithClassNameKey,
+                    exclude: [Processor::class]
+                )
+            )
+            // or you can use this configuration (this is the default configuration)
+            // in this case the result of this configuration is:
+            // [object(UserCreatedEventProcessor), object(UserDeletedEventProcessor)]
+            ->bindVariable(
+                '$processors',
+                new TaggedIterator(
+                    'event_processor_interface',
+                    format: IteratorFormat::List,
+                )
+            )
+            ->build(),
+    )
+    ->build();
+
+$container = ContainerBuilder::make()->add($config)->build();
+
+$data = [/* some data here */];
+
+$processor = $container->get(Processor::class);
+$processor->process($data);
+```

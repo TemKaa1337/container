@@ -32,7 +32,8 @@
     "config": {
         "allow-plugins": {
             "infection/extension-installer": true
-        }
+        },
+        "process-timeout": 600
     },
     "scripts": {
         "print-coverage": [

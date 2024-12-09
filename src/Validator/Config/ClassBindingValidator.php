@@ -6,6 +6,8 @@ namespace Temkaa\Container\Validator\Config;
 
 use Temkaa\Container\Exception\ClassNotFoundException;
 use Temkaa\Container\Model\Config;
+use function class_exists;
+use function interface_exists;
 
 /**
  * @internal

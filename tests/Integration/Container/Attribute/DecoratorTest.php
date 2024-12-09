@@ -14,7 +14,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class DecoratorTest extends AbstractContainerTestCase
 {
@@ -195,13 +196,10 @@ final class DecoratorTest extends AbstractContainerTestCase
         self::assertEquals('test_one', $class2->arg);
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class2->inner);
 
-        /** @psalm-suppress MixedArgument */
         self::assertCount(2, $class2->dependency);
 
-        /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className3, $class2->dependency[0]);
 
-        /** @psalm-suppress PossiblyInvalidArrayAccess, UndefinedInterfaceMethod */
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className4, $class2->dependency[1]);
     }
 

@@ -14,7 +14,7 @@ use Temkaa\Container\Service\Compiler;
 use Temkaa\Container\Validator\Config\ValidatorInterface;
 
 /**
- * @psalm-api
+ * @api
  */
 final class ContainerBuilder
 {

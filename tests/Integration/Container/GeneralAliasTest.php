@@ -15,7 +15,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion, MixedAssignment
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class GeneralAliasTest extends AbstractContainerTestCase
 {

@@ -9,6 +9,9 @@ use ReflectionException;
 use Temkaa\Container\Repository\DefinitionRepository;
 use Temkaa\Container\Service\Definition\Instantiator;
 
+/**
+ * @api 
+ */
 final readonly class Container implements ContainerInterface
 {
     private Instantiator $instantiator;

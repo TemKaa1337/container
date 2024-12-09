@@ -7,7 +7,7 @@ namespace Temkaa\Container\Attribute\Bind;
 use Attribute;
 
 /**
- * @psalm-api
+ * @api
  */
 #[Attribute(Attribute::TARGET_METHOD)]
 final readonly class Required

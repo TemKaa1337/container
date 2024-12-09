@@ -6,7 +6,6 @@ namespace Container\Config;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use ReflectionClass;
 use ReflectionException;
 use Temkaa\Container\Attribute\Bind\TaggedIterator;
 use Temkaa\Container\Builder\ContainerBuilder;
@@ -16,8 +15,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment, MixedArgument, InternalClass,
- *                 InternalMethod
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class RequiredTest extends AbstractContainerTestCase
 {
@@ -27,8 +26,6 @@ final class RequiredTest extends AbstractContainerTestCase
     protected const string GENERATED_CLASS_STUB_PATH = '/../../../Fixture/Stub/Class/';
 
     /**
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
@@ -660,18 +657,5 @@ final class RequiredTest extends AbstractContainerTestCase
 
         self::assertSame($object->arg1, $container->get(self::GENERATED_CLASS_NAMESPACE.$className2));
         self::assertSame($object->arg2, $container->get(self::GENERATED_CLASS_NAMESPACE.$className3));
-    }
-
-    /**
-     * @throws ReflectionException
-     */
-    private function assertInitialized(object $class, string $propertyName): void
-    {
-        $r = new ReflectionClass($class);
-
-        $property = $r->getProperty($propertyName);
-        if (!$property->isInitialized($class)) {
-            self::fail(sprintf('Failed asserting property "%s" is initialized.', $propertyName));
-        }
     }
 }

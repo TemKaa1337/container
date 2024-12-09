@@ -14,12 +14,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @SuppressWarnings(PHPMD.ExcessiveClassLength)
- * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)
- *
- * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment, MixedPropertyFetch,
- *                 MixedArgument
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class GeneralDecoratorTest extends AbstractContainerTestCase
 {

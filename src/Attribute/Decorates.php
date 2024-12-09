@@ -8,7 +8,7 @@ use Attribute;
 use Temkaa\Container\Model\Config\Decorator;
 
 /**
- * @psalm-api
+ * @api
  */
 #[Attribute(Attribute::TARGET_CLASS)]
 final readonly class Decorates

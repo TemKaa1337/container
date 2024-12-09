@@ -17,11 +17,14 @@ use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\Container\Model\Reference\Reference;
 use Temkaa\Container\Service\Definition\Configurator\Argument\BoundVariableConfigurator;
+use Temkaa\Container\Service\Definition\Configurator\Argument\InstanceConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\Argument\InstanceOfIteratorConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\Argument\InterfaceConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\Argument\TaggedIteratorConfigurator;
 use Temkaa\Container\Util\Flag;
 use Temkaa\Container\Validator\Definition\ArgumentValidator;
+use function array_map;
+use function file_exists;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -33,6 +36,8 @@ final readonly class ArgumentConfigurator
     private BoundVariableConfigurator $boundVariableConfigurator;
 
     private Configurator $definitionConfigurator;
+
+    private InstanceConfigurator $instanceConfigurator;
 
     private InstanceOfIteratorConfigurator $instanceOfIteratorConfigurator;
 
@@ -47,17 +52,12 @@ final readonly class ArgumentConfigurator
         $this->instanceOfIteratorConfigurator = new InstanceOfIteratorConfigurator();
         $this->interfaceConfigurator = new InterfaceConfigurator($definitionConfigurator);
         $this->taggedIteratorConfigurator = new TaggedIteratorConfigurator();
+        $this->instanceConfigurator = new InstanceConfigurator();
     }
 
     /**
-     * @param Config                $config
-     * @param Bag                   $definitions
      * @param ReflectionParameter[] $arguments
      * @param class-string          $id
-     * @param Factory|null          $factory
-     * @param Decorator|null        $decorates
-     *
-     * @return array
      *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
@@ -89,14 +89,7 @@ final readonly class ArgumentConfigurator
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @param Config              $config
-     * @param Bag                 $definitions
-     * @param ReflectionParameter $argument
-     * @param class-string        $id
-     * @param Factory|null        $factory
-     * @param Decorator|null      $decorates
-     *
-     * @return mixed
+     * @param class-string $id
      *
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
@@ -114,6 +107,10 @@ final readonly class ArgumentConfigurator
         /** @var class-string $entryId */
         $entryId = $argumentType->getName();
 
+        if ($configuredArgument = $this->instanceConfigurator->configure($config, $argument, $id, $factory)) {
+            return $configuredArgument;
+        }
+
         if ($decorates && $decorates->getId() === $entryId) {
             return new DecoratorReference($decorates->getId(), $decorates->getPriority());
         }
@@ -126,13 +123,9 @@ final readonly class ArgumentConfigurator
             return $configuredArgument;
         }
 
-        [
-            'value'    => $configuredArgument,
-            'resolved' => $resolved,
-        ] = $this->boundVariableConfigurator->configure($config, $argument, $id, $factory);
-
-        if ($resolved) {
-            return $configuredArgument;
+        $value = $this->boundVariableConfigurator->configure($config, $argument, $id, $factory);
+        if ($value->resolved) {
+            return $value->value;
         }
 
         if ($configuredArgument = $this->interfaceConfigurator->configure($config, $argument, $definitions, $entryId)) {

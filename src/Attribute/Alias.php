@@ -7,7 +7,7 @@ namespace Temkaa\Container\Attribute;
 use Attribute;
 
 /**
- * @psalm-api
+ * @api
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class Alias

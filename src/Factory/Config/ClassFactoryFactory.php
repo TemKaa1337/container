@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Factory\Config;
 
-use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
-use Temkaa\Container\Attribute\Bind\TaggedIterator;
 use Temkaa\Container\Attribute\Factory as FactoryAttribute;
 use Temkaa\Container\Model\Config\Factory;
-use UnitEnum;
 
 /**
  * @internal
@@ -16,11 +13,8 @@ use UnitEnum;
 final class ClassFactoryFactory
 {
     /**
-     * @param class-string                                                     $id
-     * @param string                                                           $method
-     * @param array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum> $boundVariables
-     *
-     * @return Factory
+     * @param class-string         $id
+     * @param array<string, mixed> $boundVariables
      */
     public static function create(string $id, string $method, array $boundVariables): Factory
     {

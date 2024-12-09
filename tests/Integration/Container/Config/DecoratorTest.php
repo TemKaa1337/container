@@ -14,7 +14,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment, InternalClass, InternalMethod
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class DecoratorTest extends AbstractContainerTestCase
 {

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Service\Definition;
 
+use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionException;
+use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
 use Temkaa\Container\Model\Definition\ClassDefinition;
 use Temkaa\Container\Model\Definition\DefinitionInterface;
 use Temkaa\Container\Model\Definition\InterfaceDefinition;
@@ -16,6 +18,9 @@ use Temkaa\Container\Model\Reference\Deferred\TaggedIteratorReference;
 use Temkaa\Container\Model\Reference\Reference;
 use Temkaa\Container\Model\Reference\ReferenceInterface;
 use Temkaa\Container\Repository\DefinitionRepository;
+use function array_map;
+use function end;
+use function explode;
 
 /**
  * @internal
@@ -102,26 +107,61 @@ final readonly class Instantiator
                 continue;
             }
 
-            /**
-             * @var TaggedIteratorReference|InstanceOfIteratorReference|DecoratorReference|Reference|InterfaceReference $argument
-             */
-            $resolvedArgument = match (true) {
-                $argument instanceof TaggedIteratorReference     => array_map(
-                    $this->instantiate(...),
-                    $this->definitionRepository->findAllByTag($argument->getTag(), $argument->getExclude()),
-                ),
-                $argument instanceof InstanceOfIteratorReference => array_map(
-                    $this->instantiate(...),
-                    $this->definitionRepository->findAllByInstanceOf($argument->getId(), $argument->getExclude()),
-                ),
-                default                                          => $this->instantiate(
-                    $this->definitionRepository->find($argument->getId()),
-                ),
-            };
+            if ($argument instanceof TaggedIteratorReference || $argument instanceof InstanceOfIteratorReference) {
+                $resolvedArguments[] = $this->resolveIteratorArgument($argument);
 
-            $resolvedArguments[] = $resolvedArgument;
+                continue;
+            }
+
+            /** @var DecoratorReference|InterfaceReference|Reference $argument */
+            $resolvedArguments[] = $this->instantiate($this->definitionRepository->find($argument->getId()));
         }
 
         return $resolvedArguments;
+    }
+
+    /**
+     * @return array<string, object>|list<object>
+     * @throws ReflectionException
+     */
+    private function resolveIteratorArgument(InstanceOfIteratorReference|TaggedIteratorReference $argument): array
+    {
+        /** @var ClassDefinition[] $objects */
+        $objects = $argument instanceof InstanceOfIteratorReference
+            ? $this->definitionRepository->findAllByInstanceOf($argument->getId(), $argument->getExclude())
+            : $this->definitionRepository->findAllByTag($argument->getTag(), $argument->getExclude());
+
+        $format = $argument->getFormat();
+        if ($format === IteratorFormat::List) {
+            return array_map($this->instantiate(...), $objects);
+        }
+
+        $result = [];
+        if ($format === IteratorFormat::ArrayWithClassNamespaceKey) {
+            foreach ($objects as $object) {
+                $result[$object->getId()] = $this->instantiate($object);
+            }
+
+            return $result;
+        }
+
+        if ($format === IteratorFormat::ArrayWithClassNameKey) {
+            foreach ($objects as $object) {
+                $classNamespace = explode('\\', $object->getId());
+
+                $result[end($classNamespace)] = $this->instantiate($object);
+            }
+
+            return $result;
+        }
+
+        $mapping = $argument->getCustomFormatMapping();
+        foreach ($objects as $object) {
+            $key = $mapping[$object->getId()];
+
+            $result[$key] = $this->instantiate($object);
+        }
+
+        return $result;
     }
 }

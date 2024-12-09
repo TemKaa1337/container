@@ -6,6 +6,8 @@ namespace Tests\Integration;
 
 use DirectoryIterator;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use ReflectionException;
 use Temkaa\Container\Builder\Config\Class\FactoryBuilder;
 use Temkaa\Container\Builder\Config\ClassBuilder as ClassConfigBuilder;
 use Temkaa\Container\Builder\ConfigBuilder;
@@ -16,7 +18,8 @@ use Temkaa\Container\Model\Config\Factory;
 use Temkaa\Container\Util\Flag;
 
 /**
- * @psalm-suppress MixedAssignment, MixedArgumentTypeCoercion, MixedArgument, InternalClass, InternalMethod
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 abstract class AbstractTestCase extends TestCase
 {
@@ -27,11 +30,14 @@ abstract class AbstractTestCase extends TestCase
     protected const string ATTRIBUTE_FACTORY_SIGNATURE = '#[\Temkaa\Container\Attribute\Factory(id: \'%s\', method: \'%s\')]';
     protected const string ATTRIBUTE_INSTANCE_OF_ITERATOR_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\InstanceOfIterator(id: %s)]';
     protected const string ATTRIBUTE_INSTANCE_OF_ITERATOR_WITH_EXCLUDE_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\InstanceOfIterator(id: %s, exclude: [%s])]';
+    protected const string ATTRIBUTE_INSTANCE_OF_ITERATOR_WITH_FULL_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\InstanceOfIterator(id: %s, exclude: [%s], format: %s, customFormatMapping: %s)]';
+    protected const string ATTRIBUTE_INSTANCE_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Instance(id: %s)]';
     protected const string ATTRIBUTE_PARAMETER_RAW_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Parameter(expression: %s)]';
     protected const string ATTRIBUTE_PARAMETER_STRING_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Parameter(expression: \'%s\')]';
     protected const string ATTRIBUTE_REQUIRED_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\Required()]';
     protected const string ATTRIBUTE_TAGGED_ITERATOR_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\TaggedIterator(tag: \'%s\')]';
     protected const string ATTRIBUTE_TAGGED_ITERATOR_WITH_EXCLUDE_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\TaggedIterator(tag: \'%s\', exclude: [%s])]';
+    protected const string ATTRIBUTE_TAGGED_ITERATOR_WITH_FULL_SIGNATURE = '#[\Temkaa\Container\Attribute\Bind\TaggedIterator(tag: \'%s\', exclude: [%s], format: %s, customFormatMapping: %s)]';
     protected const string ATTRIBUTE_TAG_SIGNATURE = '#[\Temkaa\Container\Attribute\Tag(name: \'%s\')]';
     protected const string GENERATED_CLASS_ABSOLUTE_NAMESPACE = '\Tests\Fixture\Stub\Class\\';
     protected const string GENERATED_CLASS_NAMESPACE = 'Tests\Fixture\Stub\Class\\';
@@ -59,6 +65,19 @@ abstract class AbstractTestCase extends TestCase
     }
 
     /**
+     * @throws ReflectionException
+     */
+    protected function assertInitialized(object $class, string $propertyName): void
+    {
+        $r = new ReflectionClass($class);
+
+        $property = $r->getProperty($propertyName);
+        if (!$property->isInitialized($class)) {
+            self::fail(sprintf('Failed asserting property "%s" is initialized.', $propertyName));
+        }
+    }
+
+    /**
      * @param class-string $className
      */
     protected function generateClassConfig(
@@ -82,7 +101,6 @@ abstract class AbstractTestCase extends TestCase
         }
 
         if ($decorates) {
-            /** @psalm-suppress InternalMethod */
             $builder->decorates($decorates->getId(), $decorates->getPriority());
         }
 

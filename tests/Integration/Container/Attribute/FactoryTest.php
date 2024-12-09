@@ -13,10 +13,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)
- * @SuppressWarnings(PHPMD.ExcessiveClassLength)
- *
- * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class FactoryTest extends AbstractContainerTestCase
 {
@@ -1260,8 +1258,6 @@ final class FactoryTest extends AbstractContainerTestCase
     }
 
     /**
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
@@ -1543,7 +1539,7 @@ final class FactoryTest extends AbstractContainerTestCase
         $class = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
 
         self::assertInstanceOf(self::GENERATED_CLASS_NAMESPACE.$className1, $class);
-        self::assertSame(null, $class->argument);
+        self::assertNull($class->argument);
     }
 
     /**
@@ -1704,8 +1700,6 @@ final class FactoryTest extends AbstractContainerTestCase
     }
 
     /**
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException

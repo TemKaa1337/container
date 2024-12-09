@@ -16,9 +16,8 @@ use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
 /**
+ * @psalm-suppress all
  * @SuppressWarnings(PHPMD)
- *
- * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment, MixedArgumentTypeCoercion, UndefinedClass
  */
 final class GeneralFactoryTest extends AbstractContainerTestCase
 {

@@ -10,6 +10,8 @@ use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
 use Temkaa\Container\Model\Definition\DefinitionInterface;
 use Temkaa\Container\Model\Definition\InterfaceDefinition;
+use function in_array;
+use function sprintf;
 
 /**
  * @internal

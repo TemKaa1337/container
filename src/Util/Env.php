@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Util;
 
+use function getenv;
+
 /**
  * @internal
  */

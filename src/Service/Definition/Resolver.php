@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Service\Definition;
 
+use InvalidArgumentException;
 use Psr\Container\ContainerExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
+use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
 use Temkaa\Container\Exception\CircularReferenceException;
+use Temkaa\Container\Exception\ClassNotFoundException;
 use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
 use Temkaa\Container\Model\Definition\DefinitionInterface;
@@ -19,6 +22,10 @@ use Temkaa\Container\Model\Reference\Reference;
 use Temkaa\Container\Model\Reference\ReferenceInterface;
 use Temkaa\Container\Repository\DefinitionRepository;
 use Temkaa\Container\Util\Flag;
+use function array_map;
+use function end;
+use function explode;
+use function sprintf;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -67,9 +74,6 @@ final readonly class Resolver
     }
 
     /**
-     * @param mixed $argument
-     *
-     * @return mixed
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
@@ -85,6 +89,10 @@ final readonly class Resolver
 
         if ($argument instanceof InstanceOfIteratorReference) {
             return $this->resolveTaggedArgument($argument);
+        }
+
+        if ($argument instanceof Reference && !$this->definitions->has($argument->getId())) {
+            throw new ClassNotFoundException($argument->getId());
         }
 
         /** @var DecoratorReference|Reference $argument */
@@ -183,6 +191,61 @@ final readonly class Resolver
     }
 
     /**
+     * @param DefinitionInterface[] $definitions
+     *
+     * @return array<string, object>|list<object>
+     *
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    private function resolveIterator(
+        array $definitions,
+        InstanceOfIteratorReference|TaggedIteratorReference $argument,
+    ): array {
+        $mapping = $argument->getCustomFormatMapping();
+        $format = $argument->getFormat();
+        $resolvedArguments = [];
+        foreach ($definitions as $instanceOfDefinition) {
+            $this->resolveDefinition($this->definitions->get($instanceOfDefinition->getId()));
+
+            $object = $this->instantiator->instantiate(
+                $this->definitions->get($instanceOfDefinition->getId()),
+            );
+
+            if ($format === IteratorFormat::List) {
+                $resolvedArguments[] = $object;
+
+                continue;
+            }
+
+            if ($format === IteratorFormat::ArrayWithClassNamespaceKey) {
+                $resolvedArguments[$object::class] = $object;
+
+                continue;
+            }
+
+            if ($format === IteratorFormat::ArrayWithClassNameKey) {
+                $classNamespace = explode('\\', $object::class);
+
+                $resolvedArguments[end($classNamespace)] = $object;
+
+                continue;
+            }
+
+            $key = $mapping[$object::class] ?? null;
+            if ($key === null) {
+                throw new InvalidArgumentException(
+                    sprintf('Missing class "%s" in "customFormatMapping".', $object::class),
+                );
+            }
+
+            $resolvedArguments[$key] = $object;
+        }
+
+        return $resolvedArguments;
+    }
+
+    /**
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
@@ -194,16 +257,7 @@ final readonly class Resolver
             $argument->getExclude(),
         );
 
-        $resolvedArguments = [];
-        foreach ($instanceOfDefinitions as $instanceOfDefinition) {
-            $this->resolveDefinition($this->definitions->get($instanceOfDefinition->getId()));
-
-            $resolvedArguments[] = $this->instantiator->instantiate(
-                $this->definitions->get($instanceOfDefinition->getId()),
-            );
-        }
-
-        return $resolvedArguments;
+        return $this->resolveIterator($instanceOfDefinitions, $argument);
     }
 
     /**
@@ -215,15 +269,6 @@ final readonly class Resolver
         $definitionRepository = new DefinitionRepository($this->definitions);
         $taggedDefinitions = $definitionRepository->findAllByTag($argument->getTag(), $argument->getExclude());
 
-        $resolvedArguments = [];
-        foreach ($taggedDefinitions as $taggedDefinition) {
-            $this->resolveDefinition($this->definitions->get($taggedDefinition->getId()));
-
-            $resolvedArguments[] = $this->instantiator->instantiate(
-                $this->definitions->get($taggedDefinition->getId()),
-            );
-        }
-
-        return $resolvedArguments;
+        return $this->resolveIterator($taggedDefinitions, $argument);
     }
 }

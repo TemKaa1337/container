@@ -10,6 +10,7 @@ use ReflectionParameter;
 use ReflectionUnionType;
 use Temkaa\Container\Exception\UninstantiableEntryException;
 use Temkaa\Container\Exception\UnresolvableArgumentException;
+use function sprintf;
 
 /**
  * @internal

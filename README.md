@@ -11,6 +11,7 @@ composer require temkaa/container
   - [Variable binding](./docs/01_configuration/01_variable_binding.md)
   - [Aliases](./docs/01_configuration/01_alias.md)
   - [Interface binding](./docs/01_configuration/01_interface_binding.md)
+  - [Binding existing instances](./docs/01_configuration/01_instance.md)
   - [Tagged iterators](./docs/01_configuration/01_tagged_iterator.md)
   - [InstanceOf iterators](./docs/01_configuration/01_instance_of_iterator.md)
   - [Class factories](./docs/01_configuration/01_class_factories.md)

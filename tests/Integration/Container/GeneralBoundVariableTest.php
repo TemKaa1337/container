@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Container;
 
-use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
@@ -16,10 +15,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @SuppressWarnings(PHPMD.ExcessiveClassLength)
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)
- *
- * @psalm-suppress ArgumentTypeCoercion, MixedPropertyFetch, MixedAssignment
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class GeneralBoundVariableTest extends AbstractContainerTestCase
 {
@@ -345,44 +342,6 @@ final class GeneralBoundVariableTest extends AbstractContainerTestCase
                 'int',
             ),
         );
-
-        (new ContainerBuilder())->add($config)->build();
-    }
-
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws ReflectionException
-     */
-    #[DataProvider('getDataForDoesNotCompileDueToVariableBindingErrorsTest')]
-    public function testDoesNotCompileDueToVariableBindingErrors(
-        string $className,
-        array $constructorArguments,
-        string $exception,
-        string $exceptionMessage,
-    ): void {
-        (new ClassGenerator())
-            ->addBuilder(
-                (new ClassBuilder())
-                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className.php")
-                    ->setName($className)
-                    ->setHasConstructor(true)
-                    ->setConstructorArguments($constructorArguments),
-            )
-            ->generate();
-
-        $files = [__DIR__.self::GENERATED_CLASS_STUB_PATH."$className.php"];
-        $config = $this->generateConfig(
-            includedPaths: $files,
-            classBindings: [
-                $this->generateClassConfig(
-                    className: self::GENERATED_CLASS_NAMESPACE.$className,
-                    variableBindings: ['$arg' => 'env(ENV_STRING_VAR)'],
-                ),
-            ],
-        );
-
-        $this->expectException($exception);
-        $this->expectExceptionMessage($exceptionMessage);
 
         (new ContainerBuilder())->add($config)->build();
     }

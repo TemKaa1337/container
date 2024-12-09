@@ -13,7 +13,8 @@ use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
 /**
- * @psalm-suppress MixedAssignment, MixedPropertyFetch
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class BoundVariableWithDefaultValueTest extends AbstractContainerTestCase
 {

@@ -7,6 +7,9 @@ namespace Temkaa\Container\Exception\Config;
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
 
+/**
+ * @api
+ */
 final class InvalidPathException extends RuntimeException implements ContainerExceptionInterface
 {
 }

@@ -6,6 +6,7 @@
         <cache>
           <versions>
             <info id="LocalE:\MYPROJECTS\simple-projects\container\vendor\autoload.php" version="10.5.35" />
+            <info id="Local\vendor/autoload.php" version="10.5.38" />
           </versions>
         </cache>
       </tool>

@@ -6,6 +6,9 @@ namespace Temkaa\Container\Util;
 
 use Temkaa\Container\Exception\Config\EnvVariableCircularException;
 use Temkaa\Container\Exception\Config\EnvVariableNotFoundException;
+use function preg_match_all;
+use function sprintf;
+use function str_replace;
 
 /**
  * @internal

@@ -13,6 +13,8 @@ use Temkaa\Container\Model\Config\Factory;
 use Temkaa\Container\Model\Reference\Deferred\TaggedIteratorReference;
 use Temkaa\Container\Util\BoundVariableProvider;
 use Temkaa\Container\Util\Extractor\AttributeExtractor;
+use function in_array;
+use function sprintf;
 
 /**
  * @internal
@@ -20,12 +22,7 @@ use Temkaa\Container\Util\Extractor\AttributeExtractor;
 final readonly class TaggedIteratorConfigurator
 {
     /**
-     * @param Config              $config
-     * @param ReflectionParameter $argument
-     * @param class-string        $id
-     * @param Factory|null        $factory
-     *
-     * @return TaggedIteratorReference|null
+     * @param class-string $id
      */
     public function configure(
         Config $config,
@@ -39,22 +36,27 @@ final readonly class TaggedIteratorConfigurator
 
         $attribute = $argument->getAttributes(TaggedIterator::class);
 
-        $configExpression = BoundVariableProvider::provide($config, $argumentName, $id, $factory);
-        $argumentExpression = $attribute ? AttributeExtractor::extract($attribute, index: 0) : null;
+        $configValue = BoundVariableProvider::provide($config, $argumentName, $id, $factory);
+        $argumentValue = $attribute ? AttributeExtractor::extract($attribute, index: 0) : null;
 
-        if ($configExpression === null && $argumentExpression === null) {
+        if (!$configValue->resolved && !$attribute) {
             return null;
         }
 
-        if ($configExpression !== null && !$configExpression instanceof TaggedIterator) {
+        if ($configValue->resolved && !$configValue->value instanceof TaggedIterator) {
             return null;
         }
 
         /** @var TaggedIterator $expression */
-        $expression = $configExpression ?? $argumentExpression;
+        $expression = $configValue->value ?? $argumentValue;
         $this->validateArgumentType($argumentType, $argumentName, $id);
 
-        return new TaggedIteratorReference($expression->tag, $expression->exclude);
+        return new TaggedIteratorReference(
+            $expression->tag,
+            $expression->exclude,
+            $expression->format,
+            $expression->customFormatMapping,
+        );
     }
 
     private function validateArgumentType(ReflectionNamedType $argumentType, string $argumentName, string $id): void

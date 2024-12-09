@@ -4,11 +4,10 @@
             "src"
         ],
         "excludes": [
-            "Util/Extractor/ClassExtractor.php",
-            "Util/TypeCaster.php"
+            "Util/Extractor/ClassExtractor.php"
         ],
     },
-    "timeout": 10,
+    "timeout": 60,
     "logs": {
         "text": "infection.log"
     },
@@ -75,7 +74,8 @@
         },
         "TrueValue": {
             ignore: [
-                "Temkaa\\Container\\Util\\Flag"
+                "Temkaa\\Container\\Util\\BoundVariableProvider",
+                "Temkaa\\Container\\Util\\Flag",
             ]
         },
         "LogicalAnd": {

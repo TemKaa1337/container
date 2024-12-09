@@ -6,7 +6,15 @@ namespace Temkaa\Container\Exception;
 
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
+use function array_key_last;
+use function array_map;
+use function explode;
+use function implode;
+use function sprintf;
 
+/**
+ * @api
+ */
 final class CircularReferenceException extends RuntimeException implements ContainerExceptionInterface
 {
     public function __construct(string $id, array $references)

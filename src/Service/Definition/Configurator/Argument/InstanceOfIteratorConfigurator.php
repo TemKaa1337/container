@@ -13,6 +13,10 @@ use Temkaa\Container\Model\Config\Factory;
 use Temkaa\Container\Model\Reference\Deferred\InstanceOfIteratorReference;
 use Temkaa\Container\Util\BoundVariableProvider;
 use Temkaa\Container\Util\Extractor\AttributeExtractor;
+use function class_exists;
+use function in_array;
+use function interface_exists;
+use function sprintf;
 
 /**
  * @internal
@@ -20,12 +24,7 @@ use Temkaa\Container\Util\Extractor\AttributeExtractor;
 final readonly class InstanceOfIteratorConfigurator
 {
     /**
-     * @param Config              $config
-     * @param ReflectionParameter $argument
-     * @param class-string        $id
-     * @param Factory|null        $factory
-     *
-     * @return InstanceOfIteratorReference|null
+     * @param class-string $id
      */
     public function configure(
         Config $config,
@@ -39,24 +38,29 @@ final readonly class InstanceOfIteratorConfigurator
 
         $attribute = $argument->getAttributes(InstanceOfIterator::class);
 
-        $configExpression = BoundVariableProvider::provide($config, $argumentName, $id, $factory);
-        $argumentExpression = $attribute ? AttributeExtractor::extract($attribute, index: 0) : null;
+        $configValue = BoundVariableProvider::provide($config, $argumentName, $id, $factory);
+        $argumentValue = $attribute ? AttributeExtractor::extract($attribute, index: 0) : null;
 
-        if ($configExpression === null && $argumentExpression === null) {
+        if (!$configValue->resolved && !$attribute) {
             return null;
         }
 
-        if ($configExpression !== null && !$configExpression instanceof InstanceOfIterator) {
+        if ($configValue->resolved && !$configValue->value instanceof InstanceOfIterator) {
             return null;
         }
 
         /** @var InstanceOfIterator $expression */
-        $expression = $configExpression ?? $argumentExpression;
+        $expression = $configValue->value ?? $argumentValue;
 
         $this->validateArgumentType($argumentType, $argumentName, $id);
         $this->validateClassExistence($argumentType, $argumentName, $id, $expression->id);
 
-        return new InstanceOfIteratorReference($expression->id, $expression->exclude);
+        return new InstanceOfIteratorReference(
+            $expression->id,
+            $expression->exclude,
+            $expression->format,
+            $expression->customFormatMapping,
+        );
     }
 
     private function validateArgumentType(ReflectionNamedType $argumentType, string $argumentName, string $id): void
