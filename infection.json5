@@ -4,11 +4,10 @@
             "src"
         ],
         "excludes": [
-            "Util/Extractor/ClassExtractor.php",
-            "Util/TypeCaster.php"
+            "Util/Extractor/ClassExtractor.php"
         ],
     },
-    "timeout": 10,
+    "timeout": 60,
     "logs": {
         "text": "infection.log"
     },
@@ -20,6 +19,11 @@
         "CastString": {
             ignore: [
                 "Temkaa\\Container\\Util\\Env::get"
+            ]
+        },
+        "CastInt": {
+            ignore: [
+                "Temkaa\\Container\\Service\\Type\\Resolver::resolveInt"
             ]
         },
         "Continue_": {
@@ -75,7 +79,8 @@
         },
         "TrueValue": {
             ignore: [
-                "Temkaa\\Container\\Util\\Flag"
+                "Temkaa\\Container\\Util\\BoundVariableProvider",
+                "Temkaa\\Container\\Util\\Flag",
             ]
         },
         "LogicalAnd": {

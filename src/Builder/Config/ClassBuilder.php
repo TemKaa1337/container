@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Builder\Config;
 
-use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
-use Temkaa\Container\Attribute\Bind\TaggedIterator;
 use Temkaa\Container\Factory\Definition\DecoratorFactory;
 use Temkaa\Container\Model\Config\ClassConfig;
 use Temkaa\Container\Model\Config\Decorator;
 use Temkaa\Container\Model\Config\Factory;
-use UnitEnum;
+use function array_unique;
+use function array_values;
+use function str_replace;
 
 /**
- * @psalm-api
+ * @api
  */
 final class ClassBuilder
 {
@@ -23,7 +23,7 @@ final class ClassBuilder
     private array $aliases = [];
 
     /**
-     * @var array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum>
+     * @var array<string, mixed>
      */
     private array $boundedVariables = [];
 
@@ -66,10 +66,8 @@ final class ClassBuilder
         return $this;
     }
 
-    public function bindVariable(
-        string $variableName,
-        string|InstanceOfIterator|TaggedIterator|UnitEnum $expression,
-    ): self {
+    public function bindVariable(string $variableName, mixed $expression): self
+    {
         $this->boundedVariables[str_replace('$', '', $variableName)] = $expression;
 
         return $this;

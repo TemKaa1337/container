@@ -10,6 +10,8 @@ use ReflectionNamedType;
 use Temkaa\Container\Exception\ClassFactoryException;
 use Temkaa\Container\Exception\Config\EntryNotFoundException;
 use Temkaa\Container\Model\Config\Factory;
+use function class_exists;
+use function sprintf;
 
 /**
  * @internal
@@ -123,7 +125,7 @@ final class FactoryValidator
          *
          * @var class-string|'self' $returnType
          */
-        $returnType = $factoryReflection->getMethod($factory->getMethod())->getReturnType()->getName();
+        $returnType = $factoryReflection->getMethod($factory->getMethod())->getReturnType()?->getName();
         if ($returnType !== 'self' && $returnType !== $id && !$rootClassReflection->isSubclassOf($returnType)) {
             throw new ClassFactoryException(
                 sprintf(

@@ -18,14 +18,41 @@ $config = ConfigBuilder::make()
 $container = ContainerBuilder::make()->add($config)->build();
 
 /**
- * object(Example\Example8\Collector)#24 (1) {
- *     ["objects"]=>
+ * object(Example\AttributeTaggedIterator\Collector)#53 (4) {
+ *     ["list"]=>
  *     array(2) {
  *         [0]=>
- *         object(Example\Example8\Class1)#14 (0) {
+ *         object(Example\AttributeTaggedIterator\Class1)#39 (0) {
  *         }
  *         [1]=>
- *         object(Example\Example8\Class2)#21 (0) {
+ *         object(Example\AttributeTaggedIterator\Class2)#40 (0) {
+ *         }
+ *     }
+ *     ["arrayWithClassNamespaceKey"]=>
+ *     array(2) {
+ *         ["Example\AttributeTaggedIterator\Class1"]=>
+ *         object(Example\AttributeTaggedIterator\Class1)#39 (0) {
+ *         }
+ *         ["Example\AttributeTaggedIterator\Class2"]=>
+ *         object(Example\AttributeTaggedIterator\Class2)#40 (0) {
+ *         }
+ *     }
+ *     ["arrayWithClassNameKey"]=>
+ *     array(2) {
+ *         ["Class1"]=>
+ *         object(Example\AttributeTaggedIterator\Class1)#39 (0) {
+ *         }
+ *         ["Class2"]=>
+ *         object(Example\AttributeTaggedIterator\Class2)#40 (0) {
+ *         }
+ *     }
+ *     ["arrayWithCustomKey"]=>
+ *     array(2) {
+ *         ["first_class"]=>
+ *         object(Example\AttributeTaggedIterator\Class1)#39 (0) {
+ *         }
+ *         ["second_class"]=>
+ *         object(Example\AttributeTaggedIterator\Class2)#40 (0) {
  *         }
  *     }
  * }
@@ -33,14 +60,41 @@ $container = ContainerBuilder::make()->add($config)->build();
 $class = $container->get(Collector::class);
 
 /**
- * object(Example\AttributeTaggedIterator\InterfaceCollector)#29 (1) {
- *     ["objects"]=>
+ * object(Example\AttributeTaggedIterator\InterfaceCollector)#55 (4) {
+ *     ["list"]=>
  *     array(2) {
  *         [0]=>
- *         object(Example\AttributeTaggedIterator\Class3)#22 (0) {
+ *         object(Example\AttributeTaggedIterator\Class3)#54 (0) {
  *         }
  *         [1]=>
- *         object(Example\AttributeTaggedIterator\Class4)#27 (0) {
+ *         object(Example\AttributeTaggedIterator\Class4)#46 (0) {
+ *         }
+ *     }
+ *     ["arrayWithClassNamespaceKey"]=>
+ *     array(2) {
+ *         ["Example\AttributeTaggedIterator\Class3"]=>
+ *         object(Example\AttributeTaggedIterator\Class3)#54 (0) {
+ *         }
+ *         ["Example\AttributeTaggedIterator\Class4"]=>
+ *         object(Example\AttributeTaggedIterator\Class4)#46 (0) {
+ *         }
+ *     }
+ *     ["arrayWithClassNameKey"]=>
+ *     array(2) {
+ *         ["Class3"]=>
+ *         object(Example\AttributeTaggedIterator\Class3)#54 (0) {
+ *         }
+ *         ["Class4"]=>
+ *         object(Example\AttributeTaggedIterator\Class4)#46 (0) {
+ *         }
+ *     }
+ *     ["arrayWithCustomKey"]=>
+ *     array(2) {
+ *         ["third_class"]=>
+ *         object(Example\AttributeTaggedIterator\Class3)#54 (0) {
+ *         }
+ *         ["fourth_class"]=>
+ *         object(Example\AttributeTaggedIterator\Class4)#46 (0) {
  *         }
  *     }
  * }

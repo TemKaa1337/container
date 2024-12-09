@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace Temkaa\Container\Exception\Config;
 
 use LogicException;
+use function implode;
+use function sprintf;
 
+/**
+ * @api
+ */
 final class EnvVariableCircularException extends LogicException
 {
     /**

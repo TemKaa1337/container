@@ -24,6 +24,10 @@ use Temkaa\Container\Util\Extractor\ClassExtractor;
 use Temkaa\Container\Util\Flag;
 use Temkaa\Container\Validator\Definition\FactoryValidator;
 use Temkaa\Container\Validator\Definition\Method\RequiredMethodCallValidator;
+use function array_unique;
+use function array_values;
+use function in_array;
+use function sprintf;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)

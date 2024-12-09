@@ -5,6 +5,23 @@ declare(strict_types=1);
 namespace Temkaa\Container\Util\Extractor;
 
 use DirectoryIterator;
+use function array_merge;
+use function file_get_contents;
+use function in_array;
+use function is_file;
+use function is_string;
+use function ltrim;
+use function pathinfo;
+use function token_get_all;
+use const PATHINFO_EXTENSION;
+use const T_CLASS;
+use const T_COMMENT;
+use const T_DOC_COMMENT;
+use const T_DOUBLE_COLON;
+use const T_INTERFACE;
+use const T_NS_SEPARATOR;
+use const T_STRING;
+use const T_WHITESPACE;
 
 /**
  * @internal

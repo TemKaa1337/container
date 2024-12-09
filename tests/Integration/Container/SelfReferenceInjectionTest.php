@@ -20,8 +20,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @psalm-suppress MixedAssignment, MixedPropertyFetch, InternalMethod, ArgumentTypeCoercion
- * @psalm-suppress MixedArgument, MixedMethodCall, InternalClass
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class SelfReferenceInjectionTest extends AbstractContainerTestCase
 {

@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Container\Config;
 
+use InvalidArgumentException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
 use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
 use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
+use function sprintf;
 
+/**
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
+ */
 final class InstanceOfIteratorTest extends AbstractContainerTestCase
 {
     /**
@@ -113,6 +120,124 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
                 $container->get(self::GENERATED_CLASS_NAMESPACE.$className2),
             ],
             $collector->dependency,
+        );
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testCompilesWithDifferentFormats(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly array $list,',
+                        'public readonly array $arrayWithNamespaceKey,',
+                        'public readonly array $arrayWithClassNameKey,',
+                        'public readonly array $arrayWithCustomKey,',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $classes = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
+        ];
+
+        $config = $this->generateConfig(
+            includedPaths: $classes,
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className1,
+                    variableBindings: [
+                        '$list'                  => new InstanceOfIterator(
+                            self::GENERATED_CLASS_NAMESPACE.$interfaceName,
+                        ),
+                        '$arrayWithNamespaceKey' => new InstanceOfIterator(
+                            self::GENERATED_CLASS_NAMESPACE.$interfaceName,
+                            format: IteratorFormat::ArrayWithClassNamespaceKey,
+                        ),
+                        '$arrayWithClassNameKey' => new InstanceOfIterator(
+                            self::GENERATED_CLASS_NAMESPACE.$interfaceName,
+                            format: IteratorFormat::ArrayWithClassNameKey,
+                        ),
+                        '$arrayWithCustomKey'    => new InstanceOfIterator(
+                            self::GENERATED_CLASS_NAMESPACE.$interfaceName,
+                            format: IteratorFormat::ArrayWithCustomKey,
+                            customFormatMapping: [
+                                self::GENERATED_CLASS_NAMESPACE.$className2 => 'class2',
+                                self::GENERATED_CLASS_NAMESPACE.$className3 => 'class3',
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        );
+
+        $container = (new ContainerBuilder())->add($config)->build();
+
+        $composite = $container->get(self::GENERATED_CLASS_NAMESPACE.$className1);
+
+        $class2 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className2);
+        $class3 = $container->get(self::GENERATED_CLASS_NAMESPACE.$className3);
+
+        self::assertSame(
+            [$class2, $class3],
+            $composite->list,
+        );
+        self::assertSame(
+            [
+                self::GENERATED_CLASS_NAMESPACE.$className2 => $class2,
+                self::GENERATED_CLASS_NAMESPACE.$className3 => $class3,
+            ],
+            $composite->arrayWithNamespaceKey,
+        );
+        self::assertSame(
+            [
+                $className2 => $class2,
+                $className3 => $class3,
+            ],
+            $composite->arrayWithClassNameKey,
+        );
+        self::assertSame(
+            [
+                'class2' => $class2,
+                'class3' => $class3,
+            ],
+            $composite->arrayWithCustomKey,
         );
     }
 
@@ -788,5 +913,78 @@ final class InstanceOfIteratorTest extends AbstractContainerTestCase
             ],
             $classWithComposite->composite->handlers,
         );
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws ReflectionException
+     */
+    public function testDoesNotCompileDueToMissingClassInCustomMappingFormat(): void
+    {
+        $className1 = ClassGenerator::getClassName();
+        $className2 = ClassGenerator::getClassName();
+        $className3 = ClassGenerator::getClassName();
+        $interfaceName = ClassGenerator::getClassName();
+        (new ClassGenerator())
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className1.php")
+                    ->setName($className1)
+                    ->setHasConstructor(true)
+                    ->setConstructorArguments([
+                        'public readonly array $dependency,',
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className2.php")
+                    ->setName($className2)
+                    ->setInterfaceImplementations([
+                        self::GENERATED_CLASS_ABSOLUTE_NAMESPACE.$interfaceName,
+                    ]),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$className3.php")
+                    ->setName($className3),
+            )
+            ->addBuilder(
+                (new ClassBuilder())
+                    ->setAbsolutePath(realpath(__DIR__.self::GENERATED_CLASS_STUB_PATH)."/$interfaceName.php")
+                    ->setName($interfaceName)
+                    ->setPrefix('interface'),
+            )
+            ->generate();
+
+        $classes = [
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className3.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className1.'.php',
+            __DIR__.self::GENERATED_CLASS_STUB_PATH.$className2.'.php',
+        ];
+
+        $config = $this->generateConfig(
+            includedPaths: $classes,
+            classBindings: [
+                $this->generateClassConfig(
+                    className: self::GENERATED_CLASS_NAMESPACE.$className1,
+                    variableBindings: [
+                        '$dependency' => new InstanceOfIterator(
+                            self::GENERATED_CLASS_NAMESPACE.$interfaceName,
+                            format: IteratorFormat::ArrayWithCustomKey,
+                            customFormatMapping: [
+                                self::GENERATED_CLASS_NAMESPACE.$className3 => 'test',
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            sprintf('Missing class "%s" in "customFormatMapping".', self::GENERATED_CLASS_NAMESPACE.$className2),
+        );
+
+        (new ContainerBuilder())->add($config)->build();
     }
 }

@@ -7,7 +7,10 @@ namespace Example\ConfigTaggedIterator;
 final readonly class Collector
 {
     public function __construct(
-        public array $objects,
+        private array $list,
+        private array $arrayWithNamespaceKey,
+        private array $arrayWithClassNameKey,
+        private array $arrayWithCustomKey,
     ) {
     }
 }

@@ -12,6 +12,11 @@ use Temkaa\Container\Model\Definition\ClassDefinition;
 use Temkaa\Container\Model\Reference\Deferred\InterfaceReference;
 use Temkaa\Container\Model\Reference\Reference;
 use Temkaa\Container\Service\Definition\ConfiguratorInterface;
+use function array_filter;
+use function array_values;
+use function count;
+use function current;
+use function sprintf;
 
 /**
  * @internal

@@ -12,12 +12,14 @@ use Temkaa\Container\Exception\Config\EnvVariableNotFoundException;
 use Temkaa\Container\Exception\UnresolvableArgumentException;
 use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\Factory;
+use Temkaa\Container\Model\Value;
+use Temkaa\Container\Service\Type\Resolver;
 use Temkaa\Container\Util\BoundVariableProvider;
 use Temkaa\Container\Util\ExpressionParser;
 use Temkaa\Container\Util\Extractor\AttributeExtractor;
-use Temkaa\Container\Util\TypeCaster;
-use Temkaa\Container\Validator\Definition\Argument\ExpressionTypeCompatibilityValidator;
-use UnitEnum;
+use function current;
+use function is_string;
+use function sprintf;
 
 /**
  * @internal
@@ -28,18 +30,16 @@ final readonly class BoundVariableConfigurator
 {
     private ExpressionParser $expressionParser;
 
+    private Resolver $typeResolver;
+
     public function __construct()
     {
         $this->expressionParser = new ExpressionParser();
+        $this->typeResolver = new Resolver();
     }
 
     /**
-     * @param Config              $config
-     * @param ReflectionParameter $argument
-     * @param class-string        $id
-     * @param Factory|null        $factory
-     *
-     * @return array{value: mixed, resolved: boolean}
+     * @param class-string $id
      *
      * @throws ContainerExceptionInterface
      */
@@ -48,24 +48,24 @@ final readonly class BoundVariableConfigurator
         ReflectionParameter $argument,
         string $id,
         ?Factory $factory,
-    ): array {
+    ): Value {
         /** @var ReflectionNamedType $argumentType */
         $argumentType = $argument->getType();
         $argumentName = $argument->getName();
         $argumentTypeName = $argumentType->getName();
 
-        $expression = $this->getExpression($config, $argument, $id, $factory);
-        if ($expression === null) {
+        $value = $this->getExpression($config, $argument, $id, $factory);
+        if (!$value->resolved) {
             if (!$argumentType->isBuiltin()) {
-                return ['value' => null, 'resolved' => false];
+                return new Value(null, resolved: false);
             }
 
             if ($argument->isDefaultValueAvailable()) {
-                return ['value' => $argument->getDefaultValue(), 'resolved' => true];
+                return new Value($argument->getDefaultValue(), resolved: true);
             }
 
             if ($argumentType->allowsNull()) {
-                return ['value' => null, 'resolved' => true];
+                return new Value(null, resolved: true);
             }
 
             throw new UnresolvableArgumentException(
@@ -78,38 +78,29 @@ final readonly class BoundVariableConfigurator
             );
         }
 
-        (new ExpressionTypeCompatibilityValidator())->validate($expression, $argument, $id);
-
         try {
             /** @psalm-suppress MixedAssignment */
-            $value = $expression instanceof UnitEnum
-                ? $expression
-                : TypeCaster::cast($this->expressionParser->parse($expression), $argumentTypeName);
-
-            return ['value' => $value, 'resolved' => true];
+            $expression = is_string($value->value) ? $this->expressionParser->parse($value->value) : $value->value;
         } catch (EnvVariableNotFoundException $exception) {
             if (!$argument->isDefaultValueAvailable()) {
                 throw $exception;
             }
 
-            return ['value' => $argument->getDefaultValue(), 'resolved' => true];
+            return new Value($argument->getDefaultValue(), resolved: true);
         }
+
+        return new Value($this->typeResolver->resolve($expression, $argument, $id), resolved: true);
     }
 
     /**
-     * @param Config              $config
-     * @param ReflectionParameter $argument
-     * @param class-string        $id
-     * @param Factory|null        $factory
-     *
-     * @return string|UnitEnum|null
+     * @param class-string $id
      */
     private function getExpression(
         Config $config,
         ReflectionParameter $argument,
         string $id,
         ?Factory $factory,
-    ): string|null|UnitEnum {
+    ): Value {
         $argumentName = $argument->getName();
 
         $argumentAttributes = AttributeExtractor::extractParameters(
@@ -117,10 +108,15 @@ final readonly class BoundVariableConfigurator
             parameter: 'expression',
         );
 
-        /** @var string|UnitEnum|null $configExpression */
         $configExpression = BoundVariableProvider::provide($config, $argumentName, $id, $factory);
-        $argumentExpression = $argumentAttributes ? current($argumentAttributes) : null;
+        if ($configExpression->resolved) {
+            return $configExpression;
+        }
 
-        return $configExpression ?? $argumentExpression ?? null;
+        if ($argumentAttributes) {
+            return new Value(current($argumentAttributes), resolved: true);
+        }
+
+        return new Value(null, resolved: false);
     }
 }

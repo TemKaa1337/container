@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Util;
 
-use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
-use Temkaa\Container\Attribute\Bind\TaggedIterator;
 use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\Factory;
-use UnitEnum;
+use Temkaa\Container\Model\Value;
+use function array_key_exists;
 
 /**
  * @internal
@@ -16,27 +15,44 @@ use UnitEnum;
 final class BoundVariableProvider
 {
     /**
-     * @param Config       $config
-     * @param string       $argumentName
      * @param class-string $id
-     * @param Factory|null $factory
-     *
-     * @return null|string|InstanceOfIterator|TaggedIterator|UnitEnum
      */
     public static function provide(
         Config $config,
         string $argumentName,
         string $id,
         ?Factory $factory,
-    ): null|string|InstanceOfIterator|TaggedIterator|UnitEnum {
+    ): Value {
         $classBinding = $config->getBoundedClass($id);
         $classBoundVars = $classBinding?->getBoundedVariables() ?? [];
         $classFactoryBindings = $factory?->getBoundedVariables() ?? [];
 
         $globalBoundVars = $config->getBoundedVariables();
 
-        return $factory
-            ? $classFactoryBindings[$argumentName] ?? $globalBoundVars[$argumentName] ?? null
-            : $classBoundVars[$argumentName] ?? $globalBoundVars[$argumentName] ?? null;
+        if ($factory) {
+            return match (true) {
+                array_key_exists($argumentName, $classFactoryBindings) => new Value(
+                    $classFactoryBindings[$argumentName],
+                    resolved: true,
+                ),
+                array_key_exists($argumentName, $globalBoundVars)      => new Value(
+                    $globalBoundVars[$argumentName],
+                    resolved: true,
+                ),
+                default                                                => new Value(null, resolved: false),
+            };
+        }
+
+        return match (true) {
+            array_key_exists($argumentName, $classBoundVars)  => new Value(
+                $classBoundVars[$argumentName],
+                resolved: true,
+            ),
+            array_key_exists($argumentName, $globalBoundVars) => new Value(
+                $globalBoundVars[$argumentName],
+                resolved: true,
+            ),
+            default                                           => new Value(null, resolved: false),
+        };
     }
 }

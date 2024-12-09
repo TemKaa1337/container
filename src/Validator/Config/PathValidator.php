@@ -6,6 +6,8 @@ namespace Temkaa\Container\Validator\Config;
 
 use Temkaa\Container\Exception\Config\InvalidPathException;
 use Temkaa\Container\Model\Config;
+use function realpath;
+use function sprintf;
 
 /**
  * @internal

@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Container;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionClass;
 use ReflectionException;
+use stdClass;
+use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
+use Temkaa\Container\Attribute\Bind\TaggedIterator;
 use Temkaa\Container\Builder\ConfigBuilder;
 use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
 use Temkaa\Container\Exception\CircularReferenceException;
 use Temkaa\Container\Exception\ClassNotFoundException;
 use Temkaa\Container\Exception\Config\EntryNotFoundException as ConfigEntryNotFoundException;
@@ -28,18 +33,19 @@ use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 
 /**
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ExcessiveClassLength)
- * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- * @SuppressWarnings(PHPMD.ExcessivePublicCount)
- * @SuppressWarnings(PHPMD.TooManyMethods)
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)
- *
- * @psalm-suppress ArgumentTypeCoercion, InternalClass, InternalMethod, MixedAssignment, MixedArrayAccess
- * @psalm-suppress MixedPropertyFetch
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class GeneralTest extends AbstractContainerTestCase
 {
+    public static function getDataForInstantiationOfIteratorsWithInvalidMappingFormatTest(): iterable
+    {
+        yield [['some_class' => new stdClass()]];
+        yield [[0 => new stdClass()]];
+        yield [[0 => 1]];
+        yield [['some_class' => 1]];
+    }
+
     /**
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
@@ -1613,6 +1619,32 @@ final class GeneralTest extends AbstractContainerTestCase
         );
 
         (new ContainerBuilder())->add($config)->build();
+    }
+
+    #[DataProvider('getDataForInstantiationOfIteratorsWithInvalidMappingFormatTest')]
+    public function testInstantiationOfInstanceIfIteratorWithInvalidMappingFormat(array $customFormatMapping): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Class name and signature in custom mapping must be strings.');
+
+        new InstanceOfIterator(
+            id: 'test',
+            format: IteratorFormat::ArrayWithCustomKey,
+            customFormatMapping: $customFormatMapping,
+        );
+    }
+
+    #[DataProvider('getDataForInstantiationOfIteratorsWithInvalidMappingFormatTest')]
+    public function testInstantiationOfTaggedIteratorWithInvalidMappingFormat(array $customFormatMapping): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Class name and signature in custom mapping must be strings.');
+
+        new TaggedIterator(
+            tag: 'test',
+            format: IteratorFormat::ArrayWithCustomKey,
+            customFormatMapping: $customFormatMapping,
+        );
     }
 
     /**

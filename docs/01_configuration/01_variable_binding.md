@@ -150,16 +150,6 @@ use Temkaa\Container\Builder\ConfigBuilder;
 use Temkaa\Container\Builder\Config\ClassBuilder;
 use Temkaa\Container\Builder\ContainerBuilder;
 
-enum BackedEnum: string
-{
-    case CaseOne = 'case_one';
-}
-
-enum UnitEnum
-{
-    case CaseOne;
-}
-
 final readonly class ClassWithBoundedEnvVariables
 {
     public function __construct(
@@ -209,3 +199,8 @@ $classWithBoundedVariables = $container->get(ClassWithBoundedEnvVariables::class
  */
 $classWithBoundedVariables = $container->get(ClassWithOverwrittenBoundedEnvVariables::class);
 ```
+Basically, you can bind any type of variable into any class. If variable you provided doesn't have the same type as 
+variable type into class, container will try to cast it. Please note it tries to cast it "logically", e.g. not like 
+php type conversation work, for example if you try to bind 'true', '1', 'false', '0' string values to boolean value,
+it will correctly cast this variable. But if you try to find 'true' string value to, let's say, false variable type,
+this cast will fail.

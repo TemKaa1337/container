@@ -12,6 +12,10 @@ use Temkaa\Container\Model\Definition\DefinitionInterface;
 use Temkaa\Container\Model\Definition\InterfaceDefinition;
 use Temkaa\Container\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\Container\Service\Definition\ConfiguratorInterface;
+use function array_filter;
+use function count;
+use function current;
+use function usort;
 
 /**
  * @internal

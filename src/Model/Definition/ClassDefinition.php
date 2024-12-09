@@ -6,6 +6,8 @@ namespace Temkaa\Container\Model\Definition;
 
 use Temkaa\Container\Model\Config\Decorator;
 use Temkaa\Container\Model\Definition\Class\Factory;
+use function array_unique;
+use function array_values;
 
 /**
  * @psalm-suppress MissingConstructor
@@ -236,7 +238,7 @@ final class ClassDefinition implements DefinitionInterface
     public function hasInstance(): bool
     {
         /** @psalm-suppress RedundantPropertyInitializationCheck */
-        return boolval($this->instance ?? null);
+        return (bool) ($this->instance ?? null);
     }
 
     public function isSingleton(): bool

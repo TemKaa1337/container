@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Builder\Config\Class;
 
-use Temkaa\Container\Attribute\Bind\InstanceOfIterator;
-use Temkaa\Container\Attribute\Bind\TaggedIterator;
 use Temkaa\Container\Factory\Config\ClassFactoryFactory;
 use Temkaa\Container\Model\Config\Factory;
-use UnitEnum;
+use function str_replace;
 
 /**
- * @psalm-api
+ * @api
  */
 final class FactoryBuilder
 {
     /**
-     * @var array<string, string|InstanceOfIterator|TaggedIterator|UnitEnum>
+     * @var array<string, mixed>
      */
     private array $boundVariables = [];
 
@@ -37,7 +35,7 @@ final class FactoryBuilder
     ) {
     }
 
-    public function bindVariable(string $name, string|InstanceOfIterator|TaggedIterator|UnitEnum $value): self
+    public function bindVariable(string $name, mixed $value): self
     {
         $this->boundVariables[str_replace('$', '', $name)] = $value;
 

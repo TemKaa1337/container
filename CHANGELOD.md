@@ -1,3 +1,14 @@
+### v0.2.7
+##### Features:
+- Updated dependencies versions;
+- Added more real-world classes to benchmark test;
+- Updated docs and examples;
+- Added option to select array format for `InstaceOfIterator` and `TaggedIterator`;
+- Allowed passing any possible type of variables to config bound variables in global, class and factory scopes,
+as well as with `Parameter` attribute;
+- Added `Instance` attribute to inject existing class from container;
+- FCQN'd all built-in used functions.
+
 ### v0.2.6
 ##### Features:
 - Added more classes to benchmark test.

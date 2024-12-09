@@ -8,6 +8,7 @@ use ReflectionClass;
 use Temkaa\Container\Attribute\Bind\Required;
 use Temkaa\Container\Exception\RequiredMethodCallException;
 use Temkaa\Container\Model\Config\ClassConfig;
+use function sprintf;
 
 /**
  * @internal

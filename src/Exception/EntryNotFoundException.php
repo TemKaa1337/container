@@ -6,7 +6,11 @@ namespace Temkaa\Container\Exception;
 
 use Psr\Container\ContainerExceptionInterface;
 use RuntimeException;
+use function sprintf;
 
+/**
+ * @api
+ */
 final class EntryNotFoundException extends RuntimeException implements ContainerExceptionInterface
 {
     public function __construct(string $id)

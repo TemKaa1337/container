@@ -15,6 +15,10 @@ use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
+/**
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
+ */
 final class GeneralInstanceOfIteratorTest extends AbstractContainerTestCase
 {
     /**

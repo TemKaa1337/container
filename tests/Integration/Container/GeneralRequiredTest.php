@@ -15,9 +15,8 @@ use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
 
 /**
- * @SuppressWarnings(PHPMD.ExcessiveClassLength)
- * @SuppressWarnings(PHPMD.TooManyLines)
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ * @psalm-suppress all
+ * @SuppressWarnings(PHPMD)
  */
 final class GeneralRequiredTest extends AbstractContainerTestCase
 {
