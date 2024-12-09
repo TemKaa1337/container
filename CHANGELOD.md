@@ -8,7 +8,6 @@
 as well as with `Parameter` attribute;
 - Added `Instance` attribute to inject existing class from container;
 - FCQN'd all built-in used functions.
-- TODO: add to docs and examples
 
 ### v0.2.6
 ##### Features:
