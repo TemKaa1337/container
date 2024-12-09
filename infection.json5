@@ -21,6 +21,11 @@
                 "Temkaa\\Container\\Util\\Env::get"
             ]
         },
+        "CastInt": {
+            ignore: [
+                "Temkaa\\Container\\Service\\Type\\Resolver::resolveInt"
+            ]
+        },
         "Continue_": {
             ignore: [
                 "Temkaa\\Container\\Repository\\DefinitionRepository::findOneByAlias",

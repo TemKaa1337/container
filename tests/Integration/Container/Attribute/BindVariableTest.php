@@ -57,12 +57,15 @@ final class BindVariableTest extends AbstractContainerTestCase
 
         yield ['int', '10', 10];
         yield ['int', '\\'.IntBackedEnum::class.'::TestCase', 1];
+        yield ['int', '\\'.StringBackedEnum::class.'::NumericCase', 10];
         yield ['int', '"10"', 10];
         yield ['int', '10.6', 10];
         yield ['int', '"env(ENV_CASTABLE_STRING_VAR)"', 10];
         yield ['int', '"env(ENV_INT_VAL)"', 3];
 
         yield ['float', '"10"', 10.0];
+        yield ['float', '\\'.IntBackedEnum::class.'::TestCase', 1.0];
+        yield ['float', '\\'.StringBackedEnum::class.'::NumericCase', 10.5];
         yield ['float', '10', 10.0];
         yield ['float', '10.6', 10.6];
         yield ['float', '"env(ENV_CASTABLE_STRING_VAR)"', 10.1];
@@ -164,6 +167,7 @@ final class BindVariableTest extends AbstractContainerTestCase
         yield ['int', 'null', 'null'];
 
         yield ['float', '"string"', 'string'];
+        yield ['float', '\\'.StringBackedEnum::class.'::TestCase', StringBackedEnum::class];
         yield ['float', 'true', 'bool'];
         yield ['float', '[]', 'array'];
         yield ['float', '"env(ENV_STRING_VAL)"', 'string'];

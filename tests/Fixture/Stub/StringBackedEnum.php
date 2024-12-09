@@ -6,5 +6,6 @@ namespace Tests\Fixture\Stub;
 
 enum StringBackedEnum: string
 {
+    case NumericCase = '10.5';
     case TestCase = 'TestCase';
 }
