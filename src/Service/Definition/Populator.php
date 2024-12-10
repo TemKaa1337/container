@@ -14,6 +14,7 @@ use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\ClassConfig;
 use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
+use Temkaa\Container\Service\CachingReflector;
 use Temkaa\Container\Util\Extractor\AttributeExtractor;
 use function array_merge;
 use function array_unique;
@@ -110,7 +111,7 @@ final class Populator
         /** @var list<list<string>> $tags */
         $tags = [];
         foreach ($ids as $id) {
-            $reflection = new ReflectionClass($id);
+            $reflection = CachingReflector::reflect($id);
 
             /** @var list<string> $entryTags */
             $entryTags = AttributeExtractor::extractParameters(

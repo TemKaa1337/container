@@ -18,6 +18,7 @@ use Temkaa\Container\Model\Reference\Deferred\TaggedIteratorReference;
 use Temkaa\Container\Model\Reference\Reference;
 use Temkaa\Container\Model\Reference\ReferenceInterface;
 use Temkaa\Container\Repository\DefinitionRepository;
+use Temkaa\Container\Service\CachingReflector;
 use function array_map;
 use function end;
 use function explode;
@@ -62,7 +63,7 @@ final readonly class Instantiator
                 $unresolvedArguments = $this->definitionRepository->find($factory->getId())->getArguments();
                 $factoryResolvedArguments = $this->resolveArguments($unresolvedArguments);
 
-                $factoryReflection = new ReflectionClass($factory->getId());
+                $factoryReflection = CachingReflector::reflect($factory->getId());
 
                 $factoryInstance = $factoryReflection->newInstanceArgs($factoryResolvedArguments);
             }
@@ -80,7 +81,7 @@ final readonly class Instantiator
         } else {
             $resolvedArguments = $this->resolveArguments($definition->getArguments());
 
-            $reflection = new ReflectionClass($definition->getId());
+            $reflection = CachingReflector::reflect($definition->getId());
 
             $instance = $reflection->newInstanceArgs($resolvedArguments);
         }

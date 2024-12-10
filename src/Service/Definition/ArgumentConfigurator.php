@@ -8,6 +8,7 @@ use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionParameter;
+use Temkaa\Container\Debug\PerformanceChecker;
 use Temkaa\Container\Exception\NonAutowirableClassException;
 use Temkaa\Container\Exception\UninstantiableEntryException;
 use Temkaa\Container\Model\Config;
@@ -44,8 +45,9 @@ final readonly class ArgumentConfigurator
     private InterfaceConfigurator $interfaceConfigurator;
 
     private TaggedIteratorConfigurator $taggedIteratorConfigurator;
+    private PerformanceChecker $performanceChecker;
 
-    public function __construct(Configurator $definitionConfigurator)
+    public function __construct(Configurator $definitionConfigurator, PerformanceChecker $performanceChecker)
     {
         $this->boundVariableConfigurator = new BoundVariableConfigurator();
         $this->definitionConfigurator = $definitionConfigurator;
@@ -53,6 +55,7 @@ final readonly class ArgumentConfigurator
         $this->interfaceConfigurator = new InterfaceConfigurator($definitionConfigurator);
         $this->taggedIteratorConfigurator = new TaggedIteratorConfigurator();
         $this->instanceConfigurator = new InstanceConfigurator();
+        $this->performanceChecker = $performanceChecker;
     }
 
     /**
@@ -70,9 +73,11 @@ final readonly class ArgumentConfigurator
         ?Factory $factory,
         ?Decorator $decorates,
     ): array {
+        // $this->performanceChecker->start('configure definitions -> configure arguments');
+
         (new ArgumentValidator())->validate($arguments, $id);
 
-        return array_map(
+        $result = array_map(
             fn (mixed $argument): mixed => $this->configureArgument(
                 $config,
                 $definitions,
@@ -83,6 +88,9 @@ final readonly class ArgumentConfigurator
             ),
             $arguments,
         );
+        // $this->performanceChecker->end('configure definitions -> configure arguments');
+
+        return $result;
     }
 
     /**

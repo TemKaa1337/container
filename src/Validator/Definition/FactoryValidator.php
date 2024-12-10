@@ -10,6 +10,7 @@ use ReflectionNamedType;
 use Temkaa\Container\Exception\ClassFactoryException;
 use Temkaa\Container\Exception\Config\EntryNotFoundException;
 use Temkaa\Container\Model\Config\Factory;
+use Temkaa\Container\Service\CachingReflector;
 use function class_exists;
 use function sprintf;
 
@@ -32,7 +33,7 @@ final class FactoryValidator
             );
         }
 
-        $factoryReflection = new ReflectionClass($factory->getId());
+        $factoryReflection = CachingReflector::reflect($factory->getId());
 
         $this->validateFactoryClass($factoryReflection, $factory, $id);
         $this->validateFactoryMethod($factoryReflection, $factory, $id);
@@ -105,7 +106,7 @@ final class FactoryValidator
      */
     private function validateFactoryMethod(ReflectionClass $factoryReflection, Factory $factory, string $id): void
     {
-        $rootClassReflection = new ReflectionClass($id);
+        $rootClassReflection = CachingReflector::reflect($id);
 
         $constructor = $rootClassReflection->getConstructor();
         if ($constructor && !$constructor->isPublic() && $factory->getId() !== $id) {

@@ -15,6 +15,7 @@ use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Reference\Deferred\InterfaceReference;
 use Temkaa\Container\Model\Reference\Reference;
 use Temkaa\Container\Model\Reference\ReferenceInterface;
+use Temkaa\Container\Service\CachingReflector;
 use Temkaa\Container\Service\Definition\Configurator;
 
 /**
@@ -40,7 +41,7 @@ final readonly class InterfaceConfigurator
         string $entryId,
     ): ?ReferenceInterface {
         try {
-            $dependencyReflection = new ReflectionClass($entryId);
+            $dependencyReflection = CachingReflector::reflect($entryId);
         } catch (ReflectionException) {
             throw new ClassNotFoundException($entryId);
         }

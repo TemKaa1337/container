@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Util\Extractor;
 
-use DirectoryIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RegexIterator;
+use Temkaa\Container\Debug\PerformanceChecker;
 use function array_merge;
 use function file_get_contents;
 use function in_array;
-use function is_file;
 use function is_string;
 use function ltrim;
-use function pathinfo;
 use function token_get_all;
-use const PATHINFO_EXTENSION;
 use const T_CLASS;
 use const T_COMMENT;
 use const T_DOC_COMMENT;
@@ -29,6 +29,11 @@ use const T_WHITESPACE;
 final class ClassExtractor
 {
     private const string PHP_FILE_EXTENSION = 'php';
+
+    public function __construct(
+        private readonly PerformanceChecker $performanceChecker,
+    ) {
+    }
 
     /**
      * @param string[]|string $paths
@@ -54,16 +59,20 @@ final class ClassExtractor
      * @psalm-suppress LessSpecificReturnStatement
      * @psalm-suppress MoreSpecificReturnType
      *
-     * @return list<class-string>
+     * @return class-string|null
      */
-    private function extractFromFile(string $path): array
+    private function extractFromFile(string $path): ?string
     {
+        $this->performanceChecker->start('include & exclude -> file_get_contents');
         $contents = file_get_contents($path);
+        $this->performanceChecker->end('include & exclude -> file_get_contents');
+
+        $this->performanceChecker->start('include & exclude -> token_get_all');
         $tokens = token_get_all($contents);
+        $this->performanceChecker->end('include & exclude -> token_get_all');
 
+        $this->performanceChecker->start('include & exclude -> token extraction');
         $nsTokens = [T_STRING => true, T_NS_SEPARATOR => true, T_NAME_QUALIFIED => true];
-
-        $classes = [];
 
         $namespace = '';
         for ($i = 0; isset($tokens[$i]); ++$i) {
@@ -112,14 +121,15 @@ final class ClassExtractor
                         }
                     }
 
-                    $classes[] = ltrim($namespace.$class, '\\');
-                    break;
+                    $this->performanceChecker->end('include & exclude -> token extraction');
+
+                    return ltrim($namespace.$class, '\\');
                 default:
                     break;
             }
         }
 
-        return $classes;
+        return null;
     }
 
     /**
@@ -127,24 +137,29 @@ final class ClassExtractor
      */
     private function extractFromPath(string $path): array
     {
-        if (is_file($path)) {
-            if (pathinfo($path, PATHINFO_EXTENSION) === self::PHP_FILE_EXTENSION) {
-                return $this->extractFromFile($path);
-            }
-
-            return [];
-        }
+        $recursiveDirectoryIterator = new RecursiveDirectoryIterator($path);
+        $wrappedDirectoryIterator = new RecursiveIteratorIterator($recursiveDirectoryIterator);
+        $regexIterator = new RegexIterator($wrappedDirectoryIterator, '/^.+\.php$/i', RegexIterator::GET_MATCH);
 
         /** @var list<list<class-string>> $classes */
         $classes = [];
-        foreach (new DirectoryIterator($path) as $file) {
-            if ($file->isDot()) {
-                continue;
+        foreach ($regexIterator as $file) {
+            $className = $this->extractFromFile($file[0]);
+            if ($className !== null) {
+                $classes[] = $className;
             }
-
-            $classes[] = $this->extractFromPath($file->getRealPath());
         }
 
-        return array_merge(...$classes);
+        // /** @var list<list<class-string>> $classes */
+        // $classes = [];
+        // foreach (new DirectoryIterator($path) as $file) {
+        //     if ($file->isDot()) {
+        //         continue;
+        //     }
+        //
+        //     $classes[] = $this->extractFromPath($file->getRealPath());
+        // }
+
+        return $classes;
     }
 }
