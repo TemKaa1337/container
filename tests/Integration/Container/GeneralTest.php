@@ -1355,10 +1355,11 @@ final class GeneralTest extends AbstractContainerTestCase
     public function testDoesNotCompileWithNonExistentClassExcludedPaths(): void
     {
         $classPath = __DIR__.self::GENERATED_CLASS_STUB_PATH.'NonExistentClass.php';
-        $config = $this->generateConfig(excludedPaths: [$classPath]);
 
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "'.$classPath.'" does not exist.');
+
+        $config = $this->generateConfig(excludedPaths: [$classPath]);
 
         (new ContainerBuilder())->add($config);
     }
@@ -1366,11 +1367,11 @@ final class GeneralTest extends AbstractContainerTestCase
     public function testDoesNotCompileWithNonExistentClassInIncludedPaths(): void
     {
         $classPath = __DIR__.self::GENERATED_CLASS_STUB_PATH.'NonExistentClass.php';
-        $config = $this->generateConfig(includedPaths: [$classPath]);
 
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "'.$classPath.'" does not exist.');
 
+        $config = $this->generateConfig(includedPaths: [$classPath]);
         (new ContainerBuilder())->add($config);
     }
 

@@ -8,7 +8,6 @@ use Psr\Container\ContainerExceptionInterface;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionParameter;
-use Temkaa\Container\Debug\PerformanceChecker;
 use Temkaa\Container\Exception\NonAutowirableClassException;
 use Temkaa\Container\Exception\UninstantiableEntryException;
 use Temkaa\Container\Model\Config;
@@ -25,7 +24,6 @@ use Temkaa\Container\Service\Definition\Configurator\Argument\TaggedIteratorConf
 use Temkaa\Container\Util\Flag;
 use Temkaa\Container\Validator\Definition\ArgumentValidator;
 use function array_map;
-use function file_exists;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -45,9 +43,8 @@ final readonly class ArgumentConfigurator
     private InterfaceConfigurator $interfaceConfigurator;
 
     private TaggedIteratorConfigurator $taggedIteratorConfigurator;
-    private PerformanceChecker $performanceChecker;
 
-    public function __construct(Configurator $definitionConfigurator, PerformanceChecker $performanceChecker)
+    public function __construct(Configurator $definitionConfigurator)
     {
         $this->boundVariableConfigurator = new BoundVariableConfigurator();
         $this->definitionConfigurator = $definitionConfigurator;
@@ -55,7 +52,6 @@ final readonly class ArgumentConfigurator
         $this->interfaceConfigurator = new InterfaceConfigurator($definitionConfigurator);
         $this->taggedIteratorConfigurator = new TaggedIteratorConfigurator();
         $this->instanceConfigurator = new InstanceConfigurator();
-        $this->performanceChecker = $performanceChecker;
     }
 
     /**
@@ -73,11 +69,9 @@ final readonly class ArgumentConfigurator
         ?Factory $factory,
         ?Decorator $decorates,
     ): array {
-        // $this->performanceChecker->start('configure definitions -> configure arguments');
-
         (new ArgumentValidator())->validate($arguments, $id);
 
-        $result = array_map(
+        return array_map(
             fn (mixed $argument): mixed => $this->configureArgument(
                 $config,
                 $definitions,
@@ -88,9 +82,6 @@ final readonly class ArgumentConfigurator
             ),
             $arguments,
         );
-        // $this->performanceChecker->end('configure definitions -> configure arguments');
-
-        return $result;
     }
 
     /**

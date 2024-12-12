@@ -23,7 +23,7 @@ use Temkaa\Container\Service\Definition\Instantiator;
 use Temkaa\Container\Service\Definition\Populator;
 use Temkaa\Container\Service\Definition\Resolver;
 use Temkaa\Container\Service\Type\Resolver as TypeResolver;
-use Temkaa\Container\Util\Extractor\ClassExtractorRefactored;
+use Temkaa\Container\Util\Extractor\ClassExtractor;
 use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
 use function array_merge;
 use function realpath;
@@ -35,11 +35,11 @@ final class ClassExtractorTest extends TestCase
         $src = __DIR__.'/../../../../src';
 
         $includedClasses = [
-            realpath("$src/Service")
+            realpath("$src/Service"),
         ];
         $excludedClasses = [
             realpath("$src/Service/Type"),
-            realpath("$src/Service/Compiler.php")
+            realpath("$src/Service/Compiler.php"),
         ];
         yield [
             array_merge($includedClasses, $excludedClasses),
@@ -62,8 +62,8 @@ final class ClassExtractorTest extends TestCase
             ],
             [
                 TypeResolver::class,
-                Compiler::class
-            ]
+                Compiler::class,
+            ],
         ];
     }
 
@@ -76,7 +76,7 @@ final class ClassExtractorTest extends TestCase
     ): void {
         $uniquePaths = (new UniqueDirectoryExtractor())->extract($paths);
 
-        [$includedClasses, $excludedClasses] = (new ClassExtractorRefactored())->extract(
+        [$includedClasses, $excludedClasses] = (new ClassExtractor())->extract(
             $uniquePaths,
             $inputExcludedPaths,
         );

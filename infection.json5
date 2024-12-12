@@ -4,7 +4,8 @@
             "src"
         ],
         "excludes": [
-            "Util/Extractor/ClassExtractor.php"
+            "Util/Extractor/ClassExtractor.php",
+            "Debug/PerformanceChecker.php"
         ],
     },
     "timeout": 60,

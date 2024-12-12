@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temkaa\Container\Service\Definition;
 
 use ReflectionClass;
-use ReflectionException;
 use Temkaa\Container\Attribute\Alias;
 use Temkaa\Container\Attribute\Decorates;
 use Temkaa\Container\Attribute\Tag;

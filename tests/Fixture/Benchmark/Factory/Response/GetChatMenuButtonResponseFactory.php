@@ -31,15 +31,15 @@ final readonly class GetChatMenuButtonResponseFactory implements FactoryInterfac
         return new GetChatMenuButtonResponse(
             $message['ok'],
             match (true) {
-                !isset($message['result']) => null,
+                !isset($message['result'])                => null,
                 $message['result']['type'] === 'commands' => $this->menuButtonCommandsFactory->create(
                     $message['result'],
                 ),
-                $message['result']['type'] === 'web_app' => $this->menuButtonWebAppFactory->create($message['result']),
-                $message['result']['type'] === 'default' => $this->menuButtonDefaultFactory->create(
+                $message['result']['type'] === 'web_app'  => $this->menuButtonWebAppFactory->create($message['result']),
+                $message['result']['type'] === 'default'  => $this->menuButtonDefaultFactory->create(
                     $message['result'],
                 ),
-                default => throw new InvalidArgumentException(
+                default                                   => throw new InvalidArgumentException(
                     'Could not find factory for message.',
                 )
             },

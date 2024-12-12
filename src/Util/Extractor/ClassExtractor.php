@@ -7,16 +7,12 @@ namespace Temkaa\Container\Util\Extractor;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
-use Temkaa\Container\Debug\PerformanceChecker;
-use function array_merge;
 use function file_get_contents;
-use function in_array;
 use function is_file;
 use function is_string;
 use function ltrim;
-use function realpath;
+use function str_starts_with;
 use function token_get_all;
-use function var_dump;
 use const T_CLASS;
 use const T_COMMENT;
 use const T_DOC_COMMENT;
@@ -31,33 +27,45 @@ use const T_WHITESPACE;
  */
 final class ClassExtractor
 {
-    private const string PHP_FILE_EXTENSION = 'php';
-
-    private const array SKIP_TOKENS = [T_WHITESPACE => true, T_DOC_COMMENT => true, T_COMMENT => true];
-
     private const array NAMESPACE_TOKENS = [T_STRING => true, T_NS_SEPARATOR => true, T_NAME_QUALIFIED => true];
-
-    public function __construct(
-        private readonly PerformanceChecker $performanceChecker,
-    ) {
-    }
+    private const array SKIP_TOKENS = [T_WHITESPACE => true, T_DOC_COMMENT => true, T_COMMENT => true];
 
     /**
      * @param string[]|string $paths
+     * @param list<string>    $excludedPaths
      *
-     * @return list<class-string>
+     * @return array{0: list<class-string>, 1: list<class-string>}
      */
-    public function extract(array|string $paths): array
+    public function extract(array|string $paths, array $excludedPaths): array
     {
         $paths = is_string($paths) ? [$paths] : $paths;
-        /** @var list<list<class-string>> $classes */
-        $classes = [];
+
+        /** @var list<class-string> $includedClasses */
+        $includedClasses = [];
+        /** @var list<class-string> $excludedClasses */
+        $excludedClasses = [];
 
         foreach ($paths as $path) {
-            $classes[] = $this->extractFromPath($path);
+            $extractedClasses = $this->extractFromPath($path);
+
+            foreach ($extractedClasses as $classPath => $class) {
+                $isExcluded = false;
+                foreach ($excludedPaths as $excludedPath) {
+                    if (str_starts_with($classPath, $excludedPath)) {
+                        $isExcluded = true;
+                        break;
+                    }
+                }
+
+                if ($isExcluded) {
+                    $excludedClasses[] = $class;
+                } else {
+                    $includedClasses[] = $class;
+                }
+            }
         }
 
-        return array_merge(...$classes);
+        return [$includedClasses, $excludedClasses];
     }
 
     /**
@@ -70,15 +78,8 @@ final class ClassExtractor
      */
     private function extractFromFile(string $path): ?string
     {
-        $this->performanceChecker->start('include & exclude -> file_get_contents');
         $contents = file_get_contents($path);
-        $this->performanceChecker->end('include & exclude -> file_get_contents');
-
-        $this->performanceChecker->start('include & exclude -> token_get_all');
         $tokens = token_get_all($contents);
-        $this->performanceChecker->end('include & exclude -> token_get_all');
-
-        $this->performanceChecker->start('include & exclude -> token extraction');
 
         $namespace = '';
         for ($i = 0; isset($tokens[$i]); ++$i) {
@@ -127,8 +128,6 @@ final class ClassExtractor
                         }
                     }
 
-                    $this->performanceChecker->end('include & exclude -> token extraction');
-
                     return ltrim($namespace.$class, '\\');
                 default:
                     break;
@@ -139,40 +138,31 @@ final class ClassExtractor
     }
 
     /**
-     * @return list<class-string>
+     * @return array<string, class-string>
      */
     private function extractFromPath(string $path): array
     {
         if (is_file($path)) {
             $class = $this->extractFromFile($path);
 
-            return $class !== null ? [$class] : [];
+            return $class !== null ? [$path => $class] : [];
         }
 
         $recursiveDirectoryIterator = new RecursiveDirectoryIterator($path);
         $wrappedDirectoryIterator = new RecursiveIteratorIterator($recursiveDirectoryIterator);
         $regexIterator = new RegexIterator($wrappedDirectoryIterator, '/^.+\.php$/i', RegexIterator::GET_MATCH);
 
-        /** @var list<list<class-string>> $classes */
+        /** @var array<string, class-string> $classes */
         $classes = [];
+        /** @var array{0: string} $file */
         foreach ($regexIterator as $file) {
-            // var_dump($file);
-            // die();
-            $className = $this->extractFromFile($file[0]);
+            $path = $file[0];
+
+            $className = $this->extractFromFile($path);
             if ($className !== null) {
-                $classes[] = $className;
+                $classes[$path] = $className;
             }
         }
-
-        // /** @var list<list<class-string>> $classes */
-        // $classes = [];
-        // foreach (new DirectoryIterator($path) as $file) {
-        //     if ($file->isDot()) {
-        //         continue;
-        //     }
-        //
-        //     $classes[] = $this->extractFromPath($file->getRealPath());
-        // }
 
         return $classes;
     }

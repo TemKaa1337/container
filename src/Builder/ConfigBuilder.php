@@ -32,12 +32,12 @@ final class ConfigBuilder
     private array $boundedVariables = [];
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     private array $exclude = [];
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     private array $include = [];
 

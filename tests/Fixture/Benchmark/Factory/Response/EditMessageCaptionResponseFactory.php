@@ -26,9 +26,9 @@ final readonly class EditMessageCaptionResponseFactory implements FactoryInterfa
         return new EditMessageCaptionResponse(
             $message['ok'],
             match (true) {
-                !isset($message['result']) => null,
+                !isset($message['result'])                                 => null,
                 is_bool($message['result']) && $message['result'] === true => $message['result'],
-                default => $this->messageFactory->create(
+                default                                                    => $this->messageFactory->create(
                     $message['result'],
                 )
             },

@@ -20,6 +20,7 @@ use Temkaa\Container\Model\Definition\InterfaceDefinition;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\AbstractTestCase;
+use function realpath;
 
 /**
  * @psalm-suppress ArgumentTypeCoercion, PossiblyInvalidArrayOffset, InternalClass, InternalMethod, MixedArrayAccess
@@ -58,10 +59,10 @@ final class BuilderTest extends AbstractTestCase
 
     public function testConfigDoesNotInitDueToInvalidServicePath(): void
     {
-        $config = $this->generateConfig(includedPaths: ['path']);
-
         $this->expectException(InvalidPathException::class);
         $this->expectExceptionMessage('The specified path "path" does not exist.');
+
+        $config = $this->generateConfig(includedPaths: ['path']);
 
         (new ContainerBuilder())->add($config);
     }

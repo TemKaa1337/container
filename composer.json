@@ -6,7 +6,11 @@
     "keywords": ["dependency injection", "di", "container", "di container", "ioc", "ioc container"],
     "autoload": {
         "psr-4": {
-            "Temkaa\\Container\\": "src/",
+            "Temkaa\\Container\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
             "Example\\": "examples/",
             "Tests\\": "tests/"
         }

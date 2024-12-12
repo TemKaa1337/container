@@ -10,6 +10,8 @@ use ReflectionClass;
 use Symfony\Component\Finder\Finder;
 use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
 use function realpath;
+use function str_replace;
+use const DIRECTORY_SEPARATOR;
 
 final class UniqueDirectoryExtractorTest extends TestCase
 {
@@ -17,89 +19,108 @@ final class UniqueDirectoryExtractorTest extends TestCase
     {
         yield [
             [
-                __DIR__.'/../Fixture/Benchmark/',
-                __DIR__.'/../Fixture/Benchmark/',
-                __DIR__.'/../Fixture/Benchmark/Model',
-                __DIR__.'/../Fixture/Benchmark/Model',
-                __DIR__.'/../Fixture/Benchmark/Model/Request',
-                __DIR__.'/../',
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model/Request'),
+                self::normalizePath(__DIR__.'/../'),
             ],
             [
-                __DIR__.'/../',
-            ],
-        ];
-        yield [
-            [
-                __DIR__.'/../Fixture/Benchmark/SomeFileName.php',
-                __DIR__.'/../Fixture/Benchmark/',
-                __DIR__.'/../Fixture/Benchmark/Model',
-                __DIR__.'/../Fixture/Benchmark/Model',
-                __DIR__.'/../Fixture/Benchmark/Model/Request',
-                __DIR__.'/../',
-            ],
-            [
-                __DIR__.'/../',
+                self::normalizePath(__DIR__.'/..').DIRECTORY_SEPARATOR,
             ],
         ];
         yield [
             [
-                __DIR__.'/../Fixture/Benchmark/Folder1/SomeFileName.php',
-                __DIR__.'/../Fixture/Benchmark/Folder2',
-                __DIR__.'/../Fixture/OtherDir/',
-                __DIR__.'/../Fixture/Benchmark/Model',
-                __DIR__.'/../Fixture/Benchmark/Model',
-                __DIR__.'/../Fixture/Benchmark/Model/Request',
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/SomeFileName.php'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model/Request'),
+                self::normalizePath(__DIR__.'/../'),
             ],
             [
-                __DIR__.'/../Fixture/Benchmark/Folder1/SomeFileName.php',
-                __DIR__.'/../Fixture/Benchmark/Folder2/',
-                __DIR__.'/../Fixture/OtherDir/',
-                __DIR__.'/../Fixture/Benchmark/Model/',
+                self::normalizePath(__DIR__.'/..').DIRECTORY_SEPARATOR,
             ],
         ];
         yield [
             [
-                __DIR__.'/../Fixture/Benchmark/Folder1/SomeFileName.php',
-                __DIR__.'/../Fixture/Benchmark/Folder1',
-                __DIR__.'/../Fixture/OtherDir/',
-                __DIR__.'/../Fixture/Benchmark/Model/Request',
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder1/SomeFileName.php'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder2'),
+                self::normalizePath(__DIR__.'/../Fixture/OtherDir/'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model/Request'),
             ],
             [
-                __DIR__.'/../Fixture/Benchmark/Folder1/',
-                __DIR__.'/../Fixture/OtherDir/',
-                __DIR__.'/../Fixture/Benchmark/Model/Request/',
-            ],
-        ];
-        yield [
-            [
-                __DIR__.'/../Fixture/Benchmark/Folder1/Folder2',
-                __DIR__.'/../Fixture/Benchmark/Folder2',
-                __DIR__.'/../Fixture/Benchmark/Folder3/Folder1',
-                __DIR__.'/../Fixture/Benchmark/Folder4/',
-                __DIR__.'/../Fixture/Benchmark/Folder5/Folder1/Folder2',
-                __DIR__.'/../Fixture/Benchmark/',
-            ],
-            [
-                __DIR__.'/../Fixture/Benchmark/',
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder1/SomeFileName.php'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder2').DIRECTORY_SEPARATOR,
+                self::normalizePath(__DIR__.'/../Fixture/OtherDir').DIRECTORY_SEPARATOR,
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model').DIRECTORY_SEPARATOR,
             ],
         ];
         yield [
             [
-                (new ReflectionClass(Finder::class))->getFileName(),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder1/SomeFileName.php'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder1'),
+                self::normalizePath(__DIR__.'/../Fixture/OtherDir/'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model/Request'),
             ],
             [
-                (new ReflectionClass(Finder::class))->getFileName(),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder1').DIRECTORY_SEPARATOR,
+                self::normalizePath(__DIR__.'/../Fixture/OtherDir').DIRECTORY_SEPARATOR,
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model/Request').DIRECTORY_SEPARATOR,
+            ],
+        ];
+        yield [
+            [
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder1/Folder2'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder2'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder3/Folder1'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder4/'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Folder5/Folder1/Folder2'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/'),
+            ],
+            [
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark').DIRECTORY_SEPARATOR,
             ],
         ];
         yield [
             [
                 (new ReflectionClass(Finder::class))->getFileName(),
-                realpath(__DIR__.'/../../../../vendor/')
             ],
             [
-                realpath(__DIR__.'/../../../../vendor/').'/'
+                (new ReflectionClass(Finder::class))->getFileName(),
             ],
         ];
+        yield [
+            [
+                (new ReflectionClass(Finder::class))->getFileName(),
+                realpath(__DIR__.'/../../../../vendor/'),
+            ],
+            [
+                realpath(__DIR__.'/../../../../vendor/').DIRECTORY_SEPARATOR,
+            ],
+        ];
+        yield [
+            [
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Enum/'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Factory'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model/Response/Nested'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model/Response/'),
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model'),
+            ],
+            [
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Enum').DIRECTORY_SEPARATOR,
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Factory').DIRECTORY_SEPARATOR,
+                self::normalizePath(__DIR__.'/../Fixture/Benchmark/Model').DIRECTORY_SEPARATOR,
+            ],
+        ];
+    }
+
+    private static function normalizePath(string $path): string
+    {
+        return str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path);
     }
 
     #[DataProvider('getDataForExtractTest')]
@@ -107,7 +128,7 @@ final class UniqueDirectoryExtractorTest extends TestCase
     {
         self::assertEqualsCanonicalizing(
             $expectedResultDirectories,
-            (new UniqueDirectoryExtractor())->extract($directories)
+            (new UniqueDirectoryExtractor())->extract($directories),
         );
     }
 }

@@ -19,15 +19,15 @@ use Temkaa\Container\Exception\UnresolvableArgumentException;
 use Temkaa\Container\Model\Config\Factory;
 use Tests\Fixture\Stub\AbstractClass1;
 use Tests\Fixture\Stub\AbstractClass2;
-use Tests\Fixture\Stub\IntBackedEnum;
-use Tests\Fixture\Stub\StringBackedEnum;
 use Tests\Fixture\Stub\ClassExtends1;
 use Tests\Fixture\Stub\ClassExtends2;
 use Tests\Fixture\Stub\ClassImplements1;
 use Tests\Fixture\Stub\ClassImplements2;
 use Tests\Fixture\Stub\EmptyClass;
+use Tests\Fixture\Stub\IntBackedEnum;
 use Tests\Fixture\Stub\Interface1;
 use Tests\Fixture\Stub\Interface2;
+use Tests\Fixture\Stub\StringBackedEnum;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\AbstractTestCase;
@@ -62,6 +62,25 @@ final class BindVariableTest extends AbstractContainerTestCase
         $callback = fn (): string => 'string';
         yield ['\Closure', $callback, $callback];
         yield ['callable', $callback, $callback];
+    }
+
+    public static function getCallableDataForNonCompilableBoundVariable(): iterable
+    {
+        $object = new class {
+        };
+        yield ['callable', 'string'];
+        yield ['callable', true];
+        yield ['callable', []];
+        yield ['callable', 'env(ENV_STRING_VAL)'];
+        yield ['callable', $object];
+        yield ['callable', null];
+
+        yield ['\Closure', 'string'];
+        yield ['\Closure', true];
+        yield ['\Closure', []];
+        yield ['\Closure', 'env(ENV_STRING_VAL)'];
+        yield ['\Closure', $object];
+        yield ['\Closure', null];
     }
 
     public static function getDataForCompilableBoundVariable(): iterable
@@ -233,25 +252,6 @@ final class BindVariableTest extends AbstractContainerTestCase
         // TODO: add more tests on mixed
         // TODO: add more tests on standalone null
         // TODO: add functionality with new Instance
-    }
-
-    public static function getCallableDataForNonCompilableBoundVariable(): iterable
-    {
-        $object = new class {
-        };
-        yield ['callable', 'string'];
-        yield ['callable', true];
-        yield ['callable', []];
-        yield ['callable', 'env(ENV_STRING_VAL)'];
-        yield ['callable', $object];
-        yield ['callable', null];
-
-        yield ['\Closure', 'string'];
-        yield ['\Closure', true];
-        yield ['\Closure', []];
-        yield ['\Closure', 'env(ENV_STRING_VAL)'];
-        yield ['\Closure', $object];
-        yield ['\Closure', null];
     }
 
     public static function getDataForNonCompilableBoundVariable(): iterable

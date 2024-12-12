@@ -39,17 +39,17 @@ final readonly class ChatFullInfoFactory
     public function create(array $message): ChatFullInfo
     {
         $factory = match (true) {
-            !isset($message['available_reactions']) => null,
+            !isset($message['available_reactions'])     => null,
             is_array(
                 $message['available_reactions'],
-            ) && $message[0]['type'] === 'emoji' => $this->reactionTypeEmojiFactory,
+            ) && $message[0]['type'] === 'emoji'        => $this->reactionTypeEmojiFactory,
             is_array(
                 $message['available_reactions'],
             ) && $message[0]['type'] === 'custom_emoji' => $this->reactionTypeCustomEmojiFactory,
             is_array(
                 $message['available_reactions'],
-            ) && $message[0]['type'] === 'paid' => $this->reactionTypePaidFactory,
-            default => null,
+            ) && $message[0]['type'] === 'paid'         => $this->reactionTypePaidFactory,
+            default                                     => null,
         };
 
         return new ChatFullInfo(

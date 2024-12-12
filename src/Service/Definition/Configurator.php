@@ -10,7 +10,6 @@ use ReflectionException;
 use Temkaa\Container\Attribute\Autowire;
 use Temkaa\Container\Attribute\Bind\Required;
 use Temkaa\Container\Attribute\Factory;
-use Temkaa\Container\Debug\PerformanceChecker;
 use Temkaa\Container\Exception\CircularReferenceException;
 use Temkaa\Container\Exception\NonAutowirableClassException;
 use Temkaa\Container\Exception\UninstantiableEntryException;
@@ -20,10 +19,8 @@ use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\Factory as ConfigFactory;
 use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
-use Temkaa\Container\Service\CachingReflector;
 use Temkaa\Container\Util\Extractor\AttributeExtractor;
 use Temkaa\Container\Util\Extractor\ClassExtractor;
-use Temkaa\Container\Util\Extractor\ClassExtractorRefactored;
 use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
 use Temkaa\Container\Util\Flag;
 use Temkaa\Container\Validator\Definition\FactoryValidator;
@@ -33,7 +30,6 @@ use function array_unique;
 use function array_values;
 use function in_array;
 use function sprintf;
-use function var_dump;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -63,11 +59,9 @@ final class Configurator implements ConfiguratorInterface
      */
     private array $excludedClasses;
 
-    private PerformanceChecker $performanceChecker;
-
-    private int $reflectionCalls = 0;
-
     private Config $resolvingConfig;
+
+    private UniqueDirectoryExtractor $uniqueDirectoryExtractor;
 
     /**
      * @param Config[] $configs
@@ -75,13 +69,12 @@ final class Configurator implements ConfiguratorInterface
     public function __construct(
         ConfiguratorInterface $configurator,
         array $configs,
-        PerformanceChecker $performanceChecker,
     ) {
-        $this->argumentConfigurator = new ArgumentConfigurator($this, $performanceChecker);
-        $this->classExtractor = new ClassExtractor($performanceChecker);
+        $this->argumentConfigurator = new ArgumentConfigurator($this);
+        $this->classExtractor = new ClassExtractor();
         $this->configs = $configs;
         $this->configurator = $configurator;
-        $this->performanceChecker = $performanceChecker;
+        $this->uniqueDirectoryExtractor = new UniqueDirectoryExtractor();
     }
 
     /**
@@ -95,47 +88,19 @@ final class Configurator implements ConfiguratorInterface
         foreach ($this->configs as $config) {
             $this->resolvingConfig = $config;
 
-            $this->performanceChecker->start('extract dirs');
-            $uniquePaths = (new UniqueDirectoryExtractor())->extract(
+            $uniquePaths = $this->uniqueDirectoryExtractor->extract(
                 array_merge($config->getIncludedPaths(), $config->getExcludedPaths()),
             );
-            $this->performanceChecker->end('extract dirs');
-            $this->performanceChecker->start('get classes');
-            [$includedClasses, $excludedClasses] = (new ClassExtractorRefactored($this->performanceChecker))->extract(
+
+            [$includedClasses, $excludedClasses] = $this->classExtractor->extract(
                 $uniquePaths,
                 $config->getExcludedPaths(),
             );
-            $this->performanceChecker->end('get classes');
             $this->excludedClasses = $excludedClasses;
 
-            $this->performanceChecker->print('extract dirs');
-            $this->performanceChecker->print('get classes');
-            $this->performanceChecker->print('include & exclude -> file_get_contents');
-            $this->performanceChecker->print('include & exclude -> token_get_all');
-            $this->performanceChecker->print('include & exclude -> token extraction');
-            $this->performanceChecker->print('determine section');
-            $this->performanceChecker->print('class itself extraction');
-            // try {
-            //     $this->performanceChecker->print('include & exclude -> pathinfo');
-            // } catch (Throwable $throwable) {
-            //     echo "no data for include & exclude -> pathinfo\n";
-            // }
-
-            $this->performanceChecker->start('configure definitions');
             foreach ($includedClasses as $class) {
-                $this->configureDefinition($class, failIfUninstantiable: false, isRoot: true);
+                $this->configureDefinition($class, failIfUninstantiable: false);
             }
-            $this->performanceChecker->end('configure definitions');
-            $this->performanceChecker->print('configure definitions');
-
-            $this->performanceChecker->print('configure definitions -> new ReflectionClass');
-            $this->performanceChecker->print('configure definitions -> factory stuff');
-            $this->performanceChecker->print('configure definitions -> populator');
-            $this->performanceChecker->print('configure ROOT definitions -> configure arguments');
-            $this->performanceChecker->print('configure NON ROOT definitions -> configure arguments');
-            $this->performanceChecker->print('configure definitions -> other');
-            $this->performanceChecker->print('configure definitions -> required method calls');
-            // var_dump('reflection calls: '.$this->reflectionCalls);
         }
 
         return $this->definitions;
@@ -150,7 +115,7 @@ final class Configurator implements ConfiguratorInterface
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    public function configureDefinition(string $id, bool $failIfUninstantiable = true, bool $isRoot = false): void
+    public function configureDefinition(string $id, bool $failIfUninstantiable = true): void
     {
         if ($this->definitions->has($id)) {
             return;
@@ -162,17 +127,11 @@ final class Configurator implements ConfiguratorInterface
 
         Flag::toggle($id, group: 'definition');
 
-        $this->performanceChecker->start('configure definitions -> new ReflectionClass');
         $reflection = new ReflectionClass($id);
-        $this->reflectionCalls++;
-        $this->performanceChecker->end('configure definitions -> new ReflectionClass');
         if ($reflection->isInternal()) {
             throw new UninstantiableEntryException(sprintf('Cannot resolve internal entry "%s".', $id));
         }
 
-        if ($isRoot) {
-            $this->performanceChecker->start('configure definitions -> factory stuff');
-        }
         $factoryAttributes = $reflection->getAttributes(Factory::class);
         $classConfigFactory = $this->resolvingConfig->getBoundedClass($id)?->getFactory();
 
@@ -187,19 +146,10 @@ final class Configurator implements ConfiguratorInterface
         if ($factory) {
             (new FactoryValidator())->validate($factory, $id);
         }
-        if ($isRoot) {
-            $this->performanceChecker->end('configure definitions -> factory stuff');
-        }
 
-        if ($isRoot) {
-            $this->performanceChecker->start('configure definitions -> other');
-        }
         if (!$factory && !$reflection->isInstantiable()) {
             Flag::untoggle($id, group: 'definition');
 
-            if ($isRoot) {
-                $this->performanceChecker->end('configure definitions -> other');
-            }
             if (!$failIfUninstantiable) {
                 return;
             }
@@ -209,13 +159,6 @@ final class Configurator implements ConfiguratorInterface
 
         if (in_array($id, $this->excludedClasses, strict: true)) {
             Flag::untoggle($id, group: 'definition');
-
-            if ($isRoot) {
-                $this->performanceChecker->end('configure definitions -> other');
-            }
-            if (!$failIfUninstantiable) {
-                return;
-            }
 
             throw new NonAutowirableClassException(
                 sprintf('Cannot autowire class "%s" as it is in "exclude" config parameter.', $id),
@@ -228,9 +171,6 @@ final class Configurator implements ConfiguratorInterface
         if ($isNonAutowirable) {
             Flag::untoggle($id, group: 'definition');
 
-            if ($isRoot) {
-                $this->performanceChecker->end('configure definitions -> other');
-            }
             if (!$failIfUninstantiable) {
                 return;
             }
@@ -250,24 +190,10 @@ final class Configurator implements ConfiguratorInterface
         if ($boundClassInfo = $this->resolvingConfig->getBoundedClass($id)) {
             $definition->setIsSingleton($boundClassInfo->isSingleton());
         }
-        if ($isRoot) {
-            $this->performanceChecker->end('configure definitions -> other');
-        }
 
-        if ($isRoot) {
-            $this->performanceChecker->start('configure definitions -> populator');
-        }
         (new Populator())->populate($definition, $reflection, $this->resolvingConfig, $this->definitions);
-        if ($isRoot) {
-            $this->performanceChecker->end('configure definitions -> populator');
-        }
-        if ($isRoot) {
-            $this->performanceChecker->start('configure definitions -> required method calls');
-        }
+
         $this->configureRequiredMethodCalls($definition);
-        if ($isRoot) {
-            $this->performanceChecker->end('configure definitions -> required method calls');
-        }
 
         $constructor = $reflection->getConstructor();
         if (!$constructor && !$factory) {
@@ -281,11 +207,6 @@ final class Configurator implements ConfiguratorInterface
         if ($factory) {
             $this->configureFactory($definition, $factory);
         } else {
-            if ($isRoot) {
-                $this->performanceChecker->start('configure ROOT definitions -> configure arguments');
-            } else {
-                $this->performanceChecker->start('configure NON ROOT definitions -> configure arguments');
-            }
             $definition->setArguments(
                 $this->argumentConfigurator->configure(
                     $this->resolvingConfig,
@@ -296,11 +217,6 @@ final class Configurator implements ConfiguratorInterface
                     decorates: $definition->getDecorates(),
                 ),
             );
-            if ($isRoot) {
-                $this->performanceChecker->end('configure ROOT definitions -> configure arguments');
-            } else {
-                $this->performanceChecker->end('configure NON ROOT definitions -> configure arguments');
-            }
         }
 
         $this->definitions->add($definition);

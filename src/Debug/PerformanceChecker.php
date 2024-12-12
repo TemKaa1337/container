@@ -8,9 +8,13 @@ use function array_key_last;
 use function array_map;
 use function array_sum;
 use function array_values;
-use function end;
 use function microtime;
 
+/**
+ * @internal
+ * @psalm-suppress all
+ * @codeCoverageIgnore
+ */
 final class PerformanceChecker
 {
     private array $events = [];
