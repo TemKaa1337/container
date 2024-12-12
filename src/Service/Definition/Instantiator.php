@@ -17,7 +17,6 @@ use Temkaa\Container\Model\Reference\Deferred\TaggedIteratorReference;
 use Temkaa\Container\Model\Reference\Reference;
 use Temkaa\Container\Model\Reference\ReferenceInterface;
 use Temkaa\Container\Repository\DefinitionRepository;
-use Temkaa\Container\Service\CachingReflector;
 use function array_map;
 use function end;
 use function explode;

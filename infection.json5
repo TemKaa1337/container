@@ -44,10 +44,16 @@
                 "Temkaa\\Container\\Service\\Definition\\Configurator\\DecoratorConfigurator::sortByPriority"
             ]
         },
+        "MatchArmRemoval": {
+            ignore: [
+                "Temkaa\\Container\\Util\\BoundVariableProvider::provide"
+            ]
+        },
         "NullSafeMethodCall": {
             ignore: [
                 "Temkaa\\Container\\Service\\Definition\\Configurator\\InterfaceConfigurator::collectUnboundInterfaces",
                 "Temkaa\\Container\\Service\\Definition\\Configurator\\InterfaceConfigurator::updateInterfaceReferences",
+                "Temkaa\\Container\\Validator\\Definition\\FactoryValidator::validateFactoryMethod"
             ]
         },
         "IncrementInteger": {
@@ -102,7 +108,8 @@
                 "Temkaa\\Container\\Model\\Definition\\ClassDefinition::setImplements",
                 "Temkaa\\Container\\Builder\\Config\\ClassBuilder::build",
                 "Temkaa\\Container\\Service\\Definition\\Configurator\\InterfaceConfigurator::addMissingInterfaceDefinitions",
-                "Temkaa\\Container\\Service\\Definition\\Configurator::configureRequiredMethodCalls"
+                "Temkaa\\Container\\Service\\Definition\\Configurator::configureRequiredMethodCalls",
+                "Temkaa\\Container\\Util\\Extractor\\UniqueDirectoryExtractor::extract"
             ]
         },
         "UnwrapArrayUnique": {

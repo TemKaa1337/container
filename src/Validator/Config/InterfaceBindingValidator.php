@@ -8,7 +8,6 @@ use ReflectionClass;
 use Temkaa\Container\Exception\ClassNotFoundException;
 use Temkaa\Container\Exception\Config\CannotBindInterfaceException;
 use Temkaa\Container\Model\Config;
-use Temkaa\Container\Service\CachingReflector;
 use function class_exists;
 use function interface_exists;
 use function sprintf;

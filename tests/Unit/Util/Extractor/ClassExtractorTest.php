@@ -6,7 +6,6 @@ namespace Tests\Unit\Util\Extractor;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Temkaa\Container\Service\CachingReflector;
 use Temkaa\Container\Service\Compiler;
 use Temkaa\Container\Service\Definition\ArgumentConfigurator;
 use Temkaa\Container\Service\Definition\Configurator;

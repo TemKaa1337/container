@@ -10,7 +10,6 @@ use ReflectionNamedType;
 use Temkaa\Container\Exception\ClassFactoryException;
 use Temkaa\Container\Exception\Config\EntryNotFoundException;
 use Temkaa\Container\Model\Config\Factory;
-use Temkaa\Container\Service\CachingReflector;
 use function class_exists;
 use function sprintf;
 
