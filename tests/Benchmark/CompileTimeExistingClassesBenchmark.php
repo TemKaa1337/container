@@ -26,7 +26,7 @@ final readonly class CompileTimeExistingClassesBenchmark
      * @throws ReflectionException
      * @throws ContainerExceptionInterface
      */
-    #[Assert(expression: 'mode(variant.time.avg) < 55 milliseconds')] // latest best local run - 52ms (177ms in GHA)
+    #[Assert(expression: 'mode(variant.time.avg) < 70 milliseconds')] // latest best local run - 52ms (67ms in GHA)
     #[BeforeMethods('setUp')]
     #[Iterations(20)]
     #[Revs(20)]
@@ -39,7 +39,7 @@ final readonly class CompileTimeExistingClassesBenchmark
      * @throws ReflectionException
      * @throws ContainerExceptionInterface
      */
-    #[Assert(expression: 'mode(variant.time.avg) < 100 milliseconds')] // latest best local run - 91ms (217 in GHA)
+    #[Assert(expression: 'mode(variant.time.avg) < 100 milliseconds')] // latest best local run - 91ms (100 in GHA)
     #[BeforeMethods('setUp')]
     public function benchFirstCompilationConsumesSuitableTime(): void
     {
