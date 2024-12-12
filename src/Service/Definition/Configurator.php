@@ -21,9 +21,11 @@ use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
 use Temkaa\Container\Util\Extractor\AttributeExtractor;
 use Temkaa\Container\Util\Extractor\ClassExtractor;
+use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
 use Temkaa\Container\Util\Flag;
 use Temkaa\Container\Validator\Definition\FactoryValidator;
 use Temkaa\Container\Validator\Definition\Method\RequiredMethodCallValidator;
+use function array_merge;
 use function array_unique;
 use function array_values;
 use function in_array;
@@ -59,15 +61,20 @@ final class Configurator implements ConfiguratorInterface
 
     private Config $resolvingConfig;
 
+    private UniqueDirectoryExtractor $uniqueDirectoryExtractor;
+
     /**
      * @param Config[] $configs
      */
-    public function __construct(ConfiguratorInterface $configurator, array $configs)
-    {
+    public function __construct(
+        ConfiguratorInterface $configurator,
+        array $configs,
+    ) {
         $this->argumentConfigurator = new ArgumentConfigurator($this);
         $this->classExtractor = new ClassExtractor();
         $this->configs = $configs;
         $this->configurator = $configurator;
+        $this->uniqueDirectoryExtractor = new UniqueDirectoryExtractor();
     }
 
     /**
@@ -81,8 +88,15 @@ final class Configurator implements ConfiguratorInterface
         foreach ($this->configs as $config) {
             $this->resolvingConfig = $config;
 
-            $includedClasses = $this->classExtractor->extract($config->getIncludedPaths());
-            $this->excludedClasses = $this->classExtractor->extract($config->getExcludedPaths());
+            $uniquePaths = $this->uniqueDirectoryExtractor->extract(
+                array_merge($config->getIncludedPaths(), $config->getExcludedPaths()),
+            );
+
+            [$includedClasses, $excludedClasses] = $this->classExtractor->extract(
+                $uniquePaths,
+                $config->getExcludedPaths(),
+            );
+            $this->excludedClasses = $excludedClasses;
 
             foreach ($includedClasses as $class) {
                 $this->configureDefinition($class, failIfUninstantiable: false);
@@ -145,10 +159,6 @@ final class Configurator implements ConfiguratorInterface
 
         if (in_array($id, $this->excludedClasses, strict: true)) {
             Flag::untoggle($id, group: 'definition');
-
-            if (!$failIfUninstantiable) {
-                return;
-            }
 
             throw new NonAutowirableClassException(
                 sprintf('Cannot autowire class "%s" as it is in "exclude" config parameter.', $id),
@@ -235,14 +245,14 @@ final class Configurator implements ConfiguratorInterface
             $definition->getDecorates(),
         );
 
-        $factory = DefinitionClassFactoryFactory::create(
+        $definitionClassFactory = DefinitionClassFactoryFactory::create(
             $factory->getId(),
             $factory->getMethod(),
             $factoryArguments,
             $methodReflection->isStatic(),
         );
 
-        $definition->setFactory($factory);
+        $definition->setFactory($definitionClassFactory);
     }
 
     /**

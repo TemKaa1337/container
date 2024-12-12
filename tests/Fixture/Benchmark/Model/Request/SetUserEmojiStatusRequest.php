@@ -39,7 +39,7 @@ final readonly class SetUserEmojiStatusRequest implements RequestInterface
     {
         return $this->filterNullable(
             [
-                'user_id' => $this->userId,
+                'user_id'                      => $this->userId,
                 'emoji_status_custom_emoji_id' => $this->emojiStatusCustomEmojiId,
                 'emoji_status_expiration_date' => $this->emojiStatusExpirationDate?->setTimezone(
                     new DateTimeZone('UTC'),

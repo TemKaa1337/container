@@ -15,8 +15,8 @@ final readonly class Config
      * @param array<class-string, ClassConfig>  $boundedClasses
      * @param array<class-string, class-string> $boundedInterfaces
      * @param array<string, mixed>              $boundedVariables
-     * @param string[]                          $excludedPaths
-     * @param string[]                          $includedPaths
+     * @param list<string>                      $excludedPaths
+     * @param list<string>                      $includedPaths
      */
     public function __construct(
         private array $boundedClasses,
@@ -74,7 +74,7 @@ final readonly class Config
     }
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     public function getExcludedPaths(): array
     {
@@ -82,7 +82,7 @@ final readonly class Config
     }
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     public function getIncludedPaths(): array
     {

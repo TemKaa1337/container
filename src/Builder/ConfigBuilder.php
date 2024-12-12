@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Builder;
 
+use Temkaa\Container\Exception\Config\InvalidPathException;
 use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\ClassConfig;
+use function realpath;
+use function sprintf;
 use function str_replace;
 
 /**
@@ -29,12 +32,12 @@ final class ConfigBuilder
     private array $boundedVariables = [];
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     private array $exclude = [];
 
     /**
-     * @var string[]
+     * @var list<string>
      */
     private array $include = [];
 
@@ -82,15 +85,25 @@ final class ConfigBuilder
 
     public function exclude(string $path): self
     {
-        $this->exclude[] = $path;
+        $this->exclude[] = $this->formatPath($path);
 
         return $this;
     }
 
     public function include(string $path): self
     {
-        $this->include[] = $path;
+        $this->include[] = $this->formatPath($path);
 
         return $this;
+    }
+
+    private function formatPath(string $sourcePath): string
+    {
+        $path = realpath($sourcePath);
+        if ($path === false) {
+            throw new InvalidPathException(sprintf('The specified path "%s" does not exist.', $sourcePath));
+        }
+
+        return $path;
     }
 }

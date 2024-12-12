@@ -28,16 +28,16 @@ final readonly class ChatBoostRemovedFactory
             $message['boost_id'],
             (new DateTimeImmutable())->setTimestamp($message['remove_date'])->setTimezone(new DateTimeZone('UTC')),
             match (true) {
-                $message['source']['source'] === 'premium' => $this->chatBoostSourcePremiumFactory->create(
+                $message['source']['source'] === 'premium'   => $this->chatBoostSourcePremiumFactory->create(
                     $message['source'],
                 ),
                 $message['source']['source'] === 'gift_code' => $this->chatBoostSourceGiftCodeFactory->create(
                     $message['source'],
                 ),
-                $message['source']['source'] === 'giveaway' => $this->chatBoostSourceGiveawayFactory->create(
+                $message['source']['source'] === 'giveaway'  => $this->chatBoostSourceGiveawayFactory->create(
                     $message['source'],
                 ),
-                default => throw new InvalidArgumentException(
+                default                                      => throw new InvalidArgumentException(
                     'Could not find factory for message.',
                 )
             },

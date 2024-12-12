@@ -7,7 +7,7 @@ namespace Temkaa\Container\Service\Definition;
 use Temkaa\Container\Model\Definition\Bag;
 
 /**
- * @internal 
+ * @internal
  */
 interface ConfiguratorInterface
 {

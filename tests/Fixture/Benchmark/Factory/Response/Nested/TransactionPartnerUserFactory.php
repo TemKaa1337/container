@@ -28,11 +28,11 @@ final readonly class TransactionPartnerUserFactory
     public function create(array $message): TransactionPartnerUser
     {
         $factory = match (true) {
-            !isset($message['paid_media']) => null,
+            !isset($message['paid_media'])                                        => null,
             is_array($message['paid_media']) && $message[0]['type'] === 'preview' => $this->paidMediaPreviewFactory,
-            is_array($message['paid_media']) && $message[0]['type'] === 'photo' => $this->paidMediaPhotoFactory,
-            is_array($message['paid_media']) && $message[0]['type'] === 'video' => $this->paidMediaVideoFactory,
-            default => null,
+            is_array($message['paid_media']) && $message[0]['type'] === 'photo'   => $this->paidMediaPhotoFactory,
+            is_array($message['paid_media']) && $message[0]['type'] === 'video'   => $this->paidMediaVideoFactory,
+            default                                                               => null,
         };
 
         return new TransactionPartnerUser(

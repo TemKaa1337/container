@@ -1,3 +1,7 @@
+### v0.2.8
+##### Features:
+- Performance improvements.
+
 ### v0.2.7
 ##### Features:
 - Updated dependencies versions;

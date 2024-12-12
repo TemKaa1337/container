@@ -24,7 +24,6 @@ use Temkaa\Container\Service\Definition\Configurator\Argument\TaggedIteratorConf
 use Temkaa\Container\Util\Flag;
 use Temkaa\Container\Validator\Definition\ArgumentValidator;
 use function array_map;
-use function file_exists;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)

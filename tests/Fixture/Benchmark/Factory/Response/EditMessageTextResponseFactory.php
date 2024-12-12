@@ -26,9 +26,9 @@ final readonly class EditMessageTextResponseFactory implements FactoryInterface
         return new EditMessageTextResponse(
             $message['ok'],
             match (true) {
-                !isset($message['result']) => null,
+                !isset($message['result'])                                 => null,
                 is_bool($message['result']) && $message['result'] === true => $message['result'],
-                default => $this->messageFactory->create(
+                default                                                    => $this->messageFactory->create(
                     $message['result'],
                 )
             },

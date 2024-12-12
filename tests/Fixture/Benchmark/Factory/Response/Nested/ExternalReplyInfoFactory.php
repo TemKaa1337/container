@@ -46,19 +46,19 @@ final readonly class ExternalReplyInfoFactory
     {
         return new ExternalReplyInfo(
             match (true) {
-                $message['origin']['type'] === 'user' => $this->messageOriginUserFactory->create(
+                $message['origin']['type'] === 'user'        => $this->messageOriginUserFactory->create(
                     $message['origin'],
                 ),
                 $message['origin']['type'] === 'hidden_user' => $this->messageOriginHiddenUserFactory->create(
                     $message['origin'],
                 ),
-                $message['origin']['type'] === 'chat' => $this->messageOriginChatFactory->create(
+                $message['origin']['type'] === 'chat'        => $this->messageOriginChatFactory->create(
                     $message['origin'],
                 ),
-                $message['origin']['type'] === 'channel' => $this->messageOriginChannelFactory->create(
+                $message['origin']['type'] === 'channel'     => $this->messageOriginChannelFactory->create(
                     $message['origin'],
                 ),
-                default => throw new InvalidArgumentException(
+                default                                      => throw new InvalidArgumentException(
                     'Could not find factory for message.',
                 )
             },

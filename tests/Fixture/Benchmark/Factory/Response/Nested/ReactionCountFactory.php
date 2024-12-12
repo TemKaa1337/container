@@ -25,14 +25,14 @@ final readonly class ReactionCountFactory
     {
         return new ReactionCount(
             match (true) {
-                $message['type']['type'] === 'emoji' => $this->reactionTypeEmojiFactory->create(
+                $message['type']['type'] === 'emoji'        => $this->reactionTypeEmojiFactory->create(
                     $message['type'],
                 ),
                 $message['type']['type'] === 'custom_emoji' => $this->reactionTypeCustomEmojiFactory->create(
                     $message['type'],
                 ),
-                $message['type']['type'] === 'paid' => $this->reactionTypePaidFactory->create($message['type']),
-                default => throw new InvalidArgumentException(
+                $message['type']['type'] === 'paid'         => $this->reactionTypePaidFactory->create($message['type']),
+                default                                     => throw new InvalidArgumentException(
                     'Could not find factory for message.',
                 )
             },

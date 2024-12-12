@@ -10,7 +10,7 @@ use Temkaa\Container\Repository\DefinitionRepository;
 use Temkaa\Container\Service\Definition\Instantiator;
 
 /**
- * @api 
+ * @api
  */
 final readonly class Container implements ContainerInterface
 {

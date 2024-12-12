@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Util\Extractor;
 
-use DirectoryIterator;
-use function array_merge;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RegexIterator;
 use function file_get_contents;
-use function in_array;
 use function is_file;
 use function is_string;
 use function ltrim;
-use function pathinfo;
+use function str_starts_with;
 use function token_get_all;
-use const PATHINFO_EXTENSION;
 use const T_CLASS;
 use const T_COMMENT;
 use const T_DOC_COMMENT;
@@ -28,24 +27,45 @@ use const T_WHITESPACE;
  */
 final class ClassExtractor
 {
-    private const string PHP_FILE_EXTENSION = 'php';
+    private const array NAMESPACE_TOKENS = [T_STRING => true, T_NS_SEPARATOR => true, T_NAME_QUALIFIED => true];
+    private const array SKIP_TOKENS = [T_WHITESPACE => true, T_DOC_COMMENT => true, T_COMMENT => true];
 
     /**
      * @param string[]|string $paths
+     * @param list<string>    $excludedPaths
      *
-     * @return list<class-string>
+     * @return array{0: list<class-string>, 1: list<class-string>}
      */
-    public function extract(array|string $paths): array
+    public function extract(array|string $paths, array $excludedPaths): array
     {
         $paths = is_string($paths) ? [$paths] : $paths;
-        /** @var list<list<class-string>> $classes */
-        $classes = [];
+
+        /** @var list<class-string> $includedClasses */
+        $includedClasses = [];
+        /** @var list<class-string> $excludedClasses */
+        $excludedClasses = [];
 
         foreach ($paths as $path) {
-            $classes[] = $this->extractFromPath($path);
+            $extractedClasses = $this->extractFromPath($path);
+
+            foreach ($extractedClasses as $classPath => $class) {
+                $isExcluded = false;
+                foreach ($excludedPaths as $excludedPath) {
+                    if (str_starts_with($classPath, $excludedPath)) {
+                        $isExcluded = true;
+                        break;
+                    }
+                }
+
+                if ($isExcluded) {
+                    $excludedClasses[] = $class;
+                } else {
+                    $includedClasses[] = $class;
+                }
+            }
         }
 
-        return array_merge(...$classes);
+        return [$includedClasses, $excludedClasses];
     }
 
     /**
@@ -54,16 +74,12 @@ final class ClassExtractor
      * @psalm-suppress LessSpecificReturnStatement
      * @psalm-suppress MoreSpecificReturnType
      *
-     * @return list<class-string>
+     * @return class-string|null
      */
-    private function extractFromFile(string $path): array
+    private function extractFromFile(string $path): ?string
     {
         $contents = file_get_contents($path);
         $tokens = token_get_all($contents);
-
-        $nsTokens = [T_STRING => true, T_NS_SEPARATOR => true, T_NAME_QUALIFIED => true];
-
-        $classes = [];
 
         $namespace = '';
         for ($i = 0; isset($tokens[$i]); ++$i) {
@@ -79,7 +95,7 @@ final class ClassExtractor
                 case T_NAMESPACE:
                     $namespace = '';
                     while (isset($tokens[++$i][1])) {
-                        if (isset($nsTokens[$tokens[$i][0]])) {
+                        if (isset(self::NAMESPACE_TOKENS[$tokens[$i][0]])) {
                             $namespace .= $tokens[$i][1];
                         }
                     }
@@ -98,7 +114,7 @@ final class ClassExtractor
                             break 2;
                         }
 
-                        if (!in_array($tokens[$j][0], [T_WHITESPACE, T_DOC_COMMENT, T_COMMENT], true)) {
+                        if (!isset(self::SKIP_TOKENS[$tokens[$j][0]])) {
                             break;
                         }
                     }
@@ -112,39 +128,42 @@ final class ClassExtractor
                         }
                     }
 
-                    $classes[] = ltrim($namespace.$class, '\\');
-                    break;
+                    return ltrim($namespace.$class, '\\');
                 default:
                     break;
             }
         }
 
-        return $classes;
+        return null;
     }
 
     /**
-     * @return list<class-string>
+     * @return array<string, class-string>
      */
     private function extractFromPath(string $path): array
     {
         if (is_file($path)) {
-            if (pathinfo($path, PATHINFO_EXTENSION) === self::PHP_FILE_EXTENSION) {
-                return $this->extractFromFile($path);
-            }
+            $class = $this->extractFromFile($path);
 
-            return [];
+            return $class !== null ? [$path => $class] : [];
         }
 
-        /** @var list<list<class-string>> $classes */
+        $recursiveDirectoryIterator = new RecursiveDirectoryIterator($path);
+        $wrappedDirectoryIterator = new RecursiveIteratorIterator($recursiveDirectoryIterator);
+        $regexIterator = new RegexIterator($wrappedDirectoryIterator, '/^.+\.php$/i', RegexIterator::GET_MATCH);
+
+        /** @var array<string, class-string> $classes */
         $classes = [];
-        foreach (new DirectoryIterator($path) as $file) {
-            if ($file->isDot()) {
-                continue;
-            }
+        /** @var array{0: string} $file */
+        foreach ($regexIterator as $file) {
+            $path = $file[0];
 
-            $classes[] = $this->extractFromPath($file->getRealPath());
+            $className = $this->extractFromFile($path);
+            if ($className !== null) {
+                $classes[$path] = $className;
+            }
         }
 
-        return array_merge(...$classes);
+        return $classes;
     }
 }

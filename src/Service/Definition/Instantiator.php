@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Service\Definition;
 
-use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionException;
 use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
