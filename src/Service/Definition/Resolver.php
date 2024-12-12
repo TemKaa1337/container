@@ -171,7 +171,7 @@ final readonly class Resolver
                 $definition->getArguments(),
             );
 
-            $reflection = CachingReflector::reflect($definition->getId());
+            $reflection = new ReflectionClass($definition->getId());
 
             $instance = $reflection->newInstanceArgs($resolvedArguments);
         }

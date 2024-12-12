@@ -10,11 +10,13 @@ use RegexIterator;
 use Temkaa\Container\Debug\PerformanceChecker;
 use function array_merge;
 use function file_get_contents;
+use function glob;
 use function in_array;
 use function is_file;
 use function is_string;
 use function ltrim;
 use function realpath;
+use function str_starts_with;
 use function token_get_all;
 use function var_dump;
 use const T_CLASS;
@@ -29,35 +31,60 @@ use const T_WHITESPACE;
 /**
  * @internal
  */
-final class ClassExtractor
+final class ClassExtractorRefactored
 {
-    private const string PHP_FILE_EXTENSION = 'php';
+    private const array NAMESPACE_TOKENS = [T_STRING => true, T_NS_SEPARATOR => true, T_NAME_QUALIFIED => true];
 
     private const array SKIP_TOKENS = [T_WHITESPACE => true, T_DOC_COMMENT => true, T_COMMENT => true];
 
-    private const array NAMESPACE_TOKENS = [T_STRING => true, T_NS_SEPARATOR => true, T_NAME_QUALIFIED => true];
-
     public function __construct(
-        private readonly PerformanceChecker $performanceChecker,
+        private readonly PerformanceChecker $performanceChecker = new PerformanceChecker(),
     ) {
     }
 
     /**
      * @param string[]|string $paths
      *
-     * @return list<class-string>
+     * @return array{0: list<class-string>, 1: list<class-string>}
      */
-    public function extract(array|string $paths): array
+    public function extract(array|string $paths, array $excludedPaths): array
     {
         $paths = is_string($paths) ? [$paths] : $paths;
-        /** @var list<list<class-string>> $classes */
-        $classes = [];
+
+        /** @var list<list<class-string>> $includedClasses */
+        $includedClasses = [];
+        /** @var list<list<class-string>> $excludedClasses */
+        $excludedClasses = [];
 
         foreach ($paths as $path) {
-            $classes[] = $this->extractFromPath($path);
+            $this->performanceChecker->start('class itself extraction');
+            $extractedClasses = $this->extractFromPath($path);
+            $this->performanceChecker->end('class itself extraction');
+
+            $this->performanceChecker->start('determine section');
+            foreach ($extractedClasses as $classPath => $class) {
+                if (str_starts_with($class, 'Tests\Fixture\Benchmark\Mode')) {
+                    $test = 'test';
+                }
+                $classPath = realpath($classPath);
+                $isExcluded = false;
+                foreach ($excludedPaths as $excludedPath) {
+                    if (str_starts_with($classPath, realpath($excludedPath))) {
+                        $isExcluded = true;
+                        break;
+                    }
+                }
+
+                if ($isExcluded) {
+                    $excludedClasses[] = $class;
+                } else {
+                    $includedClasses[] = $class;
+                }
+            }
+            $this->performanceChecker->end('determine section');
         }
 
-        return array_merge(...$classes);
+        return [$includedClasses, $excludedClasses];
     }
 
     /**
@@ -139,40 +166,32 @@ final class ClassExtractor
     }
 
     /**
-     * @return list<class-string>
+     * @return array<string, class-string>
      */
     private function extractFromPath(string $path): array
     {
         if (is_file($path)) {
             $class = $this->extractFromFile($path);
 
-            return $class !== null ? [$class] : [];
+            return $class !== null ? [$path => $class] : [];
         }
 
         $recursiveDirectoryIterator = new RecursiveDirectoryIterator($path);
         $wrappedDirectoryIterator = new RecursiveIteratorIterator($recursiveDirectoryIterator);
         $regexIterator = new RegexIterator($wrappedDirectoryIterator, '/^.+\.php$/i', RegexIterator::GET_MATCH);
 
-        /** @var list<list<class-string>> $classes */
+        /** @var array<string, class-string> $classes */
         $classes = [];
         foreach ($regexIterator as $file) {
             // var_dump($file);
             // die();
-            $className = $this->extractFromFile($file[0]);
+            $path = $file[0];
+
+            $className = $this->extractFromFile($path);
             if ($className !== null) {
-                $classes[] = $className;
+                $classes[$path] = $className;
             }
         }
-
-        // /** @var list<list<class-string>> $classes */
-        // $classes = [];
-        // foreach (new DirectoryIterator($path) as $file) {
-        //     if ($file->isDot()) {
-        //         continue;
-        //     }
-        //
-        //     $classes[] = $this->extractFromPath($file->getRealPath());
-        // }
 
         return $classes;
     }

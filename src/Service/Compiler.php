@@ -61,13 +61,13 @@ final readonly class Compiler
             ),
         );
         $definitions = $configurator->configure();
-        var_dump(microtime(true) - $start.' configure all');
+        // var_dump(microtime(true) - $start.' configure all');
 
         (new DuplicatedAliasValidator())->validate($definitions);
 
         (new Resolver($definitions))->resolve();
 
-        var_dump(microtime(true) - $start.' resolved and validated');
+        // var_dump(microtime(true) - $start.' resolved and validated');
 
         Flag::clear();
 

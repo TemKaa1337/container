@@ -63,7 +63,7 @@ final readonly class Instantiator
                 $unresolvedArguments = $this->definitionRepository->find($factory->getId())->getArguments();
                 $factoryResolvedArguments = $this->resolveArguments($unresolvedArguments);
 
-                $factoryReflection = CachingReflector::reflect($factory->getId());
+                $factoryReflection = new ReflectionClass($factory->getId());
 
                 $factoryInstance = $factoryReflection->newInstanceArgs($factoryResolvedArguments);
             }
@@ -81,7 +81,7 @@ final readonly class Instantiator
         } else {
             $resolvedArguments = $this->resolveArguments($definition->getArguments());
 
-            $reflection = CachingReflector::reflect($definition->getId());
+            $reflection = new ReflectionClass($definition->getId());
 
             $instance = $reflection->newInstanceArgs($resolvedArguments);
         }

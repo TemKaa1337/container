@@ -7,7 +7,9 @@ namespace Tests\Helper;
 use Composer\Autoload\ClassLoader;
 use Temkaa\Container\Builder\ConfigBuilder;
 use Temkaa\Container\Builder\ContainerBuilder;
+use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
 use function array_keys;
+use function dirname;
 use function microtime;
 use function var_dump;
 
@@ -25,5 +27,23 @@ final readonly class CustomPerformanceBenchmarker
         $end = microtime(true);
 
         var_dump('time elapsed: ' . $end - $start . ' seconds');
+    }
+
+    public function testDirs(): void
+    {
+        $extractor = new UniqueDirectoryExtractor();
+
+        $res = $extractor->extract(
+            [
+                __DIR__.'/../Fixture/Benchmark/',
+                __DIR__.'/../Fixture/Benchmark/',
+                __DIR__.'/../Fixture/Benchmark/Model',
+                __DIR__.'/../Fixture/Benchmark/Model',
+                __DIR__.'/../Fixture/Benchmark/Model/Request',
+                __DIR__.'/../',
+            ]
+        );
+
+        var_dump('dunction result', $res);
     }
 }

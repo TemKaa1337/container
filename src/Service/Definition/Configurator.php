@@ -23,15 +23,15 @@ use Temkaa\Container\Model\Definition\ClassDefinition;
 use Temkaa\Container\Service\CachingReflector;
 use Temkaa\Container\Util\Extractor\AttributeExtractor;
 use Temkaa\Container\Util\Extractor\ClassExtractor;
+use Temkaa\Container\Util\Extractor\ClassExtractorRefactored;
+use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
 use Temkaa\Container\Util\Flag;
 use Temkaa\Container\Validator\Definition\FactoryValidator;
 use Temkaa\Container\Validator\Definition\Method\RequiredMethodCallValidator;
-use Throwable;
+use function array_merge;
 use function array_unique;
 use function array_values;
-use function get_called_class;
 use function in_array;
-use function microtime;
 use function sprintf;
 use function var_dump;
 
@@ -56,8 +56,6 @@ final class Configurator implements ConfiguratorInterface
 
     private readonly ConfiguratorInterface $configurator;
 
-    private int $reflectionCalls = 0;
-
     private Bag $definitions;
 
     /**
@@ -65,9 +63,11 @@ final class Configurator implements ConfiguratorInterface
      */
     private array $excludedClasses;
 
-    private Config $resolvingConfig;
-
     private PerformanceChecker $performanceChecker;
+
+    private int $reflectionCalls = 0;
+
+    private Config $resolvingConfig;
 
     /**
      * @param Config[] $configs
@@ -95,15 +95,26 @@ final class Configurator implements ConfiguratorInterface
         foreach ($this->configs as $config) {
             $this->resolvingConfig = $config;
 
-            $this->performanceChecker->start('include & exclude');
-            $includedClasses = $this->classExtractor->extract($config->getIncludedPaths());
-            $this->excludedClasses = $this->classExtractor->extract($config->getExcludedPaths());
-            $this->performanceChecker->end('include & exclude');
+            $this->performanceChecker->start('extract dirs');
+            $uniquePaths = (new UniqueDirectoryExtractor())->extract(
+                array_merge($config->getIncludedPaths(), $config->getExcludedPaths()),
+            );
+            $this->performanceChecker->end('extract dirs');
+            $this->performanceChecker->start('get classes');
+            [$includedClasses, $excludedClasses] = (new ClassExtractorRefactored($this->performanceChecker))->extract(
+                $uniquePaths,
+                $config->getExcludedPaths(),
+            );
+            $this->performanceChecker->end('get classes');
+            $this->excludedClasses = $excludedClasses;
 
-            $this->performanceChecker->print('include & exclude');
+            $this->performanceChecker->print('extract dirs');
+            $this->performanceChecker->print('get classes');
             $this->performanceChecker->print('include & exclude -> file_get_contents');
             $this->performanceChecker->print('include & exclude -> token_get_all');
             $this->performanceChecker->print('include & exclude -> token extraction');
+            $this->performanceChecker->print('determine section');
+            $this->performanceChecker->print('class itself extraction');
             // try {
             //     $this->performanceChecker->print('include & exclude -> pathinfo');
             // } catch (Throwable $throwable) {
@@ -124,8 +135,7 @@ final class Configurator implements ConfiguratorInterface
             $this->performanceChecker->print('configure NON ROOT definitions -> configure arguments');
             $this->performanceChecker->print('configure definitions -> other');
             $this->performanceChecker->print('configure definitions -> required method calls');
-            var_dump('reflection calls: '.$this->reflectionCalls);
-            var_dump('cache hits: '.CachingReflector::$cacheHits);
+            // var_dump('reflection calls: '.$this->reflectionCalls);
         }
 
         return $this->definitions;
@@ -152,14 +162,10 @@ final class Configurator implements ConfiguratorInterface
 
         Flag::toggle($id, group: 'definition');
 
-        if ($isRoot) {
-            $this->performanceChecker->start('configure definitions -> new ReflectionClass');
-        }
-        $reflection = CachingReflector::reflect($id);
+        $this->performanceChecker->start('configure definitions -> new ReflectionClass');
+        $reflection = new ReflectionClass($id);
         $this->reflectionCalls++;
-        if ($isRoot) {
-            $this->performanceChecker->end('configure definitions -> new ReflectionClass');
-        }
+        $this->performanceChecker->end('configure definitions -> new ReflectionClass');
         if ($reflection->isInternal()) {
             throw new UninstantiableEntryException(sprintf('Cannot resolve internal entry "%s".', $id));
         }
@@ -308,7 +314,7 @@ final class Configurator implements ConfiguratorInterface
      */
     private function configureFactory(ClassDefinition $definition, ConfigFactory $factory): void
     {
-        $reflection = CachingReflector::reflect($factory->getId());
+        $reflection = new ReflectionClass($factory->getId());
         $methodReflection = $reflection->getMethod($factory->getMethod());
         if (!$methodReflection->isStatic()) {
             $this->configureDefinition($factory->getId());
@@ -339,7 +345,7 @@ final class Configurator implements ConfiguratorInterface
      */
     private function configureRequiredMethodCalls(ClassDefinition $definition): void
     {
-        $reflection = CachingReflector::reflect($definition->getId());
+        $reflection = new ReflectionClass($definition->getId());
 
         $definitionConfig = $this->resolvingConfig->getBoundedClass($definition->getId());
 

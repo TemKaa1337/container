@@ -29,7 +29,7 @@ final class InterfaceBindingValidator implements ValidatorInterface
                 throw new ClassNotFoundException($class);
             }
 
-            $reflection = CachingReflector::reflect($class);
+            $reflection = new ReflectionClass($class);
             if (!$reflection->implementsInterface($interface)) {
                 throw new CannotBindInterfaceException(
                     sprintf(

@@ -33,7 +33,7 @@ final class FactoryValidator
             );
         }
 
-        $factoryReflection = CachingReflector::reflect($factory->getId());
+        $factoryReflection = new ReflectionClass($factory->getId());
 
         $this->validateFactoryClass($factoryReflection, $factory, $id);
         $this->validateFactoryMethod($factoryReflection, $factory, $id);
@@ -106,7 +106,7 @@ final class FactoryValidator
      */
     private function validateFactoryMethod(ReflectionClass $factoryReflection, Factory $factory, string $id): void
     {
-        $rootClassReflection = CachingReflector::reflect($id);
+        $rootClassReflection = new ReflectionClass($id);
 
         $constructor = $rootClassReflection->getConstructor();
         if ($constructor && !$constructor->isPublic() && $factory->getId() !== $id) {

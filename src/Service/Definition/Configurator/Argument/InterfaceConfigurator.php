@@ -41,7 +41,7 @@ final readonly class InterfaceConfigurator
         string $entryId,
     ): ?ReferenceInterface {
         try {
-            $dependencyReflection = CachingReflector::reflect($entryId);
+            $dependencyReflection = new ReflectionClass($entryId);
         } catch (ReflectionException) {
             throw new ClassNotFoundException($entryId);
         }
