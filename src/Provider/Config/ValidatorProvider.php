@@ -11,7 +11,7 @@ use Temkaa\Container\Validator\Config\ValidatorInterface;
 /**
  * @internal
  */
-final class ValidatorProvider
+final readonly class ValidatorProvider
 {
     /**
      * @return ValidatorInterface[]

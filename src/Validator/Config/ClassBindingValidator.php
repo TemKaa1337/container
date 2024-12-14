@@ -12,11 +12,11 @@ use function interface_exists;
 /**
  * @internal
  */
-final class ClassBindingValidator implements ValidatorInterface
+final readonly class ClassBindingValidator implements ValidatorInterface
 {
     public function validate(Config $config): void
     {
-        foreach ($config->getBoundedClasses() as $classConfig) {
+        foreach ($config->getConfiguredClasses() as $classConfig) {
             if (!class_exists($classConfig->getClass()) && !interface_exists($classConfig->getClass())) {
                 throw new ClassNotFoundException($classConfig->getClass());
             }

@@ -1,3 +1,12 @@
+### v0.3.0
+##### Bugs:
+- Mark config classes as @api instead of @internal.
+##### Features:
+- Changed classes with static state to dynamic classes;
+- Added tests on loading multiple configs.
+##### BC Breaks:
+- Renamed method `bindClass` to `configure` in `ConfigBuilder`.
+
 ### v0.2.8
 ##### Features:
 - Performance improvements.

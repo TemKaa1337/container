@@ -76,17 +76,17 @@ final readonly class Processor
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(ArrayProcessor::class)
             ->tag('data.processor')
             ->build(),
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(GeneratorProcessor::class)
             ->tag('data.processor')
             ->build(),
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Processor::class)
             // here you say that this argument is tagged iterator of classes with `data.processor` tag
             ->bindVariable('$processors', new TaggedIterator('data.processor'))
@@ -349,7 +349,7 @@ final readonly class Processor
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(DataProcessor::class)
             ->tag('data.processor')
             ->build()
@@ -527,7 +527,7 @@ final readonly class Processor
 // the same functionality is available with InstanceOfIterator attribute
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Processor::class)
             // in example above this version of configuration is used
             // in this case the result of this configuration is:

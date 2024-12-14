@@ -13,10 +13,10 @@ use Temkaa\Container\Exception\UnresolvableArgumentException;
 use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\Factory;
 use Temkaa\Container\Model\Value;
+use Temkaa\Container\Provider\BoundVariableProvider;
+use Temkaa\Container\Service\ExpressionParser;
+use Temkaa\Container\Service\Extractor\AttributeExtractor;
 use Temkaa\Container\Service\Type\Resolver;
-use Temkaa\Container\Util\BoundVariableProvider;
-use Temkaa\Container\Util\ExpressionParser;
-use Temkaa\Container\Util\Extractor\AttributeExtractor;
 use function current;
 use function is_string;
 use function sprintf;
@@ -28,14 +28,12 @@ use function sprintf;
  */
 final readonly class BoundVariableConfigurator
 {
-    private ExpressionParser $expressionParser;
-
-    private Resolver $typeResolver;
-
-    public function __construct()
-    {
-        $this->expressionParser = new ExpressionParser();
-        $this->typeResolver = new Resolver();
+    public function __construct(
+        private AttributeExtractor $attributeExtractor,
+        private BoundVariableProvider $boundVariableProvider = new BoundVariableProvider(),
+        private ExpressionParser $expressionParser = new ExpressionParser(),
+        private Resolver $typeResolver = new Resolver(),
+    ) {
     }
 
     /**
@@ -103,12 +101,12 @@ final readonly class BoundVariableConfigurator
     ): Value {
         $argumentName = $argument->getName();
 
-        $argumentAttributes = AttributeExtractor::extractParameters(
+        $argumentAttributes = $this->attributeExtractor->extractParameters(
             $argument->getAttributes(Parameter::class),
             parameter: 'expression',
         );
 
-        $configExpression = BoundVariableProvider::provide($config, $argumentName, $id, $factory);
+        $configExpression = $this->boundVariableProvider->provide($config, $argumentName, $id, $factory);
         if ($configExpression->resolved) {
             return $configExpression;
         }

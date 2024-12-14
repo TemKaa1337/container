@@ -42,7 +42,7 @@ final readonly class Class3
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class1::class)
             // you can bind variables for required method calls with class bound variables
             ->bindVariable('param', 'some_param')

@@ -17,7 +17,7 @@ final readonly class ClassWithAlias
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(ClassWithAlias::class)
             ->alias('alias_1')
             ->alias('alias_2')

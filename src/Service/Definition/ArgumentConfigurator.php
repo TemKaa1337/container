@@ -16,12 +16,14 @@ use Temkaa\Container\Model\Config\Factory;
 use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Reference\Deferred\DecoratorReference;
 use Temkaa\Container\Model\Reference\Reference;
+use Temkaa\Container\Provider\BoundVariableProvider;
 use Temkaa\Container\Service\Definition\Configurator\Argument\BoundVariableConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\Argument\InstanceConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\Argument\InstanceOfIteratorConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\Argument\InterfaceConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\Argument\TaggedIteratorConfigurator;
-use Temkaa\Container\Util\Flag;
+use Temkaa\Container\Service\Extractor\AttributeExtractor;
+use Temkaa\Container\Util\FlagManager;
 use Temkaa\Container\Validator\Definition\ArgumentValidator;
 use function array_map;
 
@@ -36,6 +38,8 @@ final readonly class ArgumentConfigurator
 
     private Configurator $definitionConfigurator;
 
+    private FlagManager $flagManager;
+
     private InstanceConfigurator $instanceConfigurator;
 
     private InstanceOfIteratorConfigurator $instanceOfIteratorConfigurator;
@@ -44,14 +48,23 @@ final readonly class ArgumentConfigurator
 
     private TaggedIteratorConfigurator $taggedIteratorConfigurator;
 
-    public function __construct(Configurator $definitionConfigurator)
-    {
-        $this->boundVariableConfigurator = new BoundVariableConfigurator();
+    public function __construct(
+        AttributeExtractor $attributeExtractor,
+        Configurator $definitionConfigurator,
+        FlagManager $flagManager,
+    ) {
+        $boundVariableProvider = new BoundVariableProvider();
+
+        $this->boundVariableConfigurator = new BoundVariableConfigurator($attributeExtractor, $boundVariableProvider);
         $this->definitionConfigurator = $definitionConfigurator;
-        $this->instanceOfIteratorConfigurator = new InstanceOfIteratorConfigurator();
+        $this->instanceOfIteratorConfigurator = new InstanceOfIteratorConfigurator(
+            $attributeExtractor,
+            $boundVariableProvider,
+        );
         $this->interfaceConfigurator = new InterfaceConfigurator($definitionConfigurator);
-        $this->taggedIteratorConfigurator = new TaggedIteratorConfigurator();
-        $this->instanceConfigurator = new InstanceConfigurator();
+        $this->taggedIteratorConfigurator = new TaggedIteratorConfigurator($attributeExtractor, $boundVariableProvider);
+        $this->instanceConfigurator = new InstanceConfigurator($attributeExtractor, $boundVariableProvider);
+        $this->flagManager = $flagManager;
     }
 
     /**
@@ -144,7 +157,7 @@ final readonly class ArgumentConfigurator
                 throw $exception;
             }
 
-            Flag::untoggle($entryId, group: 'definition');
+            $this->flagManager->untoggle($entryId);
 
             return $argument->getDefaultValue();
         }

@@ -16,7 +16,6 @@ use Temkaa\Container\Service\Definition\Configurator\BaseConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\DecoratorConfigurator;
 use Temkaa\Container\Service\Definition\Configurator\InterfaceConfigurator;
 use Temkaa\Container\Service\Definition\Resolver;
-use Temkaa\Container\Util\Flag;
 use Temkaa\Container\Validator\Definition\DuplicatedAliasValidator;
 
 /**
@@ -40,8 +39,6 @@ final readonly class Compiler
      */
     public function compile(): ContainerInterface
     {
-        Flag::clear();
-
         $definitions = new Bag();
         $container = new Container(new DefinitionRepository($definitions));
 
@@ -58,8 +55,6 @@ final readonly class Compiler
         (new DuplicatedAliasValidator())->validate($definitions);
 
         (new Resolver($definitions))->resolve();
-
-        Flag::clear();
 
         return $container;
     }

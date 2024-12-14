@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\Container\Util\Extractor;
+namespace Temkaa\Container\Service\Extractor;
 
 use function array_combine;
 use function array_keys;

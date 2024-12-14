@@ -19,10 +19,10 @@ use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\Factory as ConfigFactory;
 use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
-use Temkaa\Container\Util\Extractor\AttributeExtractor;
-use Temkaa\Container\Util\Extractor\ClassExtractor;
-use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
-use Temkaa\Container\Util\Flag;
+use Temkaa\Container\Service\Extractor\AttributeExtractor;
+use Temkaa\Container\Service\Extractor\ClassExtractor;
+use Temkaa\Container\Service\Extractor\UniqueDirectoryExtractor;
+use Temkaa\Container\Util\FlagManager;
 use Temkaa\Container\Validator\Definition\FactoryValidator;
 use Temkaa\Container\Validator\Definition\Method\RequiredMethodCallValidator;
 use function array_merge;
@@ -43,6 +43,8 @@ final class Configurator implements ConfiguratorInterface
 {
     private readonly ArgumentConfigurator $argumentConfigurator;
 
+    private AttributeExtractor $attributeExtractor;
+
     private readonly ClassExtractor $classExtractor;
 
     /**
@@ -59,6 +61,10 @@ final class Configurator implements ConfiguratorInterface
      */
     private array $excludedClasses;
 
+    private FlagManager $flagManager;
+
+    private Populator $populator;
+
     private Config $resolvingConfig;
 
     private UniqueDirectoryExtractor $uniqueDirectoryExtractor;
@@ -70,7 +76,10 @@ final class Configurator implements ConfiguratorInterface
         ConfiguratorInterface $configurator,
         array $configs,
     ) {
-        $this->argumentConfigurator = new ArgumentConfigurator($this);
+        $this->attributeExtractor = new AttributeExtractor();
+        $this->populator = new Populator($this->attributeExtractor);
+        $this->flagManager = new FlagManager();
+        $this->argumentConfigurator = new ArgumentConfigurator($this->attributeExtractor, $this, $this->flagManager);
         $this->classExtractor = new ClassExtractor();
         $this->configs = $configs;
         $this->configurator = $configurator;
@@ -121,11 +130,11 @@ final class Configurator implements ConfiguratorInterface
             return;
         }
 
-        if (Flag::isToggled($id, group: 'definition')) {
-            throw new CircularReferenceException($id, Flag::getToggled(group: 'definition'));
+        if ($this->flagManager->isToggled($id)) {
+            throw new CircularReferenceException($id, $this->flagManager->getToggled());
         }
 
-        Flag::toggle($id, group: 'definition');
+        $this->flagManager->toggle($id);
 
         $reflection = new ReflectionClass($id);
         if ($reflection->isInternal()) {
@@ -133,12 +142,12 @@ final class Configurator implements ConfiguratorInterface
         }
 
         $factoryAttributes = $reflection->getAttributes(Factory::class);
-        $classConfigFactory = $this->resolvingConfig->getBoundedClass($id)?->getFactory();
+        $classConfigFactory = $this->resolvingConfig->getConfiguredClass($id)?->getFactory();
 
         $factory = match (true) {
             (bool) $classConfigFactory => $classConfigFactory,
             (bool) $factoryAttributes  => ConfigClassFactoryFactory::createFromAttribute(
-                AttributeExtractor::extract($factoryAttributes, index: 0),
+                $this->attributeExtractor->extract($factoryAttributes, index: 0),
             ),
             default                    => null,
         };
@@ -148,7 +157,7 @@ final class Configurator implements ConfiguratorInterface
         }
 
         if (!$factory && !$reflection->isInstantiable()) {
-            Flag::untoggle($id, group: 'definition');
+            $this->flagManager->untoggle($id);
 
             if (!$failIfUninstantiable) {
                 return;
@@ -158,7 +167,7 @@ final class Configurator implements ConfiguratorInterface
         }
 
         if (in_array($id, $this->excludedClasses, strict: true)) {
-            Flag::untoggle($id, group: 'definition');
+            $this->flagManager->untoggle($id);
 
             throw new NonAutowirableClassException(
                 sprintf('Cannot autowire class "%s" as it is in "exclude" config parameter.', $id),
@@ -167,9 +176,13 @@ final class Configurator implements ConfiguratorInterface
 
         $autowireTags = $reflection->getAttributes(Autowire::class);
 
-        $isNonAutowirable = AttributeExtractor::hasParameterByValue($autowireTags, parameter: 'load', value: false);
+        $isNonAutowirable = $this->attributeExtractor->hasParameterByValue(
+            $autowireTags,
+            parameter: 'load',
+            value: false,
+        );
         if ($isNonAutowirable) {
-            Flag::untoggle($id, group: 'definition');
+            $this->flagManager->untoggle($id);
 
             if (!$failIfUninstantiable) {
                 return;
@@ -183,21 +196,21 @@ final class Configurator implements ConfiguratorInterface
         $definition = (new ClassDefinition())->setId($id);
 
         if ($autowireTags) {
-            $isSingleton = AttributeExtractor::extract($autowireTags, index: 0)->singleton;
+            $isSingleton = $this->attributeExtractor->extract($autowireTags, index: 0)->singleton;
             $definition->setIsSingleton($isSingleton);
         }
 
-        if ($boundClassInfo = $this->resolvingConfig->getBoundedClass($id)) {
-            $definition->setIsSingleton($boundClassInfo->isSingleton());
+        if ($configuredClassInfo = $this->resolvingConfig->getConfiguredClass($id)) {
+            $definition->setIsSingleton($configuredClassInfo->isSingleton());
         }
 
-        (new Populator())->populate($definition, $reflection, $this->resolvingConfig, $this->definitions);
+        $this->populator->populate($definition, $reflection, $this->resolvingConfig, $this->definitions);
 
         $this->configureRequiredMethodCalls($definition);
 
         $constructor = $reflection->getConstructor();
         if (!$constructor && !$factory) {
-            Flag::untoggle($id, group: 'definition');
+            $this->flagManager->untoggle($id);
 
             $this->definitions->add($definition);
 
@@ -221,7 +234,7 @@ final class Configurator implements ConfiguratorInterface
 
         $this->definitions->add($definition);
 
-        Flag::untoggle($id, group: 'definition');
+        $this->flagManager->untoggle($id);
     }
 
     /**
@@ -263,7 +276,7 @@ final class Configurator implements ConfiguratorInterface
     {
         $reflection = new ReflectionClass($definition->getId());
 
-        $definitionConfig = $this->resolvingConfig->getBoundedClass($definition->getId());
+        $definitionConfig = $this->resolvingConfig->getConfiguredClass($definition->getId());
 
         (new RequiredMethodCallValidator())->validate($definitionConfig, $reflection);
 

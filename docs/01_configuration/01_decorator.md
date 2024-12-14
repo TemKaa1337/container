@@ -45,7 +45,7 @@ final readonly class ClassImplementingInterface implements SomeInterface
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Decorator1::class)
             // here you need to specify what you want to decorate: interface or abstract class
             // the second parameter contains priority of nested decorators, the higher priority - the closer to original 
@@ -55,7 +55,7 @@ $config = ConfigBuilder::make()
             ->bindVariable('someValue', 'someValue')
             ->build()
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Decorator2::class)
             ->decorates(id: SomeInterface::class)
             ->build()

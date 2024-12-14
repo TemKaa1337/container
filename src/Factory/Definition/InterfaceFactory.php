@@ -10,7 +10,7 @@ use Temkaa\Container\Model\Definition\InterfaceDefinition;
 /**
  * @internal
  */
-final class InterfaceFactory
+final readonly class InterfaceFactory
 {
     /**
      * @param class-string $id

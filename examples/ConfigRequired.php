@@ -13,7 +13,7 @@ use Temkaa\Container\Builder\ContainerBuilder;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigRequired/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class1::class)
             ->call('setClass')
             ->build(),

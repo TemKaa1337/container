@@ -17,17 +17,17 @@ use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigTaggedIterator/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class1::class)
             ->tag('tag')
             ->build(),
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class2::class)
             ->tag('tag')
             ->build(),
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Collector::class)
             ->bindVariable('$list', new TaggedIterator('tag'))
             ->bindVariable(

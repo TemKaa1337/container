@@ -15,7 +15,7 @@ require __DIR__.'/../vendor/autoload.php';
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigInstance/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Collector::class)
             ->bindVariable('object', new Instance(id: Class2::class))
             ->build()

@@ -12,6 +12,8 @@ use Temkaa\Container\Exception\UnresolvableArgumentException;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
 use Tests\Integration\Container\AbstractContainerTestCase;
+use function realpath;
+use function sprintf;
 
 /**
  * @psalm-suppress all

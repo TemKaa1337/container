@@ -31,6 +31,7 @@ use Temkaa\Container\Provider\Config\ProviderInterface;
 use Temkaa\Container\Repository\DefinitionRepository;
 use Tests\Helper\Service\ClassBuilder;
 use Tests\Helper\Service\ClassGenerator;
+use function realpath;
 
 /**
  * @psalm-suppress all

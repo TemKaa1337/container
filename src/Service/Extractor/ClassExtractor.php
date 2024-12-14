@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\Container\Util\Extractor;
+namespace Temkaa\Container\Service\Extractor;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -25,7 +25,7 @@ use const T_WHITESPACE;
 /**
  * @internal
  */
-final class ClassExtractor
+final readonly class ClassExtractor
 {
     private const array NAMESPACE_TOKENS = [T_STRING => true, T_NS_SEPARATOR => true, T_NAME_QUALIFIED => true];
     private const array SKIP_TOKENS = [T_WHITESPACE => true, T_DOC_COMMENT => true, T_COMMENT => true];
@@ -148,9 +148,11 @@ final class ClassExtractor
             return $class !== null ? [$path => $class] : [];
         }
 
-        $recursiveDirectoryIterator = new RecursiveDirectoryIterator($path);
-        $wrappedDirectoryIterator = new RecursiveIteratorIterator($recursiveDirectoryIterator);
-        $regexIterator = new RegexIterator($wrappedDirectoryIterator, '/^.+\.php$/i', RegexIterator::GET_MATCH);
+        $regexIterator = new RegexIterator(
+            new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)),
+            '/^.+\.php$/i',
+            RegexIterator::GET_MATCH,
+        );
 
         /** @var array<string, class-string> $classes */
         $classes = [];

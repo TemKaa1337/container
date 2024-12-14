@@ -9,7 +9,7 @@ use function getenv;
 /**
  * @internal
  */
-final class Env
+final readonly class Env
 {
     public static function get(string $name): string
     {

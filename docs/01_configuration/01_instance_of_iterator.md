@@ -75,7 +75,7 @@ final readonly class Processor
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Processor::class)
             // here you say that this argument is array of classes which implement `DataProcessor` interface
             ->bindVariable('$processors', new InstanceOfIterator(DataProcessor::class))
@@ -487,7 +487,7 @@ final readonly class Processor
 // the same functionality is available with InstanceOfIterator attribute
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Processor::class)
             // in example above this version of configuration is used
             // in this case the result of this configuration is:

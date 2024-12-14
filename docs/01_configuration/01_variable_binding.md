@@ -49,7 +49,7 @@ foreach ($envVariables as $envVariable => $envVariableValue) {
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(ClassWithAlias::class)
             ->bindVariable('$stringVar', 'env(STRING_ENV_VAR)')
             ->bindVariable('intVar', 'env(INT_ENV_VAR)')
@@ -175,7 +175,7 @@ $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
     ->bindVariable('$githubToken', 'some_token_here')
     ->bindVariable('$githubTokenLifetime', '1200')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(ClassWithOverwrittenBoundedEnvVariables::class),
             ->bindVariable('$githubToken', 'some_other_here')
             ->bindVariable('$githubTokenLifetime', '2400')

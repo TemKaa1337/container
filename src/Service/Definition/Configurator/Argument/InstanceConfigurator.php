@@ -11,8 +11,8 @@ use Temkaa\Container\Exception\UnresolvableArgumentException;
 use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\Factory;
 use Temkaa\Container\Model\Reference\Reference;
-use Temkaa\Container\Util\BoundVariableProvider;
-use Temkaa\Container\Util\Extractor\AttributeExtractor;
+use Temkaa\Container\Provider\BoundVariableProvider;
+use Temkaa\Container\Service\Extractor\AttributeExtractor;
 use function class_implements;
 use function in_array;
 use function is_subclass_of;
@@ -23,6 +23,12 @@ use function sprintf;
  */
 final readonly class InstanceConfigurator
 {
+    public function __construct(
+        private AttributeExtractor $attributeExtractor,
+        private BoundVariableProvider $boundVariableProvider = new BoundVariableProvider(),
+    ) {
+    }
+
     /**
      * @param class-string $id
      */
@@ -34,8 +40,8 @@ final readonly class InstanceConfigurator
     ): ?Reference {
         $attribute = $argument->getAttributes(Instance::class);
 
-        $configValue = BoundVariableProvider::provide($config, $argument->getName(), $id, $factory);
-        $argumentValue = $attribute ? AttributeExtractor::extract($attribute, index: 0) : null;
+        $configValue = $this->boundVariableProvider->provide($config, $argument->getName(), $id, $factory);
+        $argumentValue = $attribute ? $this->attributeExtractor->extract($attribute, index: 0) : null;
 
         if (!$configValue->resolved && !$attribute) {
             return null;

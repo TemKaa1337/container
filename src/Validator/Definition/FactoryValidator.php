@@ -16,7 +16,7 @@ use function sprintf;
 /**
  * @internal
  */
-final class FactoryValidator
+final readonly class FactoryValidator
 {
     /**
      * @param Factory      $factory

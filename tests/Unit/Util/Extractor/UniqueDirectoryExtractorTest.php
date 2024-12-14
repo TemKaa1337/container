@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Component\Finder\Finder;
-use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
+use Temkaa\Container\Service\Extractor\UniqueDirectoryExtractor;
 use function realpath;
 use function str_replace;
 use const DIRECTORY_SEPARATOR;
