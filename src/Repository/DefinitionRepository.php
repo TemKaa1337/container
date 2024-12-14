@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temkaa\Container\Repository;
 
-use Temkaa\Container\Attribute\Autowire;
 use Temkaa\Container\Exception\EntryNotFoundException;
 use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
@@ -16,7 +15,6 @@ use function sprintf;
 /**
  * @internal
  */
-#[Autowire(load: false)]
 final readonly class DefinitionRepository
 {
     public function __construct(

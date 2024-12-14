@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temkaa\Container\Model\Config;
 
 /**
- * @internal
+ * @api
  */
 final readonly class Decorator
 {

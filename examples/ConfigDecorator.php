@@ -18,12 +18,12 @@ use Temkaa\Container\Builder\ContainerBuilder;
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigDecorator/')
     ->bindInterface(Interface1::class, Class1::class)
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class2::class)
             ->decorates(id: Interface1::class, priority: 2)
             ->build(),
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class3::class)
             ->decorates(id: Interface1::class, priority: 1)
             ->build(),

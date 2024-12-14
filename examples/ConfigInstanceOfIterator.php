@@ -18,7 +18,7 @@ use Temkaa\Container\Enum\Attribute\Bind\IteratorFormat;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigInstanceOfIterator/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class4::class)
             ->bindVariable('$list', new InstanceOfIterator(Class3::class))
             ->bindVariable(

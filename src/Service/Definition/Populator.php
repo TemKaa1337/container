@@ -14,15 +14,20 @@ use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\ClassConfig;
 use Temkaa\Container\Model\Definition\Bag;
 use Temkaa\Container\Model\Definition\ClassDefinition;
-use Temkaa\Container\Util\Extractor\AttributeExtractor;
+use Temkaa\Container\Service\Extractor\AttributeExtractor;
 use function array_merge;
 use function array_unique;
 
 /**
  * @internal
  */
-final class Populator
+final readonly class Populator
 {
+    public function __construct(
+        private AttributeExtractor $attributeExtractor,
+    ) {
+    }
+
     public function populate(
         ClassDefinition $definition,
         ReflectionClass $reflection,
@@ -31,7 +36,7 @@ final class Populator
     ): void {
         $classAliases = $reflection->getAttributes(Alias::class);
 
-        $boundClassInfo = $config->getBoundedClass($reflection->getName());
+        $configuredClass = $config->getConfiguredClass($reflection->getName());
 
         $parentClasses = $this->getParentClasses($reflection);
         $interfaces = $reflection->getInterfaceNames();
@@ -44,8 +49,8 @@ final class Populator
 
         /** @var string[] $aliases */
         $aliases = array_merge(
-            AttributeExtractor::extractParameters($classAliases, parameter: 'name'),
-            $config->getBoundedClass($definition->getId())?->getAliases() ?? [],
+            $this->attributeExtractor->extractParameters($classAliases, parameter: 'name'),
+            $config->getConfiguredClass($definition->getId())?->getAliases() ?? [],
         );
 
         $definition
@@ -68,7 +73,7 @@ final class Populator
             }
         }
 
-        $this->addDecorator($reflection, $boundClassInfo, $definition);
+        $this->addDecorator($reflection, $configuredClass, $definition);
     }
 
     private function addDecorator(
@@ -79,7 +84,7 @@ final class Populator
         if ($decorates = $classConfig?->getDecorates()) {
             $definition->setDecorates($decorates);
         } else if ($decoratesAttribute = $reflection->getAttributes(Decorates::class)) {
-            $decoratesAttribute = AttributeExtractor::extract($decoratesAttribute, index: 0);
+            $decoratesAttribute = $this->attributeExtractor->extract($decoratesAttribute, index: 0);
 
             $definition->setDecorates(DecoratorFactory::createFromAttribute($decoratesAttribute));
         }
@@ -113,13 +118,13 @@ final class Populator
             $reflection = new ReflectionClass($id);
 
             /** @var list<string> $entryTags */
-            $entryTags = AttributeExtractor::extractParameters(
+            $entryTags = $this->attributeExtractor->extractParameters(
                 $reflection->getAttributes(Tag::class),
                 parameter: 'name',
             );
 
             /** @var list<string> $configTags */
-            $configTags = $config->getBoundedClass($id)?->getTags() ?? [];
+            $configTags = $config->getConfiguredClass($id)?->getTags() ?? [];
 
             $tags[] = $entryTags;
             $tags[] = $configTags;

@@ -15,7 +15,9 @@ use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\ClassConfig;
 use Temkaa\Container\Model\Config\Decorator;
 use Temkaa\Container\Model\Config\Factory;
-use Temkaa\Container\Util\Flag;
+use function realpath;
+use function sprintf;
+use function unlink;
 
 /**
  * @psalm-suppress all
@@ -157,16 +159,9 @@ abstract class AbstractTestCase extends TestCase
         }
 
         foreach ($classBindings as $classBinding) {
-            $builder->bindClass($classBinding);
+            $builder->configure($classBinding);
         }
 
         return $builder->build();
-    }
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Flag::clear();
     }
 }

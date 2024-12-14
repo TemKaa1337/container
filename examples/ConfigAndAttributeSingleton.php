@@ -16,7 +16,7 @@ use Temkaa\Container\Builder\ContainerBuilder;
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigAndAttributeSingleton/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class4::class)
             ->singleton(false)
             ->build(),

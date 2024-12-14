@@ -21,9 +21,11 @@ use Temkaa\Container\Service\Definition\ConfiguratorInterface;
 use Temkaa\Container\Service\Definition\Instantiator;
 use Temkaa\Container\Service\Definition\Populator;
 use Temkaa\Container\Service\Definition\Resolver;
+use Temkaa\Container\Service\ExpressionParser;
+use Temkaa\Container\Service\Extractor\AttributeExtractor;
+use Temkaa\Container\Service\Extractor\ClassExtractor;
+use Temkaa\Container\Service\Extractor\UniqueDirectoryExtractor;
 use Temkaa\Container\Service\Type\Resolver as TypeResolver;
-use Temkaa\Container\Util\Extractor\ClassExtractor;
-use Temkaa\Container\Util\Extractor\UniqueDirectoryExtractor;
 use function array_merge;
 use function realpath;
 
@@ -58,6 +60,10 @@ final class ClassExtractorTest extends TestCase
                 Instantiator::class,
                 Populator::class,
                 Resolver::class,
+                ExpressionParser::class,
+                ClassExtractor::class,
+                UniqueDirectoryExtractor::class,
+                AttributeExtractor::class,
             ],
             [
                 TypeResolver::class,

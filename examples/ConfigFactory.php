@@ -16,7 +16,7 @@ require __DIR__.'/../vendor/autoload.php';
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigFactory/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class1::class)
             ->factory(
                 FactoryBuilder::make(Class2::class, method: 'create')
@@ -26,7 +26,7 @@ $config = ConfigBuilder::make()
             )
             ->build(),
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class2::class)
             ->bindVariable('$stringVar', 'string_var')
             ->build(),

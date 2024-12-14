@@ -21,7 +21,7 @@ use Temkaa\Container\Model\Reference\Deferred\TaggedIteratorReference;
 use Temkaa\Container\Model\Reference\Reference;
 use Temkaa\Container\Model\Reference\ReferenceInterface;
 use Temkaa\Container\Repository\DefinitionRepository;
-use Temkaa\Container\Util\Flag;
+use Temkaa\Container\Util\FlagManager;
 use function array_map;
 use function end;
 use function explode;
@@ -38,6 +38,7 @@ final readonly class Resolver
 
     public function __construct(
         private Bag $definitions,
+        private FlagManager $flagManager = new FlagManager(),
     ) {
         $this->instantiator = new Instantiator(new DefinitionRepository($definitions));
     }
@@ -120,11 +121,11 @@ final readonly class Resolver
             return;
         }
 
-        if (Flag::isToggled($definition->getId(), group: 'resolver')) {
-            throw new CircularReferenceException($definition->getId(), Flag::getToggled(group: 'resolver'));
+        if ($this->flagManager->isToggled($definition->getId())) {
+            throw new CircularReferenceException($definition->getId(), $this->flagManager->getToggled());
         }
 
-        Flag::toggle($definition->getId(), group: 'resolver');
+        $this->flagManager->toggle($definition->getId());
 
         if ($factory = $definition->getFactory()) {
             $resolvedArguments = array_map(
@@ -187,7 +188,7 @@ final readonly class Resolver
 
         $definition->setInstance($instance);
 
-        Flag::untoggle($definition->getId(), group: 'resolver');
+        $this->flagManager->untoggle($definition->getId());
     }
 
     /**

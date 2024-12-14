@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * @internal
  */
-final class RequiredMethodCallValidator
+final readonly class RequiredMethodCallValidator
 {
     public function validate(?ClassConfig $config, ReflectionClass $reflection): void
     {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\Container\Util\Extractor;
+namespace Temkaa\Container\Service\Extractor;
 
 use ReflectionAttribute;
 use function array_filter;
@@ -11,7 +11,7 @@ use function array_map;
 /**
  * @internal
  */
-final class AttributeExtractor
+final readonly class AttributeExtractor
 {
     /**
      * @template T of object
@@ -20,7 +20,7 @@ final class AttributeExtractor
      *
      * @return T
      */
-    public static function extract(array $attributes, int $index): object
+    public function extract(array $attributes, int $index): object
     {
         $attributes = array_map(
             static fn (ReflectionAttribute $attribute): object => $attribute->newInstance(),
@@ -35,7 +35,7 @@ final class AttributeExtractor
      *
      * @param ReflectionAttribute<T>[] $attributes
      */
-    public static function extractParameters(array $attributes, string $parameter): array
+    public function extractParameters(array $attributes, string $parameter): array
     {
         /** @psalm-suppress MixedReturnStatement, MixedInferredReturnType */
         return array_map(
@@ -49,7 +49,7 @@ final class AttributeExtractor
      *
      * @param ReflectionAttribute<T>[] $attributes
      */
-    public static function hasParameterByValue(array $attributes, string $parameter, mixed $value): bool
+    public function hasParameterByValue(array $attributes, string $parameter, mixed $value): bool
     {
         return (bool) array_filter(
             $attributes,

@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\Container\Util;
+namespace Temkaa\Container\Service;
 
 use Temkaa\Container\Exception\Config\EnvVariableCircularException;
 use Temkaa\Container\Exception\Config\EnvVariableNotFoundException;
+use Temkaa\Container\Util\Env;
+use Temkaa\Container\Util\FlagManager;
 use function preg_match_all;
 use function sprintf;
 use function str_replace;
@@ -13,9 +15,14 @@ use function str_replace;
 /**
  * @internal
  */
-final class ExpressionParser
+final readonly class ExpressionParser
 {
     private const string ENV_VARIABLE_PATTERN = '#env\((.*?)\)#';
+
+    public function __construct(
+        private FlagManager $flagManager = new FlagManager(),
+    ) {
+    }
 
     public function parse(string $expression): string
     {
@@ -32,17 +39,17 @@ final class ExpressionParser
                 $expression,
             );
 
-            if (Flag::isToggled($binding, group: 'env')) {
-                throw new EnvVariableCircularException($expression, Flag::getToggled(group: 'env'));
+            if ($this->flagManager->isToggled($binding)) {
+                throw new EnvVariableCircularException($expression, $this->flagManager->getToggled());
             }
 
-            Flag::toggle($binding, group: 'env');
+            $this->flagManager->toggle($binding);
 
             if ($this->getExpressions($expression)) {
-                $expression = self::parse($expression);
+                $expression = $this->parse($expression);
             }
 
-            Flag::untoggle($binding, group: 'env');
+            $this->flagManager->untoggle($binding);
         }
 
         return $expression;

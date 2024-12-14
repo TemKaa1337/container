@@ -29,7 +29,7 @@ $object = new class {};
 $config = ConfigBuilder::make()
     ->include(__DIR__.'/ConfigVariableBind/')
     ->bindVariable('stringVariable1', 'variable_1_value')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class1::class)
             ->bindVariable('stringVariable2', 'env(ENV_VAR_2)')
             ->bindVariable('stringVariable3', $stringableClass)

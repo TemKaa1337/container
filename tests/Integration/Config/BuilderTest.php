@@ -290,7 +290,7 @@ final class BuilderTest extends AbstractTestCase
 
         self::assertEquals(
             ['string' => 'env(APP_BOUND_VAR)'],
-            $config->getBoundedClasses()[$classFullNamespace]->getBoundedVariables(),
+            $config->getConfiguredClasses()[$classFullNamespace]->getBoundedVariables(),
         );
     }
 

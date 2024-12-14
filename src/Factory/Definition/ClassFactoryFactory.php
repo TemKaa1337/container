@@ -10,7 +10,7 @@ use Temkaa\Container\Model\Definition\Class\Method;
 /**
  * @internal
  */
-final class ClassFactoryFactory
+final readonly class ClassFactoryFactory
 {
     /**
      * @param class-string $id

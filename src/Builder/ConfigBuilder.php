@@ -17,11 +17,6 @@ use function str_replace;
 final class ConfigBuilder
 {
     /**
-     * @var array<class-string, ClassConfig>
-     */
-    private array $boundedClasses = [];
-
-    /**
      * @var array<class-string, class-string>
      */
     private array $boundedInterfaces = [];
@@ -30,6 +25,11 @@ final class ConfigBuilder
      * @var array<string, mixed>
      */
     private array $boundedVariables = [];
+
+    /**
+     * @var array<class-string, ClassConfig>
+     */
+    private array $configuredClasses = [];
 
     /**
      * @var list<string>
@@ -45,13 +45,6 @@ final class ConfigBuilder
     public static function make(): self
     {
         return new self();
-    }
-
-    public function bindClass(ClassConfig $class): self
-    {
-        $this->boundedClasses[$class->getClass()] = $class;
-
-        return $this;
     }
 
     /**
@@ -75,12 +68,19 @@ final class ConfigBuilder
     public function build(): Config
     {
         return new Config(
-            $this->boundedClasses,
+            $this->configuredClasses,
             $this->boundedInterfaces,
             $this->boundedVariables,
             $this->exclude,
             $this->include,
         );
+    }
+
+    public function configure(ClassConfig $class): self
+    {
+        $this->configuredClasses[$class->getClass()] = $class;
+
+        return $this;
     }
 
     public function exclude(string $path): self

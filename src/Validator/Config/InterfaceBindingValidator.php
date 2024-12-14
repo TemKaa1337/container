@@ -15,7 +15,7 @@ use function sprintf;
 /**
  * @internal
  */
-final class InterfaceBindingValidator implements ValidatorInterface
+final readonly class InterfaceBindingValidator implements ValidatorInterface
 {
     public function validate(Config $config): void
     {

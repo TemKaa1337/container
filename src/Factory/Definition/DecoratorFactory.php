@@ -10,7 +10,7 @@ use Temkaa\Container\Model\Config\Decorator;
 /**
  * @internal
  */
-final class DecoratorFactory
+final readonly class DecoratorFactory
 {
     /**
      * @param class-string $id

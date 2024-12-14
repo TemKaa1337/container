@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temkaa\Container\Util;
+namespace Temkaa\Container\Provider;
 
 use Temkaa\Container\Model\Config;
 use Temkaa\Container\Model\Config\Factory;
@@ -12,19 +12,19 @@ use function array_key_exists;
 /**
  * @internal
  */
-final class BoundVariableProvider
+final readonly class BoundVariableProvider
 {
     /**
      * @param class-string $id
      */
-    public static function provide(
+    public function provide(
         Config $config,
         string $argumentName,
         string $id,
         ?Factory $factory,
     ): Value {
-        $classBinding = $config->getBoundedClass($id);
-        $classBoundVars = $classBinding?->getBoundedVariables() ?? [];
+        $classConfiguration = $config->getConfiguredClass($id);
+        $classBoundVars = $classConfiguration?->getBoundedVariables() ?? [];
         $classFactoryBindings = $factory?->getBoundedVariables() ?? [];
 
         $globalBoundVars = $config->getBoundedVariables();

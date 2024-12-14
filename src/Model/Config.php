@@ -7,19 +7,19 @@ namespace Temkaa\Container\Model;
 use Temkaa\Container\Model\Config\ClassConfig;
 
 /**
- * @internal
+ * @api
  */
 final readonly class Config
 {
     /**
-     * @param array<class-string, ClassConfig>  $boundedClasses
+     * @param array<class-string, ClassConfig>  $configuredClasses
      * @param array<class-string, class-string> $boundedInterfaces
      * @param array<string, mixed>              $boundedVariables
      * @param list<string>                      $excludedPaths
      * @param list<string>                      $includedPaths
      */
     public function __construct(
-        private array $boundedClasses,
+        private array $configuredClasses,
         private array $boundedInterfaces,
         private array $boundedVariables,
         private array $excludedPaths,
@@ -38,24 +38,6 @@ final readonly class Config
     }
 
     /**
-     * @param class-string $class
-     *
-     * @return ClassConfig|null
-     */
-    public function getBoundedClass(string $class): ?ClassConfig
-    {
-        return $this->boundedClasses[$class] ?? null;
-    }
-
-    /**
-     * @return array<class-string, ClassConfig>
-     */
-    public function getBoundedClasses(): array
-    {
-        return $this->boundedClasses;
-    }
-
-    /**
      * A key in array is interface name and value is class name.
      *
      * @return array<class-string, class-string>
@@ -71,6 +53,24 @@ final readonly class Config
     public function getBoundedVariables(): array
     {
         return $this->boundedVariables;
+    }
+
+    /**
+     * @param class-string $class
+     *
+     * @return ClassConfig|null
+     */
+    public function getConfiguredClass(string $class): ?ClassConfig
+    {
+        return $this->configuredClasses[$class] ?? null;
+    }
+
+    /**
+     * @return array<class-string, ClassConfig>
+     */
+    public function getConfiguredClasses(): array
+    {
+        return $this->configuredClasses;
     }
 
     /**

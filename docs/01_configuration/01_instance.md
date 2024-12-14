@@ -35,7 +35,7 @@ final readonly class Collector
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Collector::class)
             // Here you say: please bind me this particular class into this property and it doesn't matter what type
             // is hinted in that property 

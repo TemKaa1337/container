@@ -64,7 +64,7 @@ final readonly Factory
 
 $config = ConfigBuilder::make()
     ->include(__DIR__.'../../some/path/with/classes/')
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class1::class)
             ->factory(
                 FactoryBuilder::make(id: Factory::class, method: 'createClass1')
@@ -73,13 +73,13 @@ $config = ConfigBuilder::make()
                     ->build()
             )
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class2::class)
             ->factory(
                 FactoryBuilder::make(id: Factory::class, method: 'createClass2')->build()
             )
     )
-    ->bindClass(
+    ->configure(
         ClassBuilder::make(Class3::class)
             ->factory(
                 FactoryBuilder::make(id: Class3::class, method: 'createSelf')->build()
